@@ -1,5 +1,4 @@
 #include "MyForm.h"
-#include <GL\glut.h>
 
 using namespace System;
 using namespace System::Windows::Forms;

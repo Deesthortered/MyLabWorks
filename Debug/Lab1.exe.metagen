@@ -21,3 +21,20 @@ Assembly System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c5619
 Class Lab1.MyForm: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
   :System.Windows.Forms.Form
     Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+  Fields:
+    System.Windows.Forms.ComboBox ShapeListBox : Public
+Struct Lab1.MyForm+Shapes: AutoLayout, AnsiClass, Class, NestedPublic, Sealed, BeforeFieldInit
+  :System.Enum
+  Fields:
+    Int32 value__ : Public, SpecialName, RTSpecialName
+    Shapes Cube = 0 : Public, Static, Literal, HasDefault
+    Shapes Pyramid = 1 : Public, Static, Literal, HasDefault
+Class Lab1.MyForm+Engine: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFieldInit
+    Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+  Interfaces:
+    System.IDisposable
+  Methods:
+    SetShape(Shapes): PrivateScope, Public, HideBySig
+    SetLenght(UInt32): PrivateScope, Public, HideBySig
+    InitializeOpenGL(Int32, Int32): PrivateScope, Public, HideBySig
+    Dispose(): PrivateScope, Public, Final, Virtual, HideBySig
