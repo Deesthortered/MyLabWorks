@@ -11,6 +11,10 @@ namespace Lab1
 	using namespace OpenTK::Platform::Windows;
 	using namespace OpenTK::Graphics::OpenGL;
 
+	const int FrameHeight = 500;
+	const int FrameWidth  = 500;
+	const int FrameDepth  = 500;
+
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
 	public:
@@ -23,18 +27,11 @@ namespace Lab1
 			Shapes current_shape;
 			size_t edge_lenght;
 
-			int height;
-			int width;
-			int depht;
 		public:
 			Engine()
 			{
 				this->current_shape = Shapes::Cube;
 				this->edge_lenght = 1;
-
-				this->height = 0;
-				this->width = 0;
-				this->depht = 0;
 			}
 			~Engine() {};
 
@@ -45,20 +42,6 @@ namespace Lab1
 			void SetLenght(size_t l)
 			{
 				this->edge_lenght = l;
-			}
-
-			void InitializeOpenGL(int h, int w)
-			{
-				this->height = h;
-				this->width = w;
-				this->depht = w;
-
-				GL::ClearColor(0.0, 0.0, 0.0, 1.0);
-				GL::MatrixMode(MatrixMode::Projection);
-				GL::LoadIdentity();
-				GL::Ortho(-this->width >> 1, this->width >> 1, -this->height >> 1, this->height >> 1, -this->depht >> 1, this->depht >> 1);
-				GL::MatrixMode(MatrixMode::Modelview);
-				GL::Viewport(0, 0, this->width, this->height);
 			}
 
 		};
@@ -101,6 +84,7 @@ namespace Lab1
 			this->GLFrame->Size = System::Drawing::Size(774, 632);
 			this->GLFrame->TabIndex = 0;
 			this->GLFrame->VSync = false;
+			this->GLFrame->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::GLFrame_KeyPress);
 			// 
 			// ShapeListBox
 			// 
@@ -156,16 +140,49 @@ namespace Lab1
 			this->MaximizeBox = false;
 			this->Name = L"MyForm";
 			this->Text = L"Lab1. 3D object is OpenGL.";
+			this->Shown += gcnew System::EventHandler(this, &MyForm::MyForm_Shown);
 			this->ResumeLayout(false);
 			this->PerformLayout();
-			//
-			// Engine
-			//
-			this->engine.InitializeOpenGL(this->GLFrame->Height, this->GLFrame->Width);
+
 		}
 #pragma endregion
-	// Events
+	// Functions and Events
+	private: void InitializeGL()
+	{
+		GL::ClearColor(Color::Black);
+		GL::MatrixMode(MatrixMode::Projection);
+		GL::LoadIdentity();
+		GL::Ortho(-(FrameWidth >> 1), FrameWidth >> 1, -(FrameHeight >> 1), FrameHeight >> 1, -(FrameDepth >> 1), FrameDepth >> 1);
+		GL::Viewport(0, 0, FrameWidth, FrameHeight);
+		GL::Clear(ClearBufferMask::ColorBufferBit | ClearBufferMask::DepthBufferBit);
+		GL::MatrixMode(MatrixMode::Modelview);
+		GL::LoadIdentity();
+	}
+	private: void DrawOrthLines()
+	{
+		GL::Begin(BeginMode::Lines);
 
+		GL::Color3(1.0, 0.0, 0.0);
+		GL::Vertex3(0.0, 0.0, 0.0);
+		GL::Vertex3(double(FrameWidth >> 1), 0.0, 0.0);
+
+		GL::Color3(0.0, 1.0, 0.0);
+		GL::Vertex3(0.0, 0.0, 0.0);
+		GL::Vertex3(0.0, double(FrameHeight >> 1), 0.0);
+
+		GL::Color3(0.0, 0.0, 1.0);
+		GL::Vertex3(0.0, 0.0, 0.0);
+		GL::Vertex3(0.0, 0.0, double(FrameDepth >> 1));
+
+		GL::End();
+	}
+
+	private: System::Void MyForm_Shown(System::Object^  sender, System::EventArgs^  e)
+	{
+		InitializeGL();
+		DrawOrthLines();
+		GLFrame->SwapBuffers();
+	}
 	private: System::Void ShapeListBox_SelectedIndexChanged(System::Object^ sender, System::EventArgs^ e) 
 	{
 		if (ShapeListBox->SelectedItem == ShapeListBox->Items[0]) 
@@ -183,8 +200,32 @@ namespace Lab1
 		if (e->KeyCode != Keys::Enter) return;
 		engine.SetLenght(Convert::ToInt32(EdgeLenghtBox->Text));
 	}
+	private: System::Void GLFrame_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
+	{
+		GL::Clear(ClearBufferMask::ColorBufferBit | ClearBufferMask::DepthBufferBit);
+		DrawOrthLines();
+		switch (e->KeyChar)
+		{
+		case 'a': { GL::Translate( 1.0,  0.0,  0.0); } break;
+		case 'd': { GL::Translate(-1.0,  0.0,  0.0); } break;
+		case 'w': { GL::Translate( 0.0,  1.0,  0.0); } break;
+		case 's': { GL::Translate( 0.0, -1.0,  0.0); } break;
+		case 'z': { GL::Translate( 0.0,  0.0,  1.0); } break;
+		case 'c': { GL::Translate( 0.0,  0.0, -1.0); } break;
+
+		case 'q': { GL::Scale(0.9, 0.9, 0.9); } break;
+		case 'e': { GL::Scale(1.1, 1.1, 1.1); } break;
+
+		case 'r': { GL::Rotate( 1, 0.0, 0.0, 1.0); } break;
+		case 'f': { GL::Rotate(-1, 0.0, 0.0, 1.0); } break;
+		case 't': { GL::Rotate( 1, 0.0, 1.0, 0.0); } break;
+		case 'g': { GL::Rotate(-1, 0.0, 1.0, 0.0); } break;
+		case 'y': { GL::Rotate( 1, 1.0, 0.0, 0.0); } break;
+		case 'h': { GL::Rotate(-1, 1.0, 0.0, 0.0); } break;
+
+		case 13: {} break;
+		}
+		GLFrame->SwapBuffers();
+	}
 };
 }
-
-// MessageBox::Show(selectedState, "Та не, наебал))", MessageBoxButtons::OK, MessageBoxIcon::Error);
-// String^ selectedState = ShapeListBox->SelectedItem->ToString();
