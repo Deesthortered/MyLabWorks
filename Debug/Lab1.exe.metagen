@@ -23,19 +23,31 @@ Assembly System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f
 Class Lab1.MyForm: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
   :System.Windows.Forms.Form
     Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
-  Fields:
-    System.Windows.Forms.ComboBox ShapeListBox : Public
-Struct Lab1.MyForm+Shapes: AutoLayout, AnsiClass, Class, NestedPublic, Sealed, BeforeFieldInit
+Struct Lab1.MyForm+ShapeType: AutoLayout, AnsiClass, Class, NestedPublic, Sealed, BeforeFieldInit
   :System.Enum
   Fields:
     Int32 value__ : Public, SpecialName, RTSpecialName
-    Shapes Cube = 0 : Public, Static, Literal, HasDefault
-    Shapes Pyramid = 1 : Public, Static, Literal, HasDefault
+    ShapeType Cube = 0 : Public, Static, Literal, HasDefault
+    ShapeType Pyramid = 1 : Public, Static, Literal, HasDefault
+Class Lab1.MyForm+Shape: AutoLayout, AnsiClass, Class, NestedPublic, Abstract, BeforeFieldInit
+    Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+  Methods:
+    SetData(Int32, Int32, Int32, Int32, Int32, Int32, UInt32): PrivateScope, Public, Virtual, HideBySig, VtableLayoutMask
+    Draw(): PrivateScope, Public, Virtual, HideBySig, VtableLayoutMask, Abstract
+Class Lab1.MyForm+Cube: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFieldInit
+  :Lab1.MyForm+Shape
+    Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+  Methods:
+    SetData(Int32, Int32, Int32, Int32, Int32, Int32, UInt32): PrivateScope, Public, Virtual, HideBySig
+    Draw(): PrivateScope, Public, Virtual, HideBySig
+Class Lab1.MyForm+Pyramid: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFieldInit
+  :Lab1.MyForm+Shape
+    Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+  Methods:
+    SetData(Int32, Int32, Int32, Int32, Int32, Int32, UInt32): PrivateScope, Public, Virtual, HideBySig
+    Draw(): PrivateScope, Public, Virtual, HideBySig
 Class Lab1.MyForm+Engine: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFieldInit
     Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
-  Interfaces:
-    System.IDisposable
   Methods:
-    SetShape(Shapes): PrivateScope, Public, HideBySig
-    SetLenght(UInt32): PrivateScope, Public, HideBySig
-    Dispose(): PrivateScope, Public, Final, Virtual, HideBySig
+    CreateShape(ShapeType, UInt32, Int32, Int32, Int32, Int32, Int32, Int32): PrivateScope, Public, HideBySig
+    DrawShapes(): PrivateScope, Public, HideBySig
