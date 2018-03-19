@@ -32,22 +32,22 @@ Struct Lab1.MyForm+ShapeType: AutoLayout, AnsiClass, Class, NestedPublic, Sealed
 Class Lab1.MyForm+Shape: AutoLayout, AnsiClass, Class, NestedPublic, Abstract, BeforeFieldInit
     Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
   Methods:
-    SetData(Int32, Int32, Int32, Int32, Int32, Int32, UInt32): PrivateScope, Public, Virtual, HideBySig, VtableLayoutMask
+    SetData(Color, UInt32, Double, Double, Double, Double, Double, Double, Double): PrivateScope, Public, Virtual, HideBySig, VtableLayoutMask
     Draw(): PrivateScope, Public, Virtual, HideBySig, VtableLayoutMask, Abstract
 Class Lab1.MyForm+Cube: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFieldInit
   :Lab1.MyForm+Shape
     Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
   Methods:
-    SetData(Int32, Int32, Int32, Int32, Int32, Int32, UInt32): PrivateScope, Public, Virtual, HideBySig
+    SetData(Color, UInt32, Double, Double, Double, Double, Double, Double, Double): PrivateScope, Public, Virtual, HideBySig
     Draw(): PrivateScope, Public, Virtual, HideBySig
 Class Lab1.MyForm+Pyramid: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFieldInit
   :Lab1.MyForm+Shape
     Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
   Methods:
-    SetData(Int32, Int32, Int32, Int32, Int32, Int32, UInt32): PrivateScope, Public, Virtual, HideBySig
+    SetData(Color, UInt32, Double, Double, Double, Double, Double, Double, Double): PrivateScope, Public, Virtual, HideBySig
     Draw(): PrivateScope, Public, Virtual, HideBySig
 Class Lab1.MyForm+Engine: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFieldInit
     Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
   Methods:
-    CreateShape(ShapeType, UInt32, Int32, Int32, Int32, Int32, Int32, Int32): PrivateScope, Public, HideBySig
+    CreateShape(ShapeType, Color, UInt32, Double, Double, Double, Double, Double, Double, Double): PrivateScope, Public, HideBySig
     DrawShapes(): PrivateScope, Public, HideBySig
