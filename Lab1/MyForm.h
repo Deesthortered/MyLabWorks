@@ -29,11 +29,10 @@ namespace Lab1
 		protected:
 			double x_coor, y_coor, z_coor;
 			double x_rot, y_rot, z_rot;
-			double angle;
 			size_t l;
 			Color  color;
 		public:
-			virtual void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, double angle)
+			virtual void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot)
 			{
 				this->color = color;
 				this->l = l;
@@ -43,7 +42,6 @@ namespace Lab1
 				this->x_rot = x_rot;
 				this->y_rot = y_rot;
 				this->z_rot = z_rot;
-				this->angle = angle;
 			}
 			virtual void Draw() abstract;
 		};
@@ -53,20 +51,20 @@ namespace Lab1
 			double y1, y2, y3, y4, y5, y6, y7, y8;
 			double z1, z2, z3, z4, z5, z6, z7, z8;
 		public:
-			virtual void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, double angle) override
+			virtual void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot) override
 			{
-				Shape::SetData(color, l, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot, angle);
+				Shape::SetData(color, l, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot);
 				x1 = x2 = x5 = x6 = x_coor - l / 2;
 				x3 = x4 = x7 = x8 = x_coor + l / 2;
 				y1 = y2 = y3 = y4 = y_coor - l / 2;
 				y5 = y6 = y7 = y8 = y_coor + l / 2;
 				z1 = z4 = z5 = z8 = z_coor - l / 2;
 				z2 = z3 = z6 = z7 = z_coor + l / 2;
+
+
 			}
 			virtual void Draw() override
 			{
-				GL::PushMatrix();
-				GL::Rotate(this->angle, this->x_rot, this->y_rot, this->z_rot);
 				GL::Begin(BeginMode::Quads);
 				GL::Color3(color);
 				GL::Vertex3(x1, y1, z1);
@@ -125,18 +123,17 @@ namespace Lab1
 				GL::Vertex3(x4, y4, z4);
 				GL::Vertex3(x8, y8, z8);
 				GL::End();
-				GL::PopMatrix();
 			}
 		};
 		ref class Pyramid : public Shape
 		{
-			int x1, x2, x3, x4;
-			int y1, y2, y3, y4;
-			int z1, z2, z3, z4;
+			double x1, x2, x3, x4;
+			double y1, y2, y3, y4;
+			double z1, z2, z3, z4;
 		public:
-			virtual void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, double angle) override
+			virtual void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot) override
 			{
-				Shape::SetData(color, l, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot, angle);
+				Shape::SetData(color, l, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot);
 
 				x1 = x3 = x_coor - (l / Math::Sqrt(12)); x2 = x_coor + (l / Math::Sqrt(3)); x4 = x_coor;
 				y1 = y2 = y3 = y_coor; y4 = y_coor + Math::Sqrt((2 * l*l) / 3);
@@ -144,8 +141,6 @@ namespace Lab1
 			}
 			virtual void Draw() override
 			{
-				GL::PushMatrix();
-				GL::Rotate(this->angle, this->x_rot, this->y_rot, this->z_rot);
 				GL::Begin(BeginMode::Triangles);
 				GL::Color3(color);
 
@@ -177,20 +172,36 @@ namespace Lab1
 				GL::Vertex3(x2, y2, z2);
 				GL::Vertex3(x4, y4, z4);
 				GL::End();
-				GL::PopMatrix();
 			}
 		};
 
 		ref class Engine
 		{
 			List<Shape^> shape_list;
+
+			double TranslateStep = 1;
+			double ScaleStep = 0.1;
+			double RotareStep = 1;
 		public:
-			void CreateShape(ShapeType type, Color col, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, double angle)
+			void SetTranslateStep(double val)
+			{
+				this->TranslateStep = val;
+			}
+			void SetScaleStep(double val)
+			{
+				this->ScaleStep = val;
+			}
+			void SetRotareStep(double val)
+			{
+				this->RotareStep = val;
+			}
+
+			void CreateShape(ShapeType type, Color col, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot)
 			{
 				Shape^ s;
 				if (type == ShapeType::Cube) s = gcnew Cube();
 				else s = gcnew Pyramid();
-				s->SetData(col, l, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot, angle);
+				s->SetData(col, l, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot);
 				this->shape_list.Add(s);
 			}
 			void DrawShapes()
@@ -198,6 +209,29 @@ namespace Lab1
 				for each (Shape^ cur in shape_list)
 				{
 					cur->Draw();
+				}
+			}
+
+			void CameraControl(System::Windows::Forms::KeyPressEventArgs^  &e)
+			{
+				switch (e->KeyChar)
+				{
+				case 'a': { GL::Translate(TranslateStep, 0.0, 0.0); } break;
+				case 'd': { GL::Translate(-TranslateStep, 0.0, 0.0); } break;
+				case 'w': { GL::Translate(0.0, TranslateStep, 0.0); } break;
+				case 's': { GL::Translate(0.0, -TranslateStep, 0.0); } break;
+				case 'z': { GL::Translate(0.0, 0.0, TranslateStep); } break;
+				case 'c': { GL::Translate(0.0, 0.0, -TranslateStep); } break;
+
+				case 'q': { GL::Scale(1.0 - ScaleStep, 1.0 - ScaleStep, 1.0 - ScaleStep); } break;
+				case 'e': { GL::Scale(1.0 + ScaleStep, 1.0 + ScaleStep, 1.0 + ScaleStep); } break;
+
+				case 'r': { GL::Rotate(RotareStep, 1.0, 0.0, 0.0); } break;
+				case 'f': { GL::Rotate(-RotareStep, 1.0, 0.0, 0.0); } break;
+				case 't': { GL::Rotate(RotareStep, 0.0, 1.0, 0.0); } break;
+				case 'g': { GL::Rotate(-RotareStep, 0.0, 1.0, 0.0); } break;
+				case 'y': { GL::Rotate(RotareStep, 0.0, 0.0, 1.0); } break;
+				case 'h': { GL::Rotate(-RotareStep, 01.0, 0.0, 1.0); } break;
 				}
 			}
 		};
@@ -241,22 +275,36 @@ namespace Lab1
 	private: System::Windows::Forms::TabPage^  AddShapeTab;
 	private: System::Windows::Forms::Label^  label2Color;
 	private: System::Windows::Forms::ComboBox^  ColorBox2;
-	private: System::Windows::Forms::Label^  label2Angle;
-	private: System::Windows::Forms::TextBox^  tb2_angle;
 	private: System::Windows::Forms::Label^  label1rot;
 	private: System::Windows::Forms::Label^  label1scal;
 	private: System::Windows::Forms::Label^  label1trans;
 	private: System::Windows::Forms::TextBox^  tb1_scal;
 	private: System::Windows::Forms::TextBox^  tb1_rot;
 	private: System::Windows::Forms::TextBox^  tb1_trans;
-	private: System::Windows::Forms::RadioButton^  rb1_free;
-	private: System::Windows::Forms::RadioButton^  rb1_centr;
 	private: System::Windows::Forms::TabPage^  ControlTab;
+	private: System::Windows::Forms::CheckBox^  cb1_axisZ;
+	private: System::Windows::Forms::CheckBox^  cb1_axisY;
+	private: System::Windows::Forms::CheckBox^  cb1_axisX;
+	private: System::Windows::Forms::Label^  label1Planes;
+	private: System::Windows::Forms::Label^  label1Axises;
+	private: System::Windows::Forms::CheckBox^  cb1_planeXZ;
+	private: System::Windows::Forms::CheckBox^  cb1_planeXY;
+	private: System::Windows::Forms::CheckBox^  cb1_planeYZ;
+	private: System::Windows::Forms::Label^  label3AllShapes;
+	private: System::Windows::Forms::ListBox^  list3_all;
+	private: System::Windows::Forms::Label^  label3SelectedShapes;
+	private: System::Windows::Forms::ListBox^  list3_selected;
+	private: System::Windows::Forms::Button^  b3_allright;
+	private: System::Windows::Forms::Button^  b3_right;
+	private: System::Windows::Forms::Button^  b3_left;
+	private: System::Windows::Forms::Button^  b3_allleft;
+	private: System::Windows::Forms::RichTextBox^  rtb1_manual;
 
 	private: Engine engine;
 #pragma region Windows Form Designer generated code
 		void InitializeComponent(void)
 		{
+			System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(MyForm::typeid));
 			this->GLFrame = (gcnew OpenTK::GLControl());
 			this->ShapeListBox2 = (gcnew System::Windows::Forms::ComboBox());
 			this->label2Shape = (gcnew System::Windows::Forms::Label());
@@ -280,8 +328,15 @@ namespace Lab1
 			this->but2_AddShape = (gcnew System::Windows::Forms::Button());
 			this->MainTabControl = (gcnew System::Windows::Forms::TabControl());
 			this->CameraTab = (gcnew System::Windows::Forms::TabPage());
-			this->rb1_free = (gcnew System::Windows::Forms::RadioButton());
-			this->rb1_centr = (gcnew System::Windows::Forms::RadioButton());
+			this->rtb1_manual = (gcnew System::Windows::Forms::RichTextBox());
+			this->cb1_planeYZ = (gcnew System::Windows::Forms::CheckBox());
+			this->cb1_planeXZ = (gcnew System::Windows::Forms::CheckBox());
+			this->cb1_planeXY = (gcnew System::Windows::Forms::CheckBox());
+			this->cb1_axisZ = (gcnew System::Windows::Forms::CheckBox());
+			this->cb1_axisY = (gcnew System::Windows::Forms::CheckBox());
+			this->cb1_axisX = (gcnew System::Windows::Forms::CheckBox());
+			this->label1Planes = (gcnew System::Windows::Forms::Label());
+			this->label1Axises = (gcnew System::Windows::Forms::Label());
 			this->tb1_scal = (gcnew System::Windows::Forms::TextBox());
 			this->tb1_rot = (gcnew System::Windows::Forms::TextBox());
 			this->tb1_trans = (gcnew System::Windows::Forms::TextBox());
@@ -289,14 +344,21 @@ namespace Lab1
 			this->label1scal = (gcnew System::Windows::Forms::Label());
 			this->label1trans = (gcnew System::Windows::Forms::Label());
 			this->AddShapeTab = (gcnew System::Windows::Forms::TabPage());
-			this->label2Angle = (gcnew System::Windows::Forms::Label());
-			this->tb2_angle = (gcnew System::Windows::Forms::TextBox());
 			this->label2Color = (gcnew System::Windows::Forms::Label());
 			this->ColorBox2 = (gcnew System::Windows::Forms::ComboBox());
 			this->ControlTab = (gcnew System::Windows::Forms::TabPage());
+			this->label3SelectedShapes = (gcnew System::Windows::Forms::Label());
+			this->list3_selected = (gcnew System::Windows::Forms::ListBox());
+			this->b3_allright = (gcnew System::Windows::Forms::Button());
+			this->b3_right = (gcnew System::Windows::Forms::Button());
+			this->b3_left = (gcnew System::Windows::Forms::Button());
+			this->b3_allleft = (gcnew System::Windows::Forms::Button());
+			this->list3_all = (gcnew System::Windows::Forms::ListBox());
+			this->label3AllShapes = (gcnew System::Windows::Forms::Label());
 			this->MainTabControl->SuspendLayout();
 			this->CameraTab->SuspendLayout();
 			this->AddShapeTab->SuspendLayout();
+			this->ControlTab->SuspendLayout();
 			this->SuspendLayout();
 			// 
 			// GLFrame
@@ -344,7 +406,7 @@ namespace Lab1
 			this->tb2_leght->Name = L"tb2_leght";
 			this->tb2_leght->Size = System::Drawing::Size(108, 22);
 			this->tb2_leght->TabIndex = 4;
-			this->tb2_leght->Text = L"1";
+			this->tb2_leght->Text = L"50";
 			this->tb2_leght->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb2_leght_KeyPress);
 			this->tb2_leght->Leave += gcnew System::EventHandler(this, &MyForm::tb2_leght_Leave);
 			// 
@@ -382,6 +444,7 @@ namespace Lab1
 			this->tb2_Xcoor->Size = System::Drawing::Size(46, 22);
 			this->tb2_Xcoor->TabIndex = 8;
 			this->tb2_Xcoor->Text = L"0";
+			this->tb2_Xcoor->Click += gcnew System::EventHandler(this, &MyForm::tb2_Xcoor_Click);
 			this->tb2_Xcoor->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb2_Xcoor_KeyPress);
 			this->tb2_Xcoor->Leave += gcnew System::EventHandler(this, &MyForm::tb2_Xcoor_Leave);
 			// 
@@ -392,6 +455,7 @@ namespace Lab1
 			this->tb2_Ycoor->Size = System::Drawing::Size(46, 22);
 			this->tb2_Ycoor->TabIndex = 9;
 			this->tb2_Ycoor->Text = L"0";
+			this->tb2_Ycoor->Click += gcnew System::EventHandler(this, &MyForm::tb2_Ycoor_Click);
 			this->tb2_Ycoor->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb2_Ycoor_KeyPress);
 			this->tb2_Ycoor->Leave += gcnew System::EventHandler(this, &MyForm::tb2_Ycoor_Leave);
 			// 
@@ -402,6 +466,7 @@ namespace Lab1
 			this->tb2_Zcoor->Size = System::Drawing::Size(46, 22);
 			this->tb2_Zcoor->TabIndex = 10;
 			this->tb2_Zcoor->Text = L"0";
+			this->tb2_Zcoor->Click += gcnew System::EventHandler(this, &MyForm::tb2_Zcoor_Click);
 			this->tb2_Zcoor->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb2_Zcoor_KeyPress);
 			this->tb2_Zcoor->Leave += gcnew System::EventHandler(this, &MyForm::tb2_Zcoor_Leave);
 			// 
@@ -419,7 +484,7 @@ namespace Lab1
 			// label2XRot
 			// 
 			this->label2XRot->AutoSize = true;
-			this->label2XRot->Location = System::Drawing::Point(400, 46);
+			this->label2XRot->Location = System::Drawing::Point(391, 29);
 			this->label2XRot->Name = L"label2XRot";
 			this->label2XRot->Size = System::Drawing::Size(29, 17);
 			this->label2XRot->TabIndex = 12;
@@ -428,7 +493,7 @@ namespace Lab1
 			// label2YRot
 			// 
 			this->label2YRot->AutoSize = true;
-			this->label2YRot->Location = System::Drawing::Point(400, 74);
+			this->label2YRot->Location = System::Drawing::Point(391, 57);
 			this->label2YRot->Name = L"label2YRot";
 			this->label2YRot->Size = System::Drawing::Size(29, 17);
 			this->label2YRot->TabIndex = 13;
@@ -437,7 +502,7 @@ namespace Lab1
 			// label2ZRot
 			// 
 			this->label2ZRot->AutoSize = true;
-			this->label2ZRot->Location = System::Drawing::Point(400, 102);
+			this->label2ZRot->Location = System::Drawing::Point(391, 85);
 			this->label2ZRot->Name = L"label2ZRot";
 			this->label2ZRot->Size = System::Drawing::Size(29, 17);
 			this->label2ZRot->TabIndex = 14;
@@ -445,31 +510,34 @@ namespace Lab1
 			// 
 			// tb2_Xrot
 			// 
-			this->tb2_Xrot->Location = System::Drawing::Point(435, 43);
+			this->tb2_Xrot->Location = System::Drawing::Point(426, 26);
 			this->tb2_Xrot->Name = L"tb2_Xrot";
 			this->tb2_Xrot->Size = System::Drawing::Size(46, 22);
 			this->tb2_Xrot->TabIndex = 15;
 			this->tb2_Xrot->Text = L"0";
+			this->tb2_Xrot->Click += gcnew System::EventHandler(this, &MyForm::tb2_Xrot_Click);
 			this->tb2_Xrot->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb2_Xrot_KeyPress);
 			this->tb2_Xrot->Leave += gcnew System::EventHandler(this, &MyForm::tb2_Xrot_Leave);
 			// 
 			// tb2_Yrot
 			// 
-			this->tb2_Yrot->Location = System::Drawing::Point(435, 71);
+			this->tb2_Yrot->Location = System::Drawing::Point(426, 54);
 			this->tb2_Yrot->Name = L"tb2_Yrot";
 			this->tb2_Yrot->Size = System::Drawing::Size(46, 22);
 			this->tb2_Yrot->TabIndex = 16;
 			this->tb2_Yrot->Text = L"0";
+			this->tb2_Yrot->Click += gcnew System::EventHandler(this, &MyForm::tb2_Yrot_Click);
 			this->tb2_Yrot->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb2_Yrot_KeyPress);
 			this->tb2_Yrot->Leave += gcnew System::EventHandler(this, &MyForm::tb2_Yrot_Leave);
 			// 
 			// tb2_Zrot
 			// 
-			this->tb2_Zrot->Location = System::Drawing::Point(435, 99);
+			this->tb2_Zrot->Location = System::Drawing::Point(426, 82);
 			this->tb2_Zrot->Name = L"tb2_Zrot";
 			this->tb2_Zrot->Size = System::Drawing::Size(46, 22);
 			this->tb2_Zrot->TabIndex = 17;
 			this->tb2_Zrot->Text = L"0";
+			this->tb2_Zrot->Click += gcnew System::EventHandler(this, &MyForm::tb2_Zrot_Click);
 			this->tb2_Zrot->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb2_Zrot_KeyPress);
 			this->tb2_Zrot->Leave += gcnew System::EventHandler(this, &MyForm::tb2_Zrot_Leave);
 			// 
@@ -518,8 +586,15 @@ namespace Lab1
 			// 
 			// CameraTab
 			// 
-			this->CameraTab->Controls->Add(this->rb1_free);
-			this->CameraTab->Controls->Add(this->rb1_centr);
+			this->CameraTab->Controls->Add(this->rtb1_manual);
+			this->CameraTab->Controls->Add(this->cb1_planeYZ);
+			this->CameraTab->Controls->Add(this->cb1_planeXZ);
+			this->CameraTab->Controls->Add(this->cb1_planeXY);
+			this->CameraTab->Controls->Add(this->cb1_axisZ);
+			this->CameraTab->Controls->Add(this->cb1_axisY);
+			this->CameraTab->Controls->Add(this->cb1_axisX);
+			this->CameraTab->Controls->Add(this->label1Planes);
+			this->CameraTab->Controls->Add(this->label1Axises);
 			this->CameraTab->Controls->Add(this->tb1_scal);
 			this->CameraTab->Controls->Add(this->tb1_rot);
 			this->CameraTab->Controls->Add(this->tb1_trans);
@@ -534,27 +609,104 @@ namespace Lab1
 			this->CameraTab->Text = L"Camera";
 			this->CameraTab->UseVisualStyleBackColor = true;
 			// 
-			// rb1_free
+			// rtb1_manual
 			// 
-			this->rb1_free->AutoSize = true;
-			this->rb1_free->Location = System::Drawing::Point(240, 39);
-			this->rb1_free->Name = L"rb1_free";
-			this->rb1_free->Size = System::Drawing::Size(109, 21);
-			this->rb1_free->TabIndex = 7;
-			this->rb1_free->Text = L"Free camera";
-			this->rb1_free->UseVisualStyleBackColor = true;
+			this->rtb1_manual->Location = System::Drawing::Point(357, 12);
+			this->rtb1_manual->Name = L"rtb1_manual";
+			this->rtb1_manual->ReadOnly = true;
+			this->rtb1_manual->Size = System::Drawing::Size(413, 109);
+			this->rtb1_manual->TabIndex = 16;
+			this->rtb1_manual->Text = resources->GetString(L"rtb1_manual.Text");
 			// 
-			// rb1_centr
+			// cb1_planeYZ
 			// 
-			this->rb1_centr->AutoSize = true;
-			this->rb1_centr->Checked = true;
-			this->rb1_centr->Location = System::Drawing::Point(240, 12);
-			this->rb1_centr->Name = L"rb1_centr";
-			this->rb1_centr->Size = System::Drawing::Size(151, 21);
-			this->rb1_centr->TabIndex = 6;
-			this->rb1_centr->TabStop = true;
-			this->rb1_centr->Text = L"Centralized camera";
-			this->rb1_centr->UseVisualStyleBackColor = true;
+			this->cb1_planeYZ->AutoSize = true;
+			this->cb1_planeYZ->Location = System::Drawing::Point(299, 86);
+			this->cb1_planeYZ->Name = L"cb1_planeYZ";
+			this->cb1_planeYZ->Size = System::Drawing::Size(48, 21);
+			this->cb1_planeYZ->TabIndex = 15;
+			this->cb1_planeYZ->Text = L"YZ";
+			this->cb1_planeYZ->UseVisualStyleBackColor = true;
+			this->cb1_planeYZ->Click += gcnew System::EventHandler(this, &MyForm::cb1_planeYZ_Click);
+			// 
+			// cb1_planeXZ
+			// 
+			this->cb1_planeXZ->AutoSize = true;
+			this->cb1_planeXZ->Location = System::Drawing::Point(299, 60);
+			this->cb1_planeXZ->Name = L"cb1_planeXZ";
+			this->cb1_planeXZ->Size = System::Drawing::Size(48, 21);
+			this->cb1_planeXZ->TabIndex = 14;
+			this->cb1_planeXZ->Text = L"XZ";
+			this->cb1_planeXZ->UseVisualStyleBackColor = true;
+			this->cb1_planeXZ->Click += gcnew System::EventHandler(this, &MyForm::cb1_planeXZ_Click);
+			// 
+			// cb1_planeXY
+			// 
+			this->cb1_planeXY->AutoSize = true;
+			this->cb1_planeXY->Location = System::Drawing::Point(299, 32);
+			this->cb1_planeXY->Name = L"cb1_planeXY";
+			this->cb1_planeXY->Size = System::Drawing::Size(48, 21);
+			this->cb1_planeXY->TabIndex = 13;
+			this->cb1_planeXY->Text = L"XY";
+			this->cb1_planeXY->UseVisualStyleBackColor = true;
+			this->cb1_planeXY->Click += gcnew System::EventHandler(this, &MyForm::cb1_planeXY_Click);
+			// 
+			// cb1_axisZ
+			// 
+			this->cb1_axisZ->AutoSize = true;
+			this->cb1_axisZ->Checked = true;
+			this->cb1_axisZ->CheckState = System::Windows::Forms::CheckState::Checked;
+			this->cb1_axisZ->Location = System::Drawing::Point(237, 86);
+			this->cb1_axisZ->Name = L"cb1_axisZ";
+			this->cb1_axisZ->Size = System::Drawing::Size(39, 21);
+			this->cb1_axisZ->TabIndex = 12;
+			this->cb1_axisZ->Text = L"Z";
+			this->cb1_axisZ->UseVisualStyleBackColor = true;
+			this->cb1_axisZ->Click += gcnew System::EventHandler(this, &MyForm::cb1_axisZ_Click);
+			// 
+			// cb1_axisY
+			// 
+			this->cb1_axisY->AutoSize = true;
+			this->cb1_axisY->Checked = true;
+			this->cb1_axisY->CheckState = System::Windows::Forms::CheckState::Checked;
+			this->cb1_axisY->Location = System::Drawing::Point(237, 59);
+			this->cb1_axisY->Name = L"cb1_axisY";
+			this->cb1_axisY->Size = System::Drawing::Size(39, 21);
+			this->cb1_axisY->TabIndex = 11;
+			this->cb1_axisY->Text = L"Y";
+			this->cb1_axisY->UseVisualStyleBackColor = true;
+			this->cb1_axisY->Click += gcnew System::EventHandler(this, &MyForm::cb1_axisY_Click);
+			// 
+			// cb1_axisX
+			// 
+			this->cb1_axisX->AutoSize = true;
+			this->cb1_axisX->Checked = true;
+			this->cb1_axisX->CheckState = System::Windows::Forms::CheckState::Checked;
+			this->cb1_axisX->Location = System::Drawing::Point(237, 32);
+			this->cb1_axisX->Name = L"cb1_axisX";
+			this->cb1_axisX->Size = System::Drawing::Size(39, 21);
+			this->cb1_axisX->TabIndex = 10;
+			this->cb1_axisX->Text = L"X";
+			this->cb1_axisX->UseVisualStyleBackColor = true;
+			this->cb1_axisX->Click += gcnew System::EventHandler(this, &MyForm::cb1_axisX_Click);
+			// 
+			// label1Planes
+			// 
+			this->label1Planes->AutoSize = true;
+			this->label1Planes->Location = System::Drawing::Point(296, 12);
+			this->label1Planes->Name = L"label1Planes";
+			this->label1Planes->Size = System::Drawing::Size(55, 17);
+			this->label1Planes->TabIndex = 9;
+			this->label1Planes->Text = L"Planes:";
+			// 
+			// label1Axises
+			// 
+			this->label1Axises->AutoSize = true;
+			this->label1Axises->Location = System::Drawing::Point(234, 12);
+			this->label1Axises->Name = L"label1Axises";
+			this->label1Axises->Size = System::Drawing::Size(52, 17);
+			this->label1Axises->TabIndex = 8;
+			this->label1Axises->Text = L"Axises:";
 			// 
 			// tb1_scal
 			// 
@@ -562,6 +714,9 @@ namespace Lab1
 			this->tb1_scal->Name = L"tb1_scal";
 			this->tb1_scal->Size = System::Drawing::Size(100, 22);
 			this->tb1_scal->TabIndex = 5;
+			this->tb1_scal->Text = L"0,1";
+			this->tb1_scal->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb1_scal_KeyPress);
+			this->tb1_scal->Leave += gcnew System::EventHandler(this, &MyForm::tb1_scal_Leave);
 			// 
 			// tb1_rot
 			// 
@@ -569,6 +724,9 @@ namespace Lab1
 			this->tb1_rot->Name = L"tb1_rot";
 			this->tb1_rot->Size = System::Drawing::Size(100, 22);
 			this->tb1_rot->TabIndex = 4;
+			this->tb1_rot->Text = L"1";
+			this->tb1_rot->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb1_rot_KeyPress);
+			this->tb1_rot->Leave += gcnew System::EventHandler(this, &MyForm::tb1_rot_Leave);
 			// 
 			// tb1_trans
 			// 
@@ -576,6 +734,9 @@ namespace Lab1
 			this->tb1_trans->Name = L"tb1_trans";
 			this->tb1_trans->Size = System::Drawing::Size(100, 22);
 			this->tb1_trans->TabIndex = 3;
+			this->tb1_trans->Text = L"1";
+			this->tb1_trans->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb1_trans_KeyPress);
+			this->tb1_trans->Leave += gcnew System::EventHandler(this, &MyForm::tb1_trans_Leave);
 			// 
 			// label1rot
 			// 
@@ -606,8 +767,6 @@ namespace Lab1
 			// 
 			// AddShapeTab
 			// 
-			this->AddShapeTab->Controls->Add(this->label2Angle);
-			this->AddShapeTab->Controls->Add(this->tb2_angle);
 			this->AddShapeTab->Controls->Add(this->label2Color);
 			this->AddShapeTab->Controls->Add(this->ColorBox2);
 			this->AddShapeTab->Controls->Add(this->label2EdgeLenght);
@@ -638,25 +797,6 @@ namespace Lab1
 			this->AddShapeTab->Text = L"Add shape";
 			this->AddShapeTab->UseVisualStyleBackColor = true;
 			// 
-			// label2Angle
-			// 
-			this->label2Angle->AutoSize = true;
-			this->label2Angle->Location = System::Drawing::Point(373, 22);
-			this->label2Angle->Name = L"label2Angle";
-			this->label2Angle->Size = System::Drawing::Size(56, 17);
-			this->label2Angle->TabIndex = 24;
-			this->label2Angle->Text = L"Angle =";
-			// 
-			// tb2_angle
-			// 
-			this->tb2_angle->Location = System::Drawing::Point(435, 17);
-			this->tb2_angle->Name = L"tb2_angle";
-			this->tb2_angle->Size = System::Drawing::Size(46, 22);
-			this->tb2_angle->TabIndex = 23;
-			this->tb2_angle->Text = L"0";
-			this->tb2_angle->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb2_angle_KeyPress);
-			this->tb2_angle->Leave += gcnew System::EventHandler(this, &MyForm::tb2_angle_Leave);
-			// 
 			// label2Color
 			// 
 			this->label2Color->AutoSize = true;
@@ -681,12 +821,105 @@ namespace Lab1
 			// 
 			// ControlTab
 			// 
+			this->ControlTab->Controls->Add(this->label3SelectedShapes);
+			this->ControlTab->Controls->Add(this->list3_selected);
+			this->ControlTab->Controls->Add(this->b3_allright);
+			this->ControlTab->Controls->Add(this->b3_right);
+			this->ControlTab->Controls->Add(this->b3_left);
+			this->ControlTab->Controls->Add(this->b3_allleft);
+			this->ControlTab->Controls->Add(this->list3_all);
+			this->ControlTab->Controls->Add(this->label3AllShapes);
 			this->ControlTab->Location = System::Drawing::Point(4, 25);
 			this->ControlTab->Name = L"ControlTab";
 			this->ControlTab->Size = System::Drawing::Size(987, 127);
 			this->ControlTab->TabIndex = 2;
 			this->ControlTab->Text = L"Control";
 			this->ControlTab->UseVisualStyleBackColor = true;
+			// 
+			// label3SelectedShapes
+			// 
+			this->label3SelectedShapes->AutoSize = true;
+			this->label3SelectedShapes->Location = System::Drawing::Point(264, 4);
+			this->label3SelectedShapes->Name = L"label3SelectedShapes";
+			this->label3SelectedShapes->Size = System::Drawing::Size(117, 17);
+			this->label3SelectedShapes->TabIndex = 8;
+			this->label3SelectedShapes->Text = L"Selected shapes:";
+			// 
+			// list3_selected
+			// 
+			this->list3_selected->FormattingEnabled = true;
+			this->list3_selected->ItemHeight = 16;
+			this->list3_selected->Location = System::Drawing::Point(264, 24);
+			this->list3_selected->Name = L"list3_selected";
+			this->list3_selected->Size = System::Drawing::Size(170, 100);
+			this->list3_selected->Sorted = true;
+			this->list3_selected->TabIndex = 7;
+			this->list3_selected->Click += gcnew System::EventHandler(this, &MyForm::list3_selected_Click);
+			this->list3_selected->DoubleClick += gcnew System::EventHandler(this, &MyForm::list3_selected_DoubleClick);
+			// 
+			// b3_allright
+			// 
+			this->b3_allright->Location = System::Drawing::Point(183, 14);
+			this->b3_allright->Name = L"b3_allright";
+			this->b3_allright->Size = System::Drawing::Size(75, 23);
+			this->b3_allright->TabIndex = 6;
+			this->b3_allright->Text = L">>";
+			this->b3_allright->UseVisualStyleBackColor = true;
+			this->b3_allright->Click += gcnew System::EventHandler(this, &MyForm::b3_allright_Click);
+			// 
+			// b3_right
+			// 
+			this->b3_right->Enabled = false;
+			this->b3_right->Location = System::Drawing::Point(183, 43);
+			this->b3_right->Name = L"b3_right";
+			this->b3_right->Size = System::Drawing::Size(75, 23);
+			this->b3_right->TabIndex = 5;
+			this->b3_right->Text = L">";
+			this->b3_right->UseVisualStyleBackColor = true;
+			this->b3_right->Click += gcnew System::EventHandler(this, &MyForm::b3_right_Click);
+			// 
+			// b3_left
+			// 
+			this->b3_left->Enabled = false;
+			this->b3_left->Location = System::Drawing::Point(183, 72);
+			this->b3_left->Name = L"b3_left";
+			this->b3_left->Size = System::Drawing::Size(75, 23);
+			this->b3_left->TabIndex = 4;
+			this->b3_left->Text = L"<";
+			this->b3_left->UseVisualStyleBackColor = true;
+			this->b3_left->Click += gcnew System::EventHandler(this, &MyForm::b3_left_Click);
+			// 
+			// b3_allleft
+			// 
+			this->b3_allleft->Enabled = false;
+			this->b3_allleft->Location = System::Drawing::Point(183, 101);
+			this->b3_allleft->Name = L"b3_allleft";
+			this->b3_allleft->Size = System::Drawing::Size(75, 23);
+			this->b3_allleft->TabIndex = 3;
+			this->b3_allleft->Text = L"<<";
+			this->b3_allleft->UseVisualStyleBackColor = true;
+			this->b3_allleft->Click += gcnew System::EventHandler(this, &MyForm::b3_allleft_Click);
+			// 
+			// list3_all
+			// 
+			this->list3_all->FormattingEnabled = true;
+			this->list3_all->ItemHeight = 16;
+			this->list3_all->Location = System::Drawing::Point(7, 24);
+			this->list3_all->Name = L"list3_all";
+			this->list3_all->Size = System::Drawing::Size(170, 100);
+			this->list3_all->Sorted = true;
+			this->list3_all->TabIndex = 2;
+			this->list3_all->Click += gcnew System::EventHandler(this, &MyForm::list3_all_Click);
+			this->list3_all->DoubleClick += gcnew System::EventHandler(this, &MyForm::list3_all_DoubleClick);
+			// 
+			// label3AllShapes
+			// 
+			this->label3AllShapes->AutoSize = true;
+			this->label3AllShapes->Location = System::Drawing::Point(4, 4);
+			this->label3AllShapes->Name = L"label3AllShapes";
+			this->label3AllShapes->Size = System::Drawing::Size(77, 17);
+			this->label3AllShapes->TabIndex = 1;
+			this->label3AllShapes->Text = L"All shapes:";
 			// 
 			// MyForm
 			// 
@@ -705,6 +938,8 @@ namespace Lab1
 			this->CameraTab->PerformLayout();
 			this->AddShapeTab->ResumeLayout(false);
 			this->AddShapeTab->PerformLayout();
+			this->ControlTab->ResumeLayout(false);
+			this->ControlTab->PerformLayout();
 			this->ResumeLayout(false);
 
 		}
@@ -725,91 +960,191 @@ namespace Lab1
 		GL::MatrixMode(MatrixMode::Modelview);
 		GL::LoadIdentity();
 	}
+	private: void DrawAll()
+	{
+		GL::Clear(ClearBufferMask::ColorBufferBit | ClearBufferMask::DepthBufferBit);
+		DrawOrthPlanes();
+		DrawOrthLines();
+		engine.DrawShapes();
+		GLFrame->SwapBuffers();
+	}
 	private: void DrawOrthLines()
 	{
 		GL::Begin(BeginMode::Lines);
-
-		GL::Color3(1.0, 0.0, 0.0);
-		GL::Vertex3(0.0, 0.0, 0.0);
-		GL::Vertex3(double(FrameWidth >> 1), 0.0, 0.0);
-
-		GL::Color3(0.0, 1.0, 0.0);
-		GL::Vertex3(0.0, 0.0, 0.0);
-		GL::Vertex3(0.0, double(FrameHeight >> 1), 0.0);
-
-		GL::Color3(0.0, 0.0, 1.0);
-		GL::Vertex3(0.0, 0.0, 0.0);
-		GL::Vertex3(0.0, 0.0, double(FrameDepth >> 1));
-
+		if (cb1_axisX->Checked)
+		{
+			GL::Color3(Color::Red);
+			GL::Vertex3(0.0, 0.0, 0.0);
+			GL::Vertex3(double(FrameWidth >> 1), 0.0, 0.0);
+		}
+		if (cb1_axisY->Checked)
+		{
+			GL::Color3(Color::Green);
+			GL::Vertex3(0.0, 0.0, 0.0);
+			GL::Vertex3(0.0, double(FrameHeight >> 1), 0.0);
+		}
+		if (cb1_axisZ->Checked)
+		{
+			GL::Color3(Color::Blue);
+			GL::Vertex3(0.0, 0.0, 0.0);
+			GL::Vertex3(0.0, 0.0, double(FrameDepth >> 1));
+		}
 		GL::End();
 	}
+	private: void DrawOrthPlanes()
+	{
+		GL::Begin(BeginMode::Lines);
+		if (cb1_planeXY->Checked)
+		{
+			GL::Color3(Color::Red);
+			for (double i = -FrameWidth >> 1; i <= FrameWidth >> 1; i += FrameWidth >> 4)
+			{
+				GL::Vertex3(i, (double)-FrameHeight, 0.0);
+				GL::Vertex3(i, (double)FrameHeight, 0.0);
+			}
+			for (double i = -FrameHeight >> 1; i <= FrameHeight >> 1; i += FrameHeight >> 4)
+			{
+				GL::Vertex3((double)-FrameWidth, i, 0.0);
+				GL::Vertex3((double)FrameWidth, i, 0.0);
+			}
+		}
+		if (cb1_planeXZ->Checked)
+		{
+			GL::Color3(Color::Green);
+			for (double i = -FrameWidth >> 1; i <= FrameWidth >> 1; i += FrameWidth >> 4)
+			{
+				GL::Vertex3(i, 0.0, (double)-FrameDepth);
+				GL::Vertex3(i, 0.0, (double)FrameDepth);
+			}
+			for (double i = -FrameDepth >> 1; i <= FrameDepth >> 1; i += FrameDepth >> 4)
+			{
+				GL::Vertex3((double)-FrameWidth, 0.0, i);
+				GL::Vertex3((double)FrameWidth, 0.0, i);
+			}
+		}
+		if (cb1_planeYZ->Checked)
+		{
+			GL::Color3(Color::Blue);
+			for (double i = -FrameHeight >> 1; i <= FrameHeight >> 1; i += FrameHeight >> 4)
+			{
+				GL::Vertex3(0.0, i, (double)-FrameDepth);
+				GL::Vertex3(0.0, i, (double)FrameDepth);
+			}
+			for (double i = -FrameDepth >> 1; i <= FrameDepth >> 1; i += FrameDepth >> 4)
+			{
+				GL::Vertex3(0.0, (double)-FrameHeight, i);
+				GL::Vertex3(0.0, (double)FrameHeight, i);
+			}
+		}
+		GL::End();
+	}
+
 	private: System::Void MyForm_Shown(System::Object^  sender, System::EventArgs^  e)
 	{
 		InitializeGL();
-		DrawOrthLines();
-		GLFrame->SwapBuffers();
+		DrawAll();
 	}
 	private: System::Void GLFrame_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e)
 	{
-		GL::Clear(ClearBufferMask::ColorBufferBit | ClearBufferMask::DepthBufferBit);
-		switch (e->KeyChar)
-		{
-		case 'a': { GL::Translate(1.0, 0.0, 0.0); } break;
-		case 'd': { GL::Translate(-1.0, 0.0, 0.0); } break;
-		case 'w': { GL::Translate(0.0, 1.0, 0.0); } break;
-		case 's': { GL::Translate(0.0, -1.0, 0.0); } break;
-		case 'z': { GL::Translate(0.0, 0.0, 1.0); } break;
-		case 'c': { GL::Translate(0.0, 0.0, -1.0); } break;
-
-		case 'q': { GL::Scale(0.9, 0.9, 0.9); } break;
-		case 'e': { GL::Scale(1.1, 1.1, 1.1); } break;
-
-		case 'r': { GL::Rotate(1, 0.0, 0.0, 1.0); } break;
-		case 'f': { GL::Rotate(-1, 0.0, 0.0, 1.0); } break;
-		case 't': { GL::Rotate(1, 0.0, 1.0, 0.0); } break;
-		case 'g': { GL::Rotate(-1, 0.0, 1.0, 0.0); } break;
-		case 'y': { GL::Rotate(1, 1.0, 0.0, 0.0); } break;
-		case 'h': { GL::Rotate(-1, 1.0, 0.0, 0.0); } break;
-		}
-		DrawOrthLines();
-		engine.DrawShapes();
-		GLFrame->SwapBuffers();
+		if (MainTabControl->SelectedIndex != 0) return;
+		engine.CameraControl(e);
+		DrawAll();
 	}
-	private: System::Void but_AddShape_Click(System::Object^  sender, System::EventArgs^  e)
+
+	private: System::Void tb1_trans_Leave(System::Object^  sender, System::EventArgs^  e) 
 	{
-		SystemSounds::Beep->Play();
-		ShapeType type;
-		if (ShapeListBox2->SelectedItem == ShapeListBox2->Items[0]) type = ShapeType::Cube;
-		else if (ShapeListBox2->SelectedItem == ShapeListBox2->Items[1]) type = ShapeType::Pyramid;
-
-		Color col;
-		if (ColorBox2->SelectedItem == ColorBox2->Items[0]) col = Color::Red;
-		else if (ColorBox2->SelectedItem == ColorBox2->Items[1]) col = Color::Orange;
-		else if (ColorBox2->SelectedItem == ColorBox2->Items[2]) col = Color::Yellow;
-		else if (ColorBox2->SelectedItem == ColorBox2->Items[3]) col = Color::Green;
-		else if (ColorBox2->SelectedItem == ColorBox2->Items[4]) col = Color::Aqua;
-		else if (ColorBox2->SelectedItem == ColorBox2->Items[5]) col = Color::Blue;
-		else if (ColorBox2->SelectedItem == ColorBox2->Items[6]) col = Color::Purple;
-		else if (ColorBox2->SelectedItem == ColorBox2->Items[7]) col = Color::Brown;
-		else if (ColorBox2->SelectedItem == ColorBox2->Items[8]) col = Color::Gray;
-
-		engine.CreateShape(type, col, Convert::ToUInt32(tb2_leght->Text),
-									  Convert::ToDouble(tb2_Xcoor->Text),
-								  	  Convert::ToDouble(tb2_Ycoor->Text),
-									  Convert::ToDouble(tb2_Zcoor->Text),
-									  Convert::ToDouble(tb2_Xrot->Text),
-									  Convert::ToDouble(tb2_Yrot->Text),
-									  Convert::ToDouble(tb2_Zrot->Text),
-									  Convert::ToDouble(tb2_angle->Text));
-		GL::Clear(ClearBufferMask::ColorBufferBit | ClearBufferMask::DepthBufferBit);
-		DrawOrthLines();
-		engine.DrawShapes();
-		GLFrame->SwapBuffers();
+		if (tb1_trans->Text->Length == 0 || tb1_trans->Text == "-") tb1_trans->Text = "0";
+		engine.SetTranslateStep(Convert::ToDouble(tb1_trans->Text));
+	}
+	private: System::Void tb1_rot_Leave(System::Object^  sender, System::EventArgs^  e) 
+	{
+		if (tb1_rot->Text->Length == 0 || tb1_rot->Text == "-") tb1_rot->Text = "0";
+		engine.SetRotareStep(Convert::ToDouble(tb1_rot->Text));
+	}
+	private: System::Void tb1_scal_Leave(System::Object^  sender, System::EventArgs^  e) 
+	{
+		if (tb1_scal->Text->Length == 0 || tb1_scal->Text == "-") tb1_scal->Text = "0";
+		engine.SetScaleStep(Double::Parse(tb1_scal->Text));
+	}
+	private: System::Void tb1_trans_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
+	{
+		if (e->KeyChar == 13) engine.SetTranslateStep(Convert::ToDouble(tb1_trans->Text));
+		else if ((e->KeyChar <= 47 || e->KeyChar >= 59) && e->KeyChar != 8)
+		{
+			if (tb1_trans->Text->Length != 0 || e->KeyChar != 45)
+				e->Handled = true;
+		}
+	}
+	private: System::Void tb1_rot_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
+	{
+		if (e->KeyChar == 13) engine.SetRotareStep(Convert::ToDouble(tb1_rot->Text));
+		else if ((e->KeyChar <= 47 || e->KeyChar >= 59) && e->KeyChar != 8)
+		{
+			if (tb1_rot->Text->Length != 0 || e->KeyChar != 45)
+				e->Handled = true;
+		}
+	}
+	private: System::Void tb1_scal_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
+	{
+		if (e->KeyChar == 13) engine.SetScaleStep(Double::Parse(tb1_scal->Text));
+		else if ((e->KeyChar <= 47 || e->KeyChar >= 59) && e->KeyChar != 8 && e->KeyChar != 44)
+		{
+			if (tb1_scal->Text->Length != 0 || e->KeyChar != 45)
+				e->Handled = true;
+		}
+	}
+	private: System::Void cb1_axisX_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		DrawAll();
+	}
+	private: System::Void cb1_axisY_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		DrawAll();
+	}
+	private: System::Void cb1_axisZ_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		DrawAll();
+	}
+	private: System::Void cb1_planeXY_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		DrawAll();
+	}
+	private: System::Void cb1_planeXZ_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		DrawAll();
+	}
+	private: System::Void cb1_planeYZ_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		DrawAll();
 	}
 
+	private: System::Void tb2_Xcoor_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+		if (tb2_Xcoor->Text == "0") tb2_Xcoor->Text = "";
+	}
+	private: System::Void tb2_Ycoor_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+		if (tb2_Ycoor->Text == "0") tb2_Ycoor->Text = "";
+	}
+	private: System::Void tb2_Zcoor_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+		if (tb2_Zcoor->Text == "0") tb2_Zcoor->Text = "";
+	}
+	private: System::Void tb2_Xrot_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+		if (tb2_Xrot->Text == "0") tb2_Xrot->Text = "";
+	}
+	private: System::Void tb2_Yrot_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+		if (tb2_Yrot->Text == "0") tb2_Yrot->Text = "";
+	}
+	private: System::Void tb2_Zrot_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+		if (tb2_Zrot->Text == "0") tb2_Zrot->Text = "";
+	}
 	private: System::Void tb2_leght_Leave(System::Object^  sender, System::EventArgs^  e) 
 	{
-		if (tb2_leght->Text->Length == 0 || tb2_leght->Text == "-") tb2_leght->Text = "0";
+		if (tb2_leght->Text->Length == 0 || tb2_leght->Text == "-") tb2_leght->Text = "50";
 	}
 	private: System::Void tb2_Xcoor_Leave(System::Object^  sender, System::EventArgs^  e) 
 	{
@@ -823,10 +1158,6 @@ namespace Lab1
 	{
 		if (tb2_Zcoor->Text->Length == 0 || tb2_Zcoor->Text == "-") tb2_Zcoor->Text = "0";
 	}
-	private: System::Void tb2_angle_Leave(System::Object^  sender, System::EventArgs^  e) 
-	{
-		if (tb2_angle->Text->Length == 0 || tb2_angle->Text == "-") tb2_angle->Text = "0";
-	}
 	private: System::Void tb2_Xrot_Leave(System::Object^  sender, System::EventArgs^  e) 
 	{
 		if (tb2_Xrot->Text->Length == 0 || tb2_Xrot->Text == "-") tb2_Xrot->Text = "0";
@@ -839,7 +1170,6 @@ namespace Lab1
 	{
 		if (tb2_Zrot->Text->Length == 0 || tb2_Zrot->Text == "-") tb2_Zrot->Text = "0";
 	}
-
 	private: System::Void tb2_leght_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
 	{
 		if ((e->KeyChar <= 47 || e->KeyChar >= 59) && e->KeyChar != 8)
@@ -869,14 +1199,6 @@ namespace Lab1
 				e->Handled = true;
 		}
 	}
-	private: System::Void tb2_angle_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
-	{
-		if ((e->KeyChar <= 47 || e->KeyChar >= 59) && e->KeyChar != 8)
-		{
-			if (tb2_angle->Text->Length != 0 || e->KeyChar != 45)
-				e->Handled = true;
-		}
-	}
 	private: System::Void tb2_Xrot_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
 	{
 		if ((e->KeyChar <= 47 || e->KeyChar >= 59) && e->KeyChar != 8)
@@ -900,6 +1222,114 @@ namespace Lab1
 			if (tb2_Zrot->Text->Length != 0 || e->KeyChar != 45)
 				e->Handled = true;
 		}
+	}
+	private: System::Void but_AddShape_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+		SystemSounds::Beep->Play();
+		ShapeType type;
+		if (ShapeListBox2->SelectedItem == ShapeListBox2->Items[0]) type = ShapeType::Cube;
+		else if (ShapeListBox2->SelectedItem == ShapeListBox2->Items[1]) type = ShapeType::Pyramid;
+
+		Color col;
+		if (ColorBox2->SelectedItem == ColorBox2->Items[0]) col = Color::Red;
+		else if (ColorBox2->SelectedItem == ColorBox2->Items[1]) col = Color::Orange;
+		else if (ColorBox2->SelectedItem == ColorBox2->Items[2]) col = Color::Yellow;
+		else if (ColorBox2->SelectedItem == ColorBox2->Items[3]) col = Color::Green;
+		else if (ColorBox2->SelectedItem == ColorBox2->Items[4]) col = Color::Aqua;
+		else if (ColorBox2->SelectedItem == ColorBox2->Items[5]) col = Color::Blue;
+		else if (ColorBox2->SelectedItem == ColorBox2->Items[6]) col = Color::Purple;
+		else if (ColorBox2->SelectedItem == ColorBox2->Items[7]) col = Color::Brown;
+		else if (ColorBox2->SelectedItem == ColorBox2->Items[8]) col = Color::Gray;
+
+		engine.CreateShape(type, col, Convert::ToUInt32(tb2_leght->Text),
+			Convert::ToDouble(tb2_Xcoor->Text),
+			Convert::ToDouble(tb2_Ycoor->Text),
+			Convert::ToDouble(tb2_Zcoor->Text),
+			Convert::ToDouble(tb2_Xrot->Text),
+			Convert::ToDouble(tb2_Yrot->Text),
+			Convert::ToDouble(tb2_Zrot->Text));
+		DrawAll();
+	}
+
+	private: System::Void list3_all_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		if (list3_all->SelectedItem != nullptr) b3_right->Enabled = true;
+	}
+	private: System::Void list3_selected_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		if (list3_selected->SelectedItem != nullptr) b3_left->Enabled = true;
+	}
+	private: System::Void list3_all_DoubleClick(System::Object^  sender, System::EventArgs^  e)
+	{
+		if (list3_all->SelectedItem == nullptr) return;
+		list3_selected->Items->Add(list3_all->SelectedItem);
+		int selected = list3_all->SelectedIndex - (list3_all->SelectedIndex == list3_all->Items->Count - 1 ? 1 : 0);
+		list3_all->Items->RemoveAt(list3_all->SelectedIndex);
+		list3_all->SelectedIndex = selected;
+		if (list3_all->Items->Count == 0)
+		{
+			b3_allright->Enabled = false;
+			b3_right->Enabled = false;
+		}
+		b3_allleft->Enabled = true;
+	}
+	private: System::Void list3_selected_DoubleClick(System::Object^  sender, System::EventArgs^  e)
+	{
+		if (list3_selected->SelectedItem == nullptr) return;
+		list3_all->Items->Add(list3_selected->SelectedItem);
+		int selected = list3_selected->SelectedIndex - (list3_selected->SelectedIndex == list3_selected->Items->Count - 1 ? 1 : 0);
+		list3_selected->Items->RemoveAt(list3_selected->SelectedIndex);
+		list3_selected->SelectedIndex = selected;
+		if (list3_selected->Items->Count == 0)
+		{
+			b3_allleft->Enabled = false;
+			b3_left->Enabled = false;
+		}
+		b3_allright->Enabled = true;
+	}
+	private: System::Void b3_allright_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		for (int i = 0; i < list3_all->Items->Count; i++)
+			list3_selected->Items->Add(list3_all->Items[i]);
+		list3_all->Items->Clear();
+		b3_allright->Enabled = false;
+		b3_right->Enabled = false;
+		b3_allleft->Enabled = true;
+	}
+	private: System::Void b3_right_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		list3_selected->Items->Add(list3_all->SelectedItem);
+		int selected = list3_all->SelectedIndex - (list3_all->SelectedIndex == list3_all->Items->Count - 1 ? 1 : 0);
+		list3_all->Items->RemoveAt(list3_all->SelectedIndex);
+		list3_all->SelectedIndex = selected;
+		if (list3_all->Items->Count == 0)
+		{
+			b3_allright->Enabled = false;
+			b3_right->Enabled = false;
+		}
+		b3_allleft->Enabled = true;
+	}
+	private: System::Void b3_left_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		list3_all->Items->Add(list3_selected->SelectedItem);
+		int selected = list3_selected->SelectedIndex - (list3_selected->SelectedIndex == list3_selected->Items->Count - 1 ? 1 : 0);
+		list3_selected->Items->RemoveAt(list3_selected->SelectedIndex);
+		list3_selected->SelectedIndex = selected;
+		if (list3_selected->Items->Count == 0)
+		{
+			b3_allleft->Enabled = false;
+			b3_left->Enabled = false;
+		}
+		b3_allright->Enabled = true;
+	}
+	private: System::Void b3_allleft_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		for (int i = 0; i < list3_selected->Items->Count; i++)
+			list3_all->Items->Add(list3_selected->Items[i]);
+		list3_selected->Items->Clear();
+		b3_allleft->Enabled = false;
+		b3_left->Enabled = false;
+		b3_allright->Enabled = true;
 	}
 };
 }
