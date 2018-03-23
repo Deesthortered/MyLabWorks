@@ -47,130 +47,198 @@ namespace Lab1
 		};
 		ref class Cube : public Shape
 		{
-			double x1, x2, x3, x4, x5, x6, x7, x8;
-			double y1, y2, y3, y4, y5, y6, y7, y8;
-			double z1, z2, z3, z4, z5, z6, z7, z8;
+			double *x, *y, *z;
+			const size_t cnt = 8;
 		public:
+			Cube()
+			{
+				x = y = z = nullptr;
+			}
+			~Cube()
+			{
+				delete[] x, y, z;
+			}
 			virtual void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot) override
 			{
 				Shape::SetData(color, l, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot);
-				x1 = x2 = x5 = x6 = x_coor - l / 2;
-				x3 = x4 = x7 = x8 = x_coor + l / 2;
-				y1 = y2 = y3 = y4 = y_coor - l / 2;
-				y5 = y6 = y7 = y8 = y_coor + l / 2;
-				z1 = z4 = z5 = z8 = z_coor - l / 2;
-				z2 = z3 = z6 = z7 = z_coor + l / 2;
+				x = new double[cnt];
+				y = new double[cnt];
+				z = new double[cnt];
+				x[0] = x[1] = x[4] = x[5] = x_coor - l / 2;
+				x[2] = x[3] = x[6] = x[7] = x_coor + l / 2;
+				y[0] = y[1] = y[2] = y[3] = y_coor - l / 2;
+				y[4] = y[5] = y[6] = y[7] = y_coor + l / 2;
+				z[0] = z[3] = z[4] = z[7] = z_coor - l / 2;
+				z[1] = z[2] = z[5] = z[6] = z_coor + l / 2;
 
+				double *_x = new double[cnt];
+				double *_y = new double[cnt];
+				double *_z = new double[cnt];
 
+				for (size_t i = 0; i < cnt; i++) _x[i] = x[i], _y[i] = y[i], _z[i] = z[i];
+				for (size_t i = 0; i < cnt; i++)
+				{
+					_y[i] = y[i] * Math::Cos(x_rot) - z[i] * Math::Sin(x_rot);
+					_z[i] = y[i] * Math::Sin(x_rot) + z[i] * Math::Cos(x_rot);
+				}
+				for (size_t i = 0; i < cnt; i++) x[i] = _x[i], y[i] = _y[i], z[i] = _z[i];
+				for (size_t i = 0; i < cnt; i++)
+				{
+					_x[i] = x[i] * Math::Cos(y_rot) + z[i] * Math::Sin(y_rot);
+					_z[i] = -x[i] * Math::Sin(y_rot) + z[i] * Math::Cos(y_rot);
+				}
+				for (size_t i = 0; i < cnt; i++) x[i] = _x[i], y[i] = _y[i], z[i] = _z[i];
+				for (size_t i = 0; i < cnt; i++)
+				{
+					_x[i] = x[i] * Math::Cos(z_rot) - y[i] * Math::Sin(z_rot);
+					_y[i] = x[i] * Math::Sin(z_rot) + y[i] * Math::Cos(z_rot);
+				}
+				for (size_t i = 0; i < cnt; i++) x[i] = _x[i], y[i] = _y[i], z[i] = _z[i];
+				delete[] _x, _y, _z;
 			}
 			virtual void Draw() override
 			{
 				GL::Begin(BeginMode::Quads);
 				GL::Color3(color);
-				GL::Vertex3(x1, y1, z1);
-				GL::Vertex3(x2, y2, z2);
-				GL::Vertex3(x3, y3, z3);
-				GL::Vertex3(x4, y4, z4);
+				GL::Vertex3(x[0], y[0], z[0]);
+				GL::Vertex3(x[1], y[1], z[1]);
+				GL::Vertex3(x[2], y[2], z[2]);
+				GL::Vertex3(x[3], y[3], z[3]);
 
-				GL::Vertex3(x3, y3, z3);
-				GL::Vertex3(x4, y4, z4);
-				GL::Vertex3(x8, y8, z8);
-				GL::Vertex3(x7, y7, z7);
+				GL::Vertex3(x[2], y[2], z[2]);
+				GL::Vertex3(x[3], y[3], z[3]);
+				GL::Vertex3(x[7], y[7], z[7]);
+				GL::Vertex3(x[6], y[6], z[6]);
 
-				GL::Vertex3(x8, y8, z8);
-				GL::Vertex3(x7, y7, z7);
-				GL::Vertex3(x6, y6, z6);
-				GL::Vertex3(x5, y5, z5);
+				GL::Vertex3(x[7], y[7], z[7]);
+				GL::Vertex3(x[6], y[6], z[6]);
+				GL::Vertex3(x[5], y[5], z[5]);
+				GL::Vertex3(x[4], y[4], z[4]);
 
-				GL::Vertex3(x6, y6, z6);
-				GL::Vertex3(x5, y5, z5);
-				GL::Vertex3(x1, y1, z1);
-				GL::Vertex3(x2, y2, z2);
+				GL::Vertex3(x[5], y[5], z[5]);
+				GL::Vertex3(x[4], y[4], z[4]);
+				GL::Vertex3(x[0], y[0], z[0]);
+				GL::Vertex3(x[1], y[1], z[1]);
 
-				GL::Vertex3(x2, y2, z2);
-				GL::Vertex3(x3, y3, z3);
-				GL::Vertex3(x7, y7, z7);
-				GL::Vertex3(x6, y6, z6);
+				GL::Vertex3(x[1], y[1], z[1]);
+				GL::Vertex3(x[2], y[2], z[2]);
+				GL::Vertex3(x[6], y[6], z[6]);
+				GL::Vertex3(x[5], y[5], z[5]);
 
-				GL::Vertex3(x1, y1, z1);
-				GL::Vertex3(x4, y4, z4);
-				GL::Vertex3(x5, y5, z5);
-				GL::Vertex3(x8, y8, z8);
+				GL::Vertex3(x[0], y[0], z[0]);
+				GL::Vertex3(x[3], y[3], z[3]);
+				GL::Vertex3(x[7], y[7], z[7]);
+				GL::Vertex3(x[4], y[4], z[4]);
 				GL::End();
 
 				GL::Color3(Color::White);
 				GL::Begin(BeginMode::LineStrip);
-				GL::Vertex3(x1, y1, z1);
-				GL::Vertex3(x2, y2, z2);
-				GL::Vertex3(x3, y3, z3);
-				GL::Vertex3(x4, y4, z4);
-				GL::Vertex3(x1, y1, z1);
+				GL::Vertex3(x[0], y[0], z[0]);
+				GL::Vertex3(x[1], y[1], z[1]);
+				GL::Vertex3(x[2], y[2], z[2]);
+				GL::Vertex3(x[3], y[3], z[3]);
+				GL::Vertex3(x[0], y[0], z[0]);
 				GL::End();
 				GL::Begin(BeginMode::LineStrip);
-				GL::Vertex3(x5, y5, z5);
-				GL::Vertex3(x6, y6, z6);
-				GL::Vertex3(x7, y7, z7);
-				GL::Vertex3(x8, y8, z8);
-				GL::Vertex3(x5, y5, z5);
+				GL::Vertex3(x[4], y[4], z[4]);
+				GL::Vertex3(x[5], y[5], z[5]);
+				GL::Vertex3(x[6], y[6], z[6]);
+				GL::Vertex3(x[7], y[7], z[7]);
+				GL::Vertex3(x[4], y[4], z[4]);
 				GL::End();
 				GL::Begin(BeginMode::Lines);
-				GL::Vertex3(x1, y1, z1);
-				GL::Vertex3(x5, y5, z5);
-				GL::Vertex3(x2, y2, z2);
-				GL::Vertex3(x6, y6, z6);
-				GL::Vertex3(x3, y3, z3);
-				GL::Vertex3(x7, y7, z7);
-				GL::Vertex3(x4, y4, z4);
-				GL::Vertex3(x8, y8, z8);
+				GL::Vertex3(x[0], y[0], z[0]);
+				GL::Vertex3(x[4], y[4], z[4]);
+				GL::Vertex3(x[1], y[1], z[1]);
+				GL::Vertex3(x[5], y[5], z[5]);
+				GL::Vertex3(x[2], y[2], z[2]);
+				GL::Vertex3(x[6], y[6], z[6]);
+				GL::Vertex3(x[3], y[3], z[3]);
+				GL::Vertex3(x[7], y[7], z[7]);
 				GL::End();
 			}
 		};
 		ref class Pyramid : public Shape
 		{
-			double x1, x2, x3, x4;
-			double y1, y2, y3, y4;
-			double z1, z2, z3, z4;
+			double *x, *y, *z;
+			const size_t cnt = 4;
 		public:
+			Pyramid()
+			{
+				x = y = z = nullptr;
+			}
+			~Pyramid()
+			{
+				delete[] x, y, z;
+			}
+
 			virtual void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot) override
 			{
 				Shape::SetData(color, l, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot);
+				x = new double[cnt];
+				y = new double[cnt];
+				z = new double[cnt];
+				x[0] = x[2] = x_coor - (l / Math::Sqrt(12)); x[1] = x_coor + (l / Math::Sqrt(3)); x[3] = x_coor;
+				y[0] = y[1] = y[2] = y_coor; y[3] = y_coor + Math::Sqrt((2 * l*l) / 3);
+				z[0] = z_coor - (l / 2); z[1] = z[3] = z_coor; z[2] = z_coor + (l / 2);
 
-				x1 = x3 = x_coor - (l / Math::Sqrt(12)); x2 = x_coor + (l / Math::Sqrt(3)); x4 = x_coor;
-				y1 = y2 = y3 = y_coor; y4 = y_coor + Math::Sqrt((2 * l*l) / 3);
-				z1 = z_coor - (l / 2); z2= z4 = z_coor; z3 = z_coor + (l / 2);
+				double *_x = new double[cnt];
+				double *_y = new double[cnt];
+				double *_z = new double[cnt];
+
+				for (size_t i = 0; i < cnt; i++) _x[i] = x[i], _y[i] = y[i], _z[i] = z[i];
+				for (size_t i = 0; i < cnt; i++)
+				{
+					_y[i] = y[i] * Math::Cos(x_rot) - z[i] * Math::Sin(x_rot);
+					_z[i] = y[i] * Math::Sin(x_rot) + z[i] * Math::Cos(x_rot);
+				}
+				for (size_t i = 0; i < cnt; i++) x[i] = _x[i], y[i] = _y[i], z[i] = _z[i];
+				for (size_t i = 0; i < cnt; i++)
+				{
+					_x[i] = x[i] * Math::Cos(y_rot) + z[i] * Math::Sin(y_rot);
+					_z[i] = -x[i] * Math::Sin(y_rot) + z[i] * Math::Cos(y_rot);
+				}
+				for (size_t i = 0; i < cnt; i++) x[i] = _x[i], y[i] = _y[i], z[i] = _z[i];
+				for (size_t i = 0; i < cnt; i++)
+				{
+					_x[i] = x[i] * Math::Cos(z_rot) - y[i] * Math::Sin(z_rot);
+					_y[i] = x[i] * Math::Sin(z_rot) + y[i] * Math::Cos(z_rot);
+				}
+				for (size_t i = 0; i < cnt; i++) x[i] = _x[i], y[i] = _y[i], z[i] = _z[i];
+				delete[] _x, _y, _z;
 			}
 			virtual void Draw() override
 			{
 				GL::Begin(BeginMode::Triangles);
 				GL::Color3(color);
 
-				GL::Vertex3(x1, y1, z1);
-				GL::Vertex3(x2, y2, z2);
-				GL::Vertex3(x3, y3, z3);
+				GL::Vertex3(x[0], y[0], z[0]);
+				GL::Vertex3(x[1], y[1], z[1]);
+				GL::Vertex3(x[2], y[2], z[2]);
 
-				GL::Vertex3(x1, y1, z1);
-				GL::Vertex3(x4, y4, z4);
-				GL::Vertex3(x3, y3, z3);
+				GL::Vertex3(x[0], y[0], z[0]);
+				GL::Vertex3(x[3], y[3], z[3]);
+				GL::Vertex3(x[2], y[2], z[2]);
 
-				GL::Vertex3(x1, y1, z1);
-				GL::Vertex3(x4, y4, z4);
-				GL::Vertex3(x2, y2, z2);
+				GL::Vertex3(x[0], y[0], z[0]);
+				GL::Vertex3(x[3], y[3], z[3]);
+				GL::Vertex3(x[1], y[1], z[1]);
 
-				GL::Vertex3(x3, y3, z3);
-				GL::Vertex3(x4, y4, z4);
-				GL::Vertex3(x2, y2, z2);
+				GL::Vertex3(x[2], y[2], z[2]);
+				GL::Vertex3(x[3], y[3], z[3]);
+				GL::Vertex3(x[1], y[1], z[1]);
 				GL::End();
 
 				GL::Color3(Color::White);
 				GL::Begin(BeginMode::LineStrip);
-				GL::Vertex3(x1, y1, z1);
-				GL::Vertex3(x2, y2, z2);
-				GL::Vertex3(x3, y3, z3);
-				GL::Vertex3(x1, y1, z1);
-				GL::Vertex3(x4, y4, z4);
-				GL::Vertex3(x3, y3, z3);
-				GL::Vertex3(x2, y2, z2);
-				GL::Vertex3(x4, y4, z4);
+				GL::Vertex3(x[0], y[0], z[0]);
+				GL::Vertex3(x[1], y[1], z[1]);
+				GL::Vertex3(x[2], y[2], z[2]);
+				GL::Vertex3(x[0], y[0], z[0]);
+				GL::Vertex3(x[3], y[3], z[3]);
+				GL::Vertex3(x[2], y[2], z[2]);
+				GL::Vertex3(x[1], y[1], z[1]);
+				GL::Vertex3(x[3], y[3], z[3]);
 				GL::End();
 			}
 		};
@@ -179,10 +247,27 @@ namespace Lab1
 		{
 			List<Shape^> shape_list;
 
-			double TranslateStep = 1;
-			double ScaleStep = 0.1;
-			double RotareStep = 1;
+			double TranslateStep;
+			double ScaleStep;
+			double RotareStep;
+			float *light_pos;
 		public:
+			Engine()
+			{
+				TranslateStep = 1;
+				ScaleStep = 0.1;
+				RotareStep = 1;
+				light_pos = new float[4];
+				light_pos[0] = 100;
+				light_pos[1] = 100;
+				light_pos[2] = 100;
+				light_pos[3] = 1;
+			}
+			~Engine()
+			{
+				//delete[] light_pos;
+			}
+
 			void SetTranslateStep(double val)
 			{
 				this->TranslateStep = val;
@@ -210,6 +295,7 @@ namespace Lab1
 				{
 					cur->Draw();
 				}
+				GL::Light(LightName::Light0, LightParameter::Position, light_pos);
 			}
 
 			void CameraControl(System::Windows::Forms::KeyPressEventArgs^  &e)
@@ -231,8 +317,34 @@ namespace Lab1
 				case 't': { GL::Rotate(RotareStep, 0.0, 1.0, 0.0); } break;
 				case 'g': { GL::Rotate(-RotareStep, 0.0, 1.0, 0.0); } break;
 				case 'y': { GL::Rotate(RotareStep, 0.0, 0.0, 1.0); } break;
-				case 'h': { GL::Rotate(-RotareStep, 01.0, 0.0, 1.0); } break;
+				case 'h': { GL::Rotate(-RotareStep, 0.0, 0.0, 1.0); } break;
+
+				case 'u': { light_pos[0] += (float)TranslateStep; } break;
+				case 'j': { light_pos[0] -= (float)TranslateStep; } break;
+				case 'i': { light_pos[1] += (float)TranslateStep; } break;
+				case 'k': { light_pos[1] -= (float)TranslateStep; } break;
+				case 'o': { light_pos[2] += (float)TranslateStep; } break;
+				case 'l': { light_pos[2] -= (float)TranslateStep; } break;
 				}
+			}
+			void NullLightPos()
+			{
+				light_pos[0] = 0;
+				light_pos[1] = 0;
+				light_pos[2] = 0;
+			}
+
+			float GetLightX()
+			{
+				return light_pos[0];
+			}
+			float GetLightY()
+			{
+				return light_pos[1];
+			}
+			float GetLightZ()
+			{
+				return light_pos[2];
 			}
 		};
 
@@ -299,6 +411,14 @@ namespace Lab1
 	private: System::Windows::Forms::Button^  b3_left;
 	private: System::Windows::Forms::Button^  b3_allleft;
 	private: System::Windows::Forms::RichTextBox^  rtb1_manual;
+	private: System::Windows::Forms::Button^  but1LightNull;
+	private: System::Windows::Forms::TextBox^  tb1_LightZ;
+	private: System::Windows::Forms::TextBox^  tb1_LightY;
+	private: System::Windows::Forms::TextBox^  tb1_LightX;
+	private: System::Windows::Forms::Label^  label1LightZ;
+	private: System::Windows::Forms::Label^  label1LightY;
+	private: System::Windows::Forms::Label^  label1LightX;
+	private: System::Windows::Forms::Label^  label1LightPos;
 
 	private: Engine engine;
 #pragma region Windows Form Designer generated code
@@ -328,6 +448,14 @@ namespace Lab1
 			this->but2_AddShape = (gcnew System::Windows::Forms::Button());
 			this->MainTabControl = (gcnew System::Windows::Forms::TabControl());
 			this->CameraTab = (gcnew System::Windows::Forms::TabPage());
+			this->but1LightNull = (gcnew System::Windows::Forms::Button());
+			this->tb1_LightZ = (gcnew System::Windows::Forms::TextBox());
+			this->tb1_LightY = (gcnew System::Windows::Forms::TextBox());
+			this->tb1_LightX = (gcnew System::Windows::Forms::TextBox());
+			this->label1LightZ = (gcnew System::Windows::Forms::Label());
+			this->label1LightY = (gcnew System::Windows::Forms::Label());
+			this->label1LightX = (gcnew System::Windows::Forms::Label());
+			this->label1LightPos = (gcnew System::Windows::Forms::Label());
 			this->rtb1_manual = (gcnew System::Windows::Forms::RichTextBox());
 			this->cb1_planeYZ = (gcnew System::Windows::Forms::CheckBox());
 			this->cb1_planeXZ = (gcnew System::Windows::Forms::CheckBox());
@@ -586,6 +714,14 @@ namespace Lab1
 			// 
 			// CameraTab
 			// 
+			this->CameraTab->Controls->Add(this->but1LightNull);
+			this->CameraTab->Controls->Add(this->tb1_LightZ);
+			this->CameraTab->Controls->Add(this->tb1_LightY);
+			this->CameraTab->Controls->Add(this->tb1_LightX);
+			this->CameraTab->Controls->Add(this->label1LightZ);
+			this->CameraTab->Controls->Add(this->label1LightY);
+			this->CameraTab->Controls->Add(this->label1LightX);
+			this->CameraTab->Controls->Add(this->label1LightPos);
 			this->CameraTab->Controls->Add(this->rtb1_manual);
 			this->CameraTab->Controls->Add(this->cb1_planeYZ);
 			this->CameraTab->Controls->Add(this->cb1_planeXZ);
@@ -608,6 +744,79 @@ namespace Lab1
 			this->CameraTab->TabIndex = 0;
 			this->CameraTab->Text = L"Camera";
 			this->CameraTab->UseVisualStyleBackColor = true;
+			// 
+			// but1LightNull
+			// 
+			this->but1LightNull->Location = System::Drawing::Point(890, 31);
+			this->but1LightNull->Name = L"but1LightNull";
+			this->but1LightNull->Size = System::Drawing::Size(82, 76);
+			this->but1LightNull->TabIndex = 24;
+			this->but1LightNull->Text = L"Set light to null";
+			this->but1LightNull->UseVisualStyleBackColor = true;
+			this->but1LightNull->Click += gcnew System::EventHandler(this, &MyForm::but1LightNull_Click);
+			// 
+			// tb1_LightZ
+			// 
+			this->tb1_LightZ->Location = System::Drawing::Point(814, 87);
+			this->tb1_LightZ->Name = L"tb1_LightZ";
+			this->tb1_LightZ->ReadOnly = true;
+			this->tb1_LightZ->Size = System::Drawing::Size(70, 22);
+			this->tb1_LightZ->TabIndex = 23;
+			this->tb1_LightZ->Text = L"100";
+			// 
+			// tb1_LightY
+			// 
+			this->tb1_LightY->Location = System::Drawing::Point(814, 59);
+			this->tb1_LightY->Name = L"tb1_LightY";
+			this->tb1_LightY->ReadOnly = true;
+			this->tb1_LightY->Size = System::Drawing::Size(70, 22);
+			this->tb1_LightY->TabIndex = 22;
+			this->tb1_LightY->Text = L"100";
+			// 
+			// tb1_LightX
+			// 
+			this->tb1_LightX->Location = System::Drawing::Point(814, 31);
+			this->tb1_LightX->Name = L"tb1_LightX";
+			this->tb1_LightX->ReadOnly = true;
+			this->tb1_LightX->Size = System::Drawing::Size(70, 22);
+			this->tb1_LightX->TabIndex = 21;
+			this->tb1_LightX->Text = L"100";
+			// 
+			// label1LightZ
+			// 
+			this->label1LightZ->AutoSize = true;
+			this->label1LightZ->Location = System::Drawing::Point(792, 90);
+			this->label1LightZ->Name = L"label1LightZ";
+			this->label1LightZ->Size = System::Drawing::Size(25, 17);
+			this->label1LightZ->TabIndex = 20;
+			this->label1LightZ->Text = L"Z :";
+			// 
+			// label1LightY
+			// 
+			this->label1LightY->AutoSize = true;
+			this->label1LightY->Location = System::Drawing::Point(791, 64);
+			this->label1LightY->Name = L"label1LightY";
+			this->label1LightY->Size = System::Drawing::Size(25, 17);
+			this->label1LightY->TabIndex = 19;
+			this->label1LightY->Text = L"Y :";
+			// 
+			// label1LightX
+			// 
+			this->label1LightX->AutoSize = true;
+			this->label1LightX->Location = System::Drawing::Point(792, 36);
+			this->label1LightX->Name = L"label1LightX";
+			this->label1LightX->Size = System::Drawing::Size(25, 17);
+			this->label1LightX->TabIndex = 18;
+			this->label1LightX->Text = L"X :";
+			// 
+			// label1LightPos
+			// 
+			this->label1LightPos->AutoSize = true;
+			this->label1LightPos->Location = System::Drawing::Point(777, 12);
+			this->label1LightPos->Name = L"label1LightPos";
+			this->label1LightPos->Size = System::Drawing::Size(96, 17);
+			this->label1LightPos->TabIndex = 17;
+			this->label1LightPos->Text = L"Light position:";
 			// 
 			// rtb1_manual
 			// 
@@ -951,7 +1160,6 @@ namespace Lab1
 		FrameWidth = GLFrame->Width;
 		FrameHeight = GLFrame->Height;
 		FrameDepth = GLFrame->Height;
-		GL::ClearColor(Color::Black);
 		GL::MatrixMode(MatrixMode::Projection);
 		GL::LoadIdentity();
 		GL::Ortho(-(FrameWidth >> 1), FrameWidth >> 1, -(FrameHeight >> 1), FrameHeight >> 1, -(FrameDepth >> 1), FrameDepth >> 1);
@@ -959,6 +1167,20 @@ namespace Lab1
 		GL::Clear(ClearBufferMask::ColorBufferBit | ClearBufferMask::DepthBufferBit);
 		GL::MatrixMode(MatrixMode::Modelview);
 		GL::LoadIdentity();
+
+		
+
+		float specular[] = { 1.0, 1.0, 1.0, 1.0 };
+		float shininess = 50.0;
+		GL::ClearColor(80 / 255.0, 80 / 255.0, 80 / 255.0, 0.1);
+		GL::ShadeModel(ShadingModel::Smooth);
+		GL::Material(MaterialFace::Front, MaterialParameter::Specular, specular);
+		GL::Material(MaterialFace::Front, MaterialParameter::Shininess, shininess);
+
+		GL::Enable(EnableCap::ColorMaterial);
+		GL::Enable(EnableCap::Lighting);
+		GL::Enable(EnableCap::Light0);
+		GL::Enable(EnableCap::DepthTest);
 	}
 	private: void DrawAll()
 	{
@@ -1046,8 +1268,10 @@ namespace Lab1
 	}
 	private: System::Void GLFrame_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e)
 	{
-		if (MainTabControl->SelectedIndex != 0) return;
 		engine.CameraControl(e);
+		tb1_LightX->Text = Convert::ToString(engine.GetLightX());
+		tb1_LightY->Text = Convert::ToString(engine.GetLightY());
+		tb1_LightZ->Text = Convert::ToString(engine.GetLightZ());
 		DrawAll();
 	}
 
@@ -1116,6 +1340,13 @@ namespace Lab1
 	private: System::Void cb1_planeYZ_Click(System::Object^  sender, System::EventArgs^  e) 
 	{
 		DrawAll();
+	}
+	private: System::Void but1LightNull_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+		engine.NullLightPos();
+		tb1_LightX->Text = "0";
+		tb1_LightY->Text = "0";
+		tb1_LightZ->Text = "0";
 	}
 
 	private: System::Void tb2_Xcoor_Click(System::Object^  sender, System::EventArgs^  e)
