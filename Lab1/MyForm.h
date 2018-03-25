@@ -16,6 +16,7 @@ namespace Lab1
 	int FrameHeight;
 	int FrameWidth;
 	int FrameDepth;
+	size_t cnt_shapes = 10;
 
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
@@ -27,6 +28,7 @@ namespace Lab1
 		ref class Shape abstract
 		{
 		protected:
+			size_t id;
 			double x_coor, y_coor, z_coor;
 			double x_rot, y_rot, z_rot;
 			size_t l;
@@ -34,6 +36,7 @@ namespace Lab1
 		public:
 			virtual void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot)
 			{
+				this->id = 0;
 				this->color = color;
 				this->l = l;
 				this->x_coor = x_coor;
@@ -98,6 +101,9 @@ namespace Lab1
 			}
 			virtual void Draw() override
 			{
+				this->id = cnt_shapes;
+				cnt_shapes++;
+				GL::PushName(this->id);
 				GL::Begin(BeginMode::Quads);
 				GL::Color3(color);
 				GL::Vertex3(x[0], y[0], z[0]);
@@ -156,6 +162,7 @@ namespace Lab1
 				GL::Vertex3(x[3], y[3], z[3]);
 				GL::Vertex3(x[7], y[7], z[7]);
 				GL::End();
+				GL::PopName();
 			}
 		};
 		ref class Pyramid : public Shape
@@ -209,6 +216,9 @@ namespace Lab1
 			}
 			virtual void Draw() override
 			{
+				this->id = cnt_shapes;
+				cnt_shapes++;
+				GL::PushName(this->id);
 				GL::Begin(BeginMode::Triangles);
 				GL::Color3(color);
 
@@ -240,13 +250,13 @@ namespace Lab1
 				GL::Vertex3(x[1], y[1], z[1]);
 				GL::Vertex3(x[3], y[3], z[3]);
 				GL::End();
+				GL::PopName();
 			}
 		};
 
 		ref class Engine
 		{
 			List<Shape^> shape_list;
-
 			double TranslateStep;
 			double ScaleStep;
 			double RotareStep;
@@ -402,14 +412,6 @@ namespace Lab1
 	private: System::Windows::Forms::CheckBox^  cb1_planeXZ;
 	private: System::Windows::Forms::CheckBox^  cb1_planeXY;
 	private: System::Windows::Forms::CheckBox^  cb1_planeYZ;
-	private: System::Windows::Forms::Label^  label3AllShapes;
-	private: System::Windows::Forms::ListBox^  list3_all;
-	private: System::Windows::Forms::Label^  label3SelectedShapes;
-	private: System::Windows::Forms::ListBox^  list3_selected;
-	private: System::Windows::Forms::Button^  b3_allright;
-	private: System::Windows::Forms::Button^  b3_right;
-	private: System::Windows::Forms::Button^  b3_left;
-	private: System::Windows::Forms::Button^  b3_allleft;
 	private: System::Windows::Forms::RichTextBox^  rtb1_manual;
 	private: System::Windows::Forms::Button^  but1LightNull;
 	private: System::Windows::Forms::TextBox^  tb1_LightZ;
@@ -475,29 +477,22 @@ namespace Lab1
 			this->label2Color = (gcnew System::Windows::Forms::Label());
 			this->ColorBox2 = (gcnew System::Windows::Forms::ComboBox());
 			this->ControlTab = (gcnew System::Windows::Forms::TabPage());
-			this->label3SelectedShapes = (gcnew System::Windows::Forms::Label());
-			this->list3_selected = (gcnew System::Windows::Forms::ListBox());
-			this->b3_allright = (gcnew System::Windows::Forms::Button());
-			this->b3_right = (gcnew System::Windows::Forms::Button());
-			this->b3_left = (gcnew System::Windows::Forms::Button());
-			this->b3_allleft = (gcnew System::Windows::Forms::Button());
-			this->list3_all = (gcnew System::Windows::Forms::ListBox());
-			this->label3AllShapes = (gcnew System::Windows::Forms::Label());
 			this->MainTabControl->SuspendLayout();
 			this->CameraTab->SuspendLayout();
 			this->AddShapeTab->SuspendLayout();
-			this->ControlTab->SuspendLayout();
 			this->SuspendLayout();
 			// 
 			// GLFrame
 			// 
 			this->GLFrame->BackColor = System::Drawing::Color::Black;
+			this->GLFrame->Cursor = System::Windows::Forms::Cursors::NoMove2D;
 			this->GLFrame->Location = System::Drawing::Point(7, 171);
 			this->GLFrame->Margin = System::Windows::Forms::Padding(4, 4, 4, 4);
 			this->GLFrame->Name = L"GLFrame";
-			this->GLFrame->Size = System::Drawing::Size(1000, 670);
+			this->GLFrame->Size = System::Drawing::Size(990, 660);
 			this->GLFrame->TabIndex = 0;
 			this->GLFrame->VSync = false;
+			this->GLFrame->Click += gcnew System::EventHandler(this, &MyForm::GLFrame_Click);
 			this->GLFrame->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::GLFrame_KeyPress);
 			// 
 			// ShapeListBox2
@@ -1030,105 +1025,12 @@ namespace Lab1
 			// 
 			// ControlTab
 			// 
-			this->ControlTab->Controls->Add(this->label3SelectedShapes);
-			this->ControlTab->Controls->Add(this->list3_selected);
-			this->ControlTab->Controls->Add(this->b3_allright);
-			this->ControlTab->Controls->Add(this->b3_right);
-			this->ControlTab->Controls->Add(this->b3_left);
-			this->ControlTab->Controls->Add(this->b3_allleft);
-			this->ControlTab->Controls->Add(this->list3_all);
-			this->ControlTab->Controls->Add(this->label3AllShapes);
 			this->ControlTab->Location = System::Drawing::Point(4, 25);
 			this->ControlTab->Name = L"ControlTab";
 			this->ControlTab->Size = System::Drawing::Size(987, 127);
 			this->ControlTab->TabIndex = 2;
 			this->ControlTab->Text = L"Control";
 			this->ControlTab->UseVisualStyleBackColor = true;
-			// 
-			// label3SelectedShapes
-			// 
-			this->label3SelectedShapes->AutoSize = true;
-			this->label3SelectedShapes->Location = System::Drawing::Point(264, 4);
-			this->label3SelectedShapes->Name = L"label3SelectedShapes";
-			this->label3SelectedShapes->Size = System::Drawing::Size(117, 17);
-			this->label3SelectedShapes->TabIndex = 8;
-			this->label3SelectedShapes->Text = L"Selected shapes:";
-			// 
-			// list3_selected
-			// 
-			this->list3_selected->FormattingEnabled = true;
-			this->list3_selected->ItemHeight = 16;
-			this->list3_selected->Location = System::Drawing::Point(264, 24);
-			this->list3_selected->Name = L"list3_selected";
-			this->list3_selected->Size = System::Drawing::Size(170, 100);
-			this->list3_selected->Sorted = true;
-			this->list3_selected->TabIndex = 7;
-			this->list3_selected->Click += gcnew System::EventHandler(this, &MyForm::list3_selected_Click);
-			this->list3_selected->DoubleClick += gcnew System::EventHandler(this, &MyForm::list3_selected_DoubleClick);
-			// 
-			// b3_allright
-			// 
-			this->b3_allright->Location = System::Drawing::Point(183, 14);
-			this->b3_allright->Name = L"b3_allright";
-			this->b3_allright->Size = System::Drawing::Size(75, 23);
-			this->b3_allright->TabIndex = 6;
-			this->b3_allright->Text = L">>";
-			this->b3_allright->UseVisualStyleBackColor = true;
-			this->b3_allright->Click += gcnew System::EventHandler(this, &MyForm::b3_allright_Click);
-			// 
-			// b3_right
-			// 
-			this->b3_right->Enabled = false;
-			this->b3_right->Location = System::Drawing::Point(183, 43);
-			this->b3_right->Name = L"b3_right";
-			this->b3_right->Size = System::Drawing::Size(75, 23);
-			this->b3_right->TabIndex = 5;
-			this->b3_right->Text = L">";
-			this->b3_right->UseVisualStyleBackColor = true;
-			this->b3_right->Click += gcnew System::EventHandler(this, &MyForm::b3_right_Click);
-			// 
-			// b3_left
-			// 
-			this->b3_left->Enabled = false;
-			this->b3_left->Location = System::Drawing::Point(183, 72);
-			this->b3_left->Name = L"b3_left";
-			this->b3_left->Size = System::Drawing::Size(75, 23);
-			this->b3_left->TabIndex = 4;
-			this->b3_left->Text = L"<";
-			this->b3_left->UseVisualStyleBackColor = true;
-			this->b3_left->Click += gcnew System::EventHandler(this, &MyForm::b3_left_Click);
-			// 
-			// b3_allleft
-			// 
-			this->b3_allleft->Enabled = false;
-			this->b3_allleft->Location = System::Drawing::Point(183, 101);
-			this->b3_allleft->Name = L"b3_allleft";
-			this->b3_allleft->Size = System::Drawing::Size(75, 23);
-			this->b3_allleft->TabIndex = 3;
-			this->b3_allleft->Text = L"<<";
-			this->b3_allleft->UseVisualStyleBackColor = true;
-			this->b3_allleft->Click += gcnew System::EventHandler(this, &MyForm::b3_allleft_Click);
-			// 
-			// list3_all
-			// 
-			this->list3_all->FormattingEnabled = true;
-			this->list3_all->ItemHeight = 16;
-			this->list3_all->Location = System::Drawing::Point(7, 24);
-			this->list3_all->Name = L"list3_all";
-			this->list3_all->Size = System::Drawing::Size(170, 100);
-			this->list3_all->Sorted = true;
-			this->list3_all->TabIndex = 2;
-			this->list3_all->Click += gcnew System::EventHandler(this, &MyForm::list3_all_Click);
-			this->list3_all->DoubleClick += gcnew System::EventHandler(this, &MyForm::list3_all_DoubleClick);
-			// 
-			// label3AllShapes
-			// 
-			this->label3AllShapes->AutoSize = true;
-			this->label3AllShapes->Location = System::Drawing::Point(4, 4);
-			this->label3AllShapes->Name = L"label3AllShapes";
-			this->label3AllShapes->Size = System::Drawing::Size(77, 17);
-			this->label3AllShapes->TabIndex = 1;
-			this->label3AllShapes->Text = L"All shapes:";
 			// 
 			// MyForm
 			// 
@@ -1147,8 +1049,6 @@ namespace Lab1
 			this->CameraTab->PerformLayout();
 			this->AddShapeTab->ResumeLayout(false);
 			this->AddShapeTab->PerformLayout();
-			this->ControlTab->ResumeLayout(false);
-			this->ControlTab->PerformLayout();
 			this->ResumeLayout(false);
 
 		}
@@ -1168,23 +1068,24 @@ namespace Lab1
 		GL::MatrixMode(MatrixMode::Modelview);
 		GL::LoadIdentity();
 
-		
-
 		float specular[] = { 1.0, 1.0, 1.0, 1.0 };
 		float shininess = 50.0;
 		GL::ClearColor(80 / 255.0, 80 / 255.0, 80 / 255.0, 0.1);
 		GL::ShadeModel(ShadingModel::Smooth);
 		GL::Material(MaterialFace::Front, MaterialParameter::Specular, specular);
 		GL::Material(MaterialFace::Front, MaterialParameter::Shininess, shininess);
-
 		GL::Enable(EnableCap::ColorMaterial);
 		GL::Enable(EnableCap::Lighting);
 		GL::Enable(EnableCap::Light0);
 		GL::Enable(EnableCap::DepthTest);
+
+		GL::InitNames();
 	}
 	private: void DrawAll()
 	{
 		GL::Clear(ClearBufferMask::ColorBufferBit | ClearBufferMask::DepthBufferBit);
+		GL::InitNames();
+		cnt_shapes = 10;
 		DrawOrthPlanes();
 		DrawOrthLines();
 		engine.DrawShapes();
@@ -1259,6 +1160,135 @@ namespace Lab1
 			}
 		}
 		GL::End();
+	}
+	private: int SelectObject(double x, double y)
+	{
+		int objectsFound = 0;			// Общее количество кликнутых обьектов
+		int viewportCoords[4] = { 0 };	// Массив для хранения экранных координат
+
+		// Переменная для хранения ID обьектов, на которые мы кликнули.
+		// Мы делаем массив в 32 элемента, т.к. OpenGL также сохраняет другую
+		// информацию, которая нам сейчас не нужна. Для каждого обьекта нужно
+		// 4 слота.
+		unsigned int selectBuffer[32] = { 0 };
+
+		// glSelectBuffer регистрирует массив как буфер выбора обьектов. Первый параметр - размер
+		// массива. Второй - сам массив для хранения информации.
+		GL::SelectBuffer(32, selectBuffer);
+		
+		// Эта функция возвращает информацию о многих вещах в OpenGL. Мы передаём GL_VIEWPOR,
+		// чтобы получить координаты экрана. Функция сохранит их в переданном вторым параметром массиве
+		// в виде top,left,bottom,right.
+		GL::GetInteger(GetPName::Viewport, viewportCoords); // Получаем текущие координаты экрана
+
+		// Теперь выходим из матрицы GL_MODELVIEW и переходим в матрицу GL_PROJECTION.
+		// Это даёт возможность использовать X и Y координаты вместо 3D.
+	    GL::MatrixMode(MatrixMode::Projection);    // Переходим в матрицу проекции
+
+		GL::PushMatrix(); // Переходим в новые экранные координаты
+
+		// Эта функция делает так, что фреймбуфер не изменяется при рендере в него, вместо этого
+		// происходит запись имён (ID) примитивов, которые были бы отрисованы при режиме
+		// GL_RENDER. Информация помещается в selectBuffer.
+		GL::RenderMode(RenderingMode::Select);    // Позволяет рендерить обьекты без изменения фреймбуфера
+
+		GL::LoadIdentity(); // Сбросим матрицу проекции
+		
+		// gluPickMatrix позволяет создавать матрицу проекции около нашего курсора. Проще говоря,
+		// рендерится только область, которую мы укажем (вокруг курсора). Если обьект рендерится
+		// в этой области, его ID сохраняется (Вот он, смысл всей функции).
+		// Первые 2 параметра - X и Y координаты начала, следующие 2 - ширина и высота области
+		// отрисовки. Последний параметр - экранные координаты. Заметьте, мы вычитаем 'y' из
+		// НИЖНЕЙ экранной координаты. Мы сделали это, чтобы перевернуть Y координаты. 
+		// В 3д-пространстве нулевые y-координаты начинаются внизу, а в экранных координатах
+		// 0 по y находится вверху. Также передаём регион 2 на 2 пиксела для поиска в нём обьекта. 
+		// Это может быть изменено как вам удобнее.
+		PickMatrix(x, viewportCoords[3] - y, 2, 2, viewportCoords);
+
+		// Далее просто вызываем нашу нормальную функцию gluPerspective, точно так же, как
+		// делали при инициализации.
+		Perspective(45.0f, (float)FrameWidth / (float)FrameHeight, 0.1f, 150.0f);
+
+		GL::MatrixMode(MatrixMode::Modelview); // Возвращаемся в матрицу GL_MODELVIEW
+		
+		DrawAll();  // Теперь рендерим выбранную зону для выбора обьекта
+
+		// Если мы вернёмся в нормальный режим рендеринга из режима выбора, glRenderMode
+		// возвратит число обьектов, найденных в указанном регионе (в gluPickMatrix()).
+
+		objectsFound = GL::RenderMode(RenderingMode::Render); // Вернемся в режим отрисовки и получим число обьектов
+
+		GL::MatrixMode(MatrixMode::Projection);    // Вернемся в привычную матрицу проекции
+		GL::PopMatrix();              // Выходим из матрицы
+
+		GL::MatrixMode(MatrixMode::Modelview);  // Вернемся в матрицу GL_MODELVIEW
+
+		// УФФ! Это было немного сложно. Теперь нам нужно выяснить ID выбранных обьектов.
+		// Если они есть - objectsFound должно быть как минимум 1.
+
+		if (objectsFound == 0) return -1;
+		{
+			// Если мы нашли более 1 обьекта, нужно проверить значения глубины всех
+			// выбоанных обьектов. Обьект с МЕНЬШИМ значением глубины - ближайший
+			// к нам обьект, значит и щелкнули мы на него. В зависимости от того, что
+			// мы программируем, нам могут понадобится и ВСЕ выбранные обьекты (если
+			// некоторые были за ближайшим), но в этом уроке мы позаботимся только о
+			// переднем обьекте. Итак, как нам получить значение глубины? Оно сохранено
+			// в буфере выбора (selectionBuffer). Для каждого обьекта в нем 4 значения.
+			// Первое - "число имен в массиве имен на момент события, далее минимум и
+			// максимум значений глубины для всех вершин, которые были выбраны при прошлом
+			// событии, далее по содержимое массива имен, нижнее имя - первое;
+			// ("the number of names in the name stack at the time of the event, followed
+			// by the minimum and maximum depth values of all vertices that hit since the
+			// previous event, then followed by the name stack contents, bottom name first.") - MSDN.
+			// Единстве, что нам нужно - минимальное значение глубины (второе значение) и
+			// ID обьекта, переданного в glLoadName() (четвертое значение).
+			// Итак, [0-3] - данные первого обьекта, [4-7] - второго, и т.д...
+			// Будте осторожны, так как если вы отображаете на экране 2Д текст, он будет 
+			// всегда находится как ближайший обьект. Так что убедитесь, что отключили вывод
+			// текста при рендеринге в режиме GL_SELECT. Я для этого использую флаг, передаваемый
+			// в RenderScene(). Итак, получим обьект с минимальной глубиной!
+
+			// При старте установим ближайшую глубину как глубину первого обьекта.
+			// 1 - это минимальное Z-значение первого обьекта.
+			unsigned int lowestDepth = selectBuffer[1];
+
+			// Установим выбранный обьект как первый при старте.
+			// 3 - ID первого обьекта, переданный в glLoadName().
+			int selectedObject = selectBuffer[3];
+
+			// Проходим через все найденные обьекты, начиная со второго (значения первого
+			// мы присвоили изначально).
+			for (int i = 1; i < objectsFound; i++)
+			{
+				// Проверяем, не ниже ли значение глубины текущего обьекта, чем предидущего.
+				// Заметьте, мы умножаем i на 4 (4 значения на каждый обьект) и прибавляем 1 для глубины.
+				if (selectBuffer[(i * 4) + 1] < lowestDepth)
+				{
+					// Установим новое низшее значение
+					lowestDepth = selectBuffer[(i * 4) + 1];
+
+					// Установим текущий ID обьекта
+					selectedObject = selectBuffer[(i * 4) + 3];
+				}
+			}
+			// Вернем выбранный обьект
+			return selectedObject;
+		}
+	}
+	private: void PickMatrix(double x, double y, double deltax, double deltay, int* viewport)
+	{
+		if (deltax <= 0 || deltay <= 0) return;
+		// Translate and scale the picked region to cover the canvas
+		GL::Translate((viewport[2] - 2 * (x - viewport[0])) / deltax,
+			(viewport[3] - 2 * (y - viewport[1])) / deltay, 0);
+		GL::Scale(viewport[2] / deltax, viewport[3] / deltay, 1.0);
+	}
+	private: void Perspective(float a, float b, float c, float d)
+	{
+		OpenTK::Matrix4 projectionMatrix = OpenTK::Matrix4::CreatePerspectiveFieldOfView((float)((a*OpenTK::MathHelper::Pi)/180.0), b, c, d);
+		GL::MatrixMode(MatrixMode::Projection);
+		GL::LoadMatrix(projectionMatrix);
 	}
 
 	private: System::Void MyForm_Shown(System::Object^  sender, System::EventArgs^  e)
@@ -1482,85 +1512,13 @@ namespace Lab1
 		DrawAll();
 	}
 
-	private: System::Void list3_all_Click(System::Object^  sender, System::EventArgs^  e) 
+	private: System::Void GLFrame_Click(System::Object^  sender, System::EventArgs^  e) 
 	{
-		if (list3_all->SelectedItem != nullptr) b3_right->Enabled = true;
-	}
-	private: System::Void list3_selected_Click(System::Object^  sender, System::EventArgs^  e) 
-	{
-		if (list3_selected->SelectedItem != nullptr) b3_left->Enabled = true;
-	}
-	private: System::Void list3_all_DoubleClick(System::Object^  sender, System::EventArgs^  e)
-	{
-		if (list3_all->SelectedItem == nullptr) return;
-		list3_selected->Items->Add(list3_all->SelectedItem);
-		int selected = list3_all->SelectedIndex - (list3_all->SelectedIndex == list3_all->Items->Count - 1 ? 1 : 0);
-		list3_all->Items->RemoveAt(list3_all->SelectedIndex);
-		list3_all->SelectedIndex = selected;
-		if (list3_all->Items->Count == 0)
-		{
-			b3_allright->Enabled = false;
-			b3_right->Enabled = false;
-		}
-		b3_allleft->Enabled = true;
-	}
-	private: System::Void list3_selected_DoubleClick(System::Object^  sender, System::EventArgs^  e)
-	{
-		if (list3_selected->SelectedItem == nullptr) return;
-		list3_all->Items->Add(list3_selected->SelectedItem);
-		int selected = list3_selected->SelectedIndex - (list3_selected->SelectedIndex == list3_selected->Items->Count - 1 ? 1 : 0);
-		list3_selected->Items->RemoveAt(list3_selected->SelectedIndex);
-		list3_selected->SelectedIndex = selected;
-		if (list3_selected->Items->Count == 0)
-		{
-			b3_allleft->Enabled = false;
-			b3_left->Enabled = false;
-		}
-		b3_allright->Enabled = true;
-	}
-	private: System::Void b3_allright_Click(System::Object^  sender, System::EventArgs^  e) 
-	{
-		for (int i = 0; i < list3_all->Items->Count; i++)
-			list3_selected->Items->Add(list3_all->Items[i]);
-		list3_all->Items->Clear();
-		b3_allright->Enabled = false;
-		b3_right->Enabled = false;
-		b3_allleft->Enabled = true;
-	}
-	private: System::Void b3_right_Click(System::Object^  sender, System::EventArgs^  e) 
-	{
-		list3_selected->Items->Add(list3_all->SelectedItem);
-		int selected = list3_all->SelectedIndex - (list3_all->SelectedIndex == list3_all->Items->Count - 1 ? 1 : 0);
-		list3_all->Items->RemoveAt(list3_all->SelectedIndex);
-		list3_all->SelectedIndex = selected;
-		if (list3_all->Items->Count == 0)
-		{
-			b3_allright->Enabled = false;
-			b3_right->Enabled = false;
-		}
-		b3_allleft->Enabled = true;
-	}
-	private: System::Void b3_left_Click(System::Object^  sender, System::EventArgs^  e) 
-	{
-		list3_all->Items->Add(list3_selected->SelectedItem);
-		int selected = list3_selected->SelectedIndex - (list3_selected->SelectedIndex == list3_selected->Items->Count - 1 ? 1 : 0);
-		list3_selected->Items->RemoveAt(list3_selected->SelectedIndex);
-		list3_selected->SelectedIndex = selected;
-		if (list3_selected->Items->Count == 0)
-		{
-			b3_allleft->Enabled = false;
-			b3_left->Enabled = false;
-		}
-		b3_allright->Enabled = true;
-	}
-	private: System::Void b3_allleft_Click(System::Object^  sender, System::EventArgs^  e) 
-	{
-		for (int i = 0; i < list3_selected->Items->Count; i++)
-			list3_all->Items->Add(list3_selected->Items[i]);
-		list3_selected->Items->Clear();
-		b3_allleft->Enabled = false;
-		b3_left->Enabled = false;
-		b3_allright->Enabled = true;
+		double x = (MousePosition.X - this->Left - GLFrame->Left - 8) / (742 / 2.0) - 1;
+		double y = -(MousePosition.Y - this->Top - GLFrame->Top - 31) / (268 / 2.0) + 1;
+		int selected = SelectObject(x, y);
+		
+		DrawAll();
 	}
 };
 }
