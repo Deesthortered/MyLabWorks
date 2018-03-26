@@ -1280,8 +1280,7 @@ namespace Lab1
 	{
 		if (deltax <= 0 || deltay <= 0) return;
 		// Translate and scale the picked region to cover the canvas
-		GL::Translate((viewport[2] - 2 * (x - viewport[0])) / deltax,
-			(viewport[3] - 2 * (y - viewport[1])) / deltay, 0);
+		GL::Translate((viewport[2] - 2 * (x - viewport[0])) / deltax, (viewport[3] - 2 * (y - viewport[1])) / deltay, 0);
 		GL::Scale(viewport[2] / deltax, viewport[3] / deltay, 1.0);
 	}
 	private: void Perspective(float a, float b, float c, float d)
@@ -1515,7 +1514,7 @@ namespace Lab1
 	private: System::Void GLFrame_Click(System::Object^  sender, System::EventArgs^  e) 
 	{
 		double x = (MousePosition.X - this->Left - GLFrame->Left - 8) / (742 / 2.0) - 1;
-		double y = -(MousePosition.Y - this->Top - GLFrame->Top - 31) / (268 / 2.0) + 1;
+		double y = -(MousePosition.Y - this->Top - GLFrame->Top - 31) / (536 / 2.0) + 1;
 		int selected = SelectObject(x, y);
 		
 		DrawAll();
