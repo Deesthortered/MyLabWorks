@@ -1,13 +1,10 @@
 #include "MyForm.h"
+#include <windows.h>
+using namespace Lab1;
 
-using namespace System;
-using namespace System::Windows::Forms;
-
-[STAThreadAttribute]
-int main(array<String^>^ args)
+int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
 	Application::EnableVisualStyles();
 	Application::SetCompatibleTextRenderingDefault(false);
-	Lab1::MyForm Form;
-	Application::Run(%Form);
+	Application::Run(gcnew MyForm);
 }

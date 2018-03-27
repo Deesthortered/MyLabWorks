@@ -34,6 +34,9 @@ Class Lab1.MyForm+Shape: AutoLayout, AnsiClass, Class, NestedPublic, Abstract, B
   Methods:
     SetData(Color, UInt32, Double, Double, Double, Double, Double, Double): PrivateScope, Public, Virtual, HideBySig, VtableLayoutMask
     Draw(): PrivateScope, Public, Virtual, HideBySig, VtableLayoutMask, Abstract
+    GetID(): PrivateScope, Public, HideBySig
+    Select(): PrivateScope, Public, HideBySig
+    Deselect(): PrivateScope, Public, HideBySig
 Class Lab1.MyForm+Cube: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFieldInit
   :Lab1.MyForm+Shape
     Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
@@ -67,4 +70,6 @@ Class Lab1.MyForm+Engine: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFiel
     GetLightX(): PrivateScope, Public, HideBySig
     GetLightY(): PrivateScope, Public, HideBySig
     GetLightZ(): PrivateScope, Public, HideBySig
+    SelectShape(UInt32): PrivateScope, Public, HideBySig
+    DeselectAll(): PrivateScope, Public, HideBySig
     Dispose(): PrivateScope, Public, Final, Virtual, HideBySig

@@ -3,11 +3,14 @@
 namespace Lab1 
 {
 	using namespace System;
+	using namespace Microsoft;
+	using namespace System::Xml;
 	using namespace System::ComponentModel;
 	using namespace System::Collections;
 	using namespace System::Collections::Generic;
 	using namespace System::Windows::Forms;
 	using namespace System::Data;
+	using namespace System::Data::OleDb;
 	using namespace System::Drawing;
 	using namespace System::Media;
 	using namespace OpenTK::Platform::Windows;
@@ -29,6 +32,7 @@ namespace Lab1
 		{
 		protected:
 			size_t id;
+			bool selected;
 			double x_coor, y_coor, z_coor;
 			double x_rot, y_rot, z_rot;
 			size_t l;
@@ -37,6 +41,7 @@ namespace Lab1
 			virtual void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot)
 			{
 				this->id = 0;
+				this->selected = false;
 				this->color = color;
 				this->l = l;
 				this->x_coor = x_coor;
@@ -47,6 +52,18 @@ namespace Lab1
 				this->z_rot = z_rot;
 			}
 			virtual void Draw() abstract;
+			size_t GetID()
+			{
+				return this->id;
+			}
+			void Select()
+			{
+				this->selected = !this->selected;
+			}
+			void Deselect()
+			{
+				this->selected = false;
+			}
 		};
 		ref class Cube : public Shape
 		{
@@ -105,7 +122,8 @@ namespace Lab1
 				cnt_shapes++;
 				GL::PushName(this->id);
 				GL::Begin(BeginMode::Quads);
-				GL::Color3(color);
+				if (this->selected) GL::Color3(Color::White);
+				else GL::Color3(color);
 				GL::Vertex3(x[0], y[0], z[0]);
 				GL::Vertex3(x[1], y[1], z[1]);
 				GL::Vertex3(x[2], y[2], z[2]);
@@ -220,7 +238,8 @@ namespace Lab1
 				cnt_shapes++;
 				GL::PushName(this->id);
 				GL::Begin(BeginMode::Triangles);
-				GL::Color3(color);
+				if (this->selected) GL::Color3(Color::White);
+				else GL::Color3(color);
 
 				GL::Vertex3(x[0], y[0], z[0]);
 				GL::Vertex3(x[1], y[1], z[1]);
@@ -356,6 +375,21 @@ namespace Lab1
 			{
 				return light_pos[2];
 			}
+
+			void SelectShape(size_t id)
+			{
+				for (int i = 0; i < shape_list.Count; i++)
+					if (shape_list[i]->GetID() == id)
+					{
+						shape_list[i]->Select();
+						return;
+					}
+			}
+			void DeselectAll()
+			{
+				for (int i = 0; i < shape_list.Count; i++)
+					shape_list[i]->Deselect();
+			}
 		};
 
 	public:	MyForm(void)
@@ -391,7 +425,7 @@ namespace Lab1
 	private: System::Windows::Forms::Label^  label2Rotation;
 	private: System::Windows::Forms::Label^  lable2General;
 	private: System::Windows::Forms::Button^  but2_AddShape;
-	private: System::ComponentModel::Container ^components;
+	private: System::ComponentModel::IContainer^  components;
 	private: System::Windows::Forms::TabControl^  MainTabControl;
 	private: System::Windows::Forms::TabPage^  CameraTab;
 	private: System::Windows::Forms::TabPage^  AddShapeTab;
@@ -421,7 +455,15 @@ namespace Lab1
 	private: System::Windows::Forms::Label^  label1LightY;
 	private: System::Windows::Forms::Label^  label1LightX;
 	private: System::Windows::Forms::Label^  label1LightPos;
-
+	private: System::Windows::Forms::Button^  b3_update;
+	private: System::Windows::Forms::DataGridView^  dataGridView;
+	private: System::Data::OleDb::OleDbCommand^  oleDbSelectCommand1;
+	private: System::Data::OleDb::OleDbConnection^  oleDbConnection1;
+	private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand1;
+	private: System::Data::OleDb::OleDbCommand^  oleDbUpdateCommand1;
+	private: System::Data::OleDb::OleDbCommand^  oleDbDeleteCommand1;
+	private: System::Data::OleDb::OleDbDataAdapter^  oleDbDataAdapter1;
+	private: System::Data::DataSet^  dataSet1;
 	private: Engine engine;
 #pragma region Windows Form Designer generated code
 		void InitializeComponent(void)
@@ -477,9 +519,21 @@ namespace Lab1
 			this->label2Color = (gcnew System::Windows::Forms::Label());
 			this->ColorBox2 = (gcnew System::Windows::Forms::ComboBox());
 			this->ControlTab = (gcnew System::Windows::Forms::TabPage());
+			this->dataGridView = (gcnew System::Windows::Forms::DataGridView());
+			this->dataSet1 = (gcnew System::Data::DataSet());
+			this->b3_update = (gcnew System::Windows::Forms::Button());
+			this->oleDbSelectCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
+			this->oleDbConnection1 = (gcnew System::Data::OleDb::OleDbConnection());
+			this->oleDbInsertCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
+			this->oleDbUpdateCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
+			this->oleDbDeleteCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
+			this->oleDbDataAdapter1 = (gcnew System::Data::OleDb::OleDbDataAdapter());
 			this->MainTabControl->SuspendLayout();
 			this->CameraTab->SuspendLayout();
 			this->AddShapeTab->SuspendLayout();
+			this->ControlTab->SuspendLayout();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridView))->BeginInit();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataSet1))->BeginInit();
 			this->SuspendLayout();
 			// 
 			// GLFrame
@@ -492,8 +546,8 @@ namespace Lab1
 			this->GLFrame->Size = System::Drawing::Size(990, 660);
 			this->GLFrame->TabIndex = 0;
 			this->GLFrame->VSync = false;
-			this->GLFrame->Click += gcnew System::EventHandler(this, &MyForm::GLFrame_Click);
 			this->GLFrame->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::GLFrame_KeyPress);
+			this->GLFrame->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &MyForm::GLFrame_MouseDown);
 			// 
 			// ShapeListBox2
 			// 
@@ -1025,12 +1079,184 @@ namespace Lab1
 			// 
 			// ControlTab
 			// 
+			this->ControlTab->Controls->Add(this->dataGridView);
+			this->ControlTab->Controls->Add(this->b3_update);
 			this->ControlTab->Location = System::Drawing::Point(4, 25);
 			this->ControlTab->Name = L"ControlTab";
 			this->ControlTab->Size = System::Drawing::Size(987, 127);
 			this->ControlTab->TabIndex = 2;
 			this->ControlTab->Text = L"Control";
 			this->ControlTab->UseVisualStyleBackColor = true;
+			// 
+			// dataGridView
+			// 
+			this->dataGridView->AllowUserToAddRows = false;
+			this->dataGridView->AutoGenerateColumns = false;
+			this->dataGridView->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
+			this->dataGridView->DataSource = this->dataSet1;
+			this->dataGridView->Location = System::Drawing::Point(3, 3);
+			this->dataGridView->Name = L"dataGridView";
+			this->dataGridView->ReadOnly = true;
+			this->dataGridView->RowTemplate->Height = 24;
+			this->dataGridView->Size = System::Drawing::Size(817, 121);
+			this->dataGridView->TabIndex = 2;
+			// 
+			// dataSet1
+			// 
+			this->dataSet1->DataSetName = L"NewDataSet";
+			// 
+			// b3_update
+			// 
+			this->b3_update->Location = System::Drawing::Point(826, 3);
+			this->b3_update->Name = L"b3_update";
+			this->b3_update->Size = System::Drawing::Size(155, 28);
+			this->b3_update->TabIndex = 1;
+			this->b3_update->Text = L"Update Database";
+			this->b3_update->UseVisualStyleBackColor = true;
+			// 
+			// oleDbSelectCommand1
+			// 
+			this->oleDbSelectCommand1->CommandText = L"SELECT Shapes.*\r\nFROM     Shapes";
+			this->oleDbSelectCommand1->Connection = this->oleDbConnection1;
+			// 
+			// oleDbConnection1
+			// 
+			this->oleDbConnection1->ConnectionString = L"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=D:\\2.Programming\\MyLabWorks\\Lab1\\dat"
+				L"abase.mdb";
+			// 
+			// oleDbInsertCommand1
+			// 
+			this->oleDbInsertCommand1->CommandText = L"INSERT INTO `Shapes` (`x_coor`, `y_coor`, `z_coor`, `lenght`, `x_rot`, `y_rot`, `"
+				L"z_rot`, `Cube/Pyramid`, `Color`) VALUES (\?, \?, \?, \?, \?, \?, \?, \?, \?)";
+			this->oleDbInsertCommand1->Connection = this->oleDbConnection1;
+			this->oleDbInsertCommand1->Parameters->AddRange(gcnew cli::array< System::Data::OleDb::OleDbParameter^  >(9) {
+				(gcnew System::Data::OleDb::OleDbParameter(L"x_coor",
+					System::Data::OleDb::OleDbType::Integer, 0, L"x_coor")), (gcnew System::Data::OleDb::OleDbParameter(L"y_coor", System::Data::OleDb::OleDbType::Integer,
+						0, L"y_coor")), (gcnew System::Data::OleDb::OleDbParameter(L"z_coor", System::Data::OleDb::OleDbType::Integer, 0, L"z_coor")),
+						(gcnew System::Data::OleDb::OleDbParameter(L"lenght", System::Data::OleDb::OleDbType::Integer, 0, L"lenght")), (gcnew System::Data::OleDb::OleDbParameter(L"x_rot",
+							System::Data::OleDb::OleDbType::Integer, 0, L"x_rot")), (gcnew System::Data::OleDb::OleDbParameter(L"y_rot", System::Data::OleDb::OleDbType::Integer,
+								0, L"y_rot")), (gcnew System::Data::OleDb::OleDbParameter(L"z_rot", System::Data::OleDb::OleDbType::Integer, 0, L"z_rot")), (gcnew System::Data::OleDb::OleDbParameter(L"Cube/Pyramid",
+									System::Data::OleDb::OleDbType::Boolean, 0, L"Cube/Pyramid")), (gcnew System::Data::OleDb::OleDbParameter(L"Color", System::Data::OleDb::OleDbType::Integer,
+										0, L"Color"))
+			});
+			// 
+			// oleDbUpdateCommand1
+			// 
+			this->oleDbUpdateCommand1->CommandText = resources->GetString(L"oleDbUpdateCommand1.CommandText");
+			this->oleDbUpdateCommand1->Connection = this->oleDbConnection1;
+			this->oleDbUpdateCommand1->Parameters->AddRange(gcnew cli::array< System::Data::OleDb::OleDbParameter^  >(28) {
+				(gcnew System::Data::OleDb::OleDbParameter(L"x_coor",
+					System::Data::OleDb::OleDbType::Integer, 0, L"x_coor")), (gcnew System::Data::OleDb::OleDbParameter(L"y_coor", System::Data::OleDb::OleDbType::Integer,
+						0, L"y_coor")), (gcnew System::Data::OleDb::OleDbParameter(L"z_coor", System::Data::OleDb::OleDbType::Integer, 0, L"z_coor")),
+						(gcnew System::Data::OleDb::OleDbParameter(L"lenght", System::Data::OleDb::OleDbType::Integer, 0, L"lenght")), (gcnew System::Data::OleDb::OleDbParameter(L"x_rot",
+							System::Data::OleDb::OleDbType::Integer, 0, L"x_rot")), (gcnew System::Data::OleDb::OleDbParameter(L"y_rot", System::Data::OleDb::OleDbType::Integer,
+								0, L"y_rot")), (gcnew System::Data::OleDb::OleDbParameter(L"z_rot", System::Data::OleDb::OleDbType::Integer, 0, L"z_rot")), (gcnew System::Data::OleDb::OleDbParameter(L"Cube/Pyramid",
+									System::Data::OleDb::OleDbType::Boolean, 0, L"Cube/Pyramid")), (gcnew System::Data::OleDb::OleDbParameter(L"Color", System::Data::OleDb::OleDbType::Integer,
+										0, L"Color")), (gcnew System::Data::OleDb::OleDbParameter(L"Original_Код", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+											false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Код", System::Data::DataRowVersion::Original, nullptr)),
+											(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_x_coor", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+												static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"x_coor", System::Data::DataRowVersion::Original, true, nullptr)),
+												(gcnew System::Data::OleDb::OleDbParameter(L"Original_x_coor", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+													false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"x_coor", System::Data::DataRowVersion::Original, nullptr)),
+													(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_y_coor", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+														static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"y_coor", System::Data::DataRowVersion::Original, true, nullptr)),
+														(gcnew System::Data::OleDb::OleDbParameter(L"Original_y_coor", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+															false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"y_coor", System::Data::DataRowVersion::Original, nullptr)),
+															(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_z_coor", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+																static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"z_coor", System::Data::DataRowVersion::Original, true, nullptr)),
+																(gcnew System::Data::OleDb::OleDbParameter(L"Original_z_coor", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+																	false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"z_coor", System::Data::DataRowVersion::Original, nullptr)),
+																	(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_lenght", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+																		static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"lenght", System::Data::DataRowVersion::Original, true, nullptr)),
+																		(gcnew System::Data::OleDb::OleDbParameter(L"Original_lenght", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+																			false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"lenght", System::Data::DataRowVersion::Original, nullptr)),
+																			(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_x_rot", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+																				static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"x_rot", System::Data::DataRowVersion::Original, true, nullptr)),
+																				(gcnew System::Data::OleDb::OleDbParameter(L"Original_x_rot", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+																					false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"x_rot", System::Data::DataRowVersion::Original, nullptr)),
+																					(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_y_rot", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+																						static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"y_rot", System::Data::DataRowVersion::Original, true, nullptr)),
+																						(gcnew System::Data::OleDb::OleDbParameter(L"Original_y_rot", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+																							false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"y_rot", System::Data::DataRowVersion::Original, nullptr)),
+																							(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_z_rot", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+																								static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"z_rot", System::Data::DataRowVersion::Original, true, nullptr)),
+																								(gcnew System::Data::OleDb::OleDbParameter(L"Original_z_rot", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+																									false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"z_rot", System::Data::DataRowVersion::Original, nullptr)),
+																									(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Cube/Pyramid", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+																										static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Cube/Pyramid", System::Data::DataRowVersion::Original, true,
+																										nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_Cube/Pyramid", System::Data::OleDb::OleDbType::Boolean,
+																											0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Cube/Pyramid",
+																											System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Color", System::Data::OleDb::OleDbType::Integer,
+																												0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Color", System::Data::DataRowVersion::Original,
+																												true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_Color", System::Data::OleDb::OleDbType::Integer, 0,
+																													System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Color", System::Data::DataRowVersion::Original,
+																													nullptr))
+			});
+			// 
+			// oleDbDeleteCommand1
+			// 
+			this->oleDbDeleteCommand1->CommandText = resources->GetString(L"oleDbDeleteCommand1.CommandText");
+			this->oleDbDeleteCommand1->Connection = this->oleDbConnection1;
+			this->oleDbDeleteCommand1->Parameters->AddRange(gcnew cli::array< System::Data::OleDb::OleDbParameter^  >(19) {
+				(gcnew System::Data::OleDb::OleDbParameter(L"Original_Код",
+					System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
+					static_cast<System::Byte>(0), L"Код", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_x_coor",
+						System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
+						L"x_coor", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_x_coor",
+							System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
+							static_cast<System::Byte>(0), L"x_coor", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_y_coor",
+								System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
+								L"y_coor", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_y_coor",
+									System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
+									static_cast<System::Byte>(0), L"y_coor", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_z_coor",
+										System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
+										L"z_coor", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_z_coor",
+											System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
+											static_cast<System::Byte>(0), L"z_coor", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_lenght",
+												System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
+												L"lenght", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_lenght",
+													System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
+													static_cast<System::Byte>(0), L"lenght", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_x_rot",
+														System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
+														L"x_rot", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_x_rot",
+															System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
+															static_cast<System::Byte>(0), L"x_rot", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_y_rot",
+																System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
+																L"y_rot", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_y_rot",
+																	System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
+																	static_cast<System::Byte>(0), L"y_rot", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_z_rot",
+																		System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
+																		L"z_rot", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_z_rot",
+																			System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
+																			static_cast<System::Byte>(0), L"z_rot", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Cube/Pyramid",
+																				System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
+																				L"Cube/Pyramid", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_Cube/Pyramid",
+																					System::Data::OleDb::OleDbType::Boolean, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
+																					static_cast<System::Byte>(0), L"Cube/Pyramid", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Color",
+																						System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
+																						L"Color", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_Color",
+																							System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
+																							static_cast<System::Byte>(0), L"Color", System::Data::DataRowVersion::Original, nullptr))
+			});
+			// 
+			// oleDbDataAdapter1
+			// 
+			this->oleDbDataAdapter1->DeleteCommand = this->oleDbDeleteCommand1;
+			this->oleDbDataAdapter1->InsertCommand = this->oleDbInsertCommand1;
+			this->oleDbDataAdapter1->SelectCommand = this->oleDbSelectCommand1;
+			cli::array< System::Data::Common::DataColumnMapping^ >^ __mcTemp__1 = gcnew cli::array< System::Data::Common::DataColumnMapping^  >(10) {
+				(gcnew System::Data::Common::DataColumnMapping(L"Код",
+					L"Код")), (gcnew System::Data::Common::DataColumnMapping(L"x_coor", L"x_coor")), (gcnew System::Data::Common::DataColumnMapping(L"y_coor",
+						L"y_coor")), (gcnew System::Data::Common::DataColumnMapping(L"z_coor", L"z_coor")), (gcnew System::Data::Common::DataColumnMapping(L"lenght",
+							L"lenght")), (gcnew System::Data::Common::DataColumnMapping(L"x_rot", L"x_rot")), (gcnew System::Data::Common::DataColumnMapping(L"y_rot",
+								L"y_rot")), (gcnew System::Data::Common::DataColumnMapping(L"z_rot", L"z_rot")), (gcnew System::Data::Common::DataColumnMapping(L"Cube/Pyramid",
+									L"Cube/Pyramid")), (gcnew System::Data::Common::DataColumnMapping(L"Color", L"Color"))
+			};
+			this->oleDbDataAdapter1->TableMappings->AddRange(gcnew cli::array< System::Data::Common::DataTableMapping^  >(1) {
+				(gcnew System::Data::Common::DataTableMapping(L"Table",
+					L"Shapes", __mcTemp__1))
+			});
+			this->oleDbDataAdapter1->UpdateCommand = this->oleDbUpdateCommand1;
 			// 
 			// MyForm
 			// 
@@ -1049,6 +1275,9 @@ namespace Lab1
 			this->CameraTab->PerformLayout();
 			this->AddShapeTab->ResumeLayout(false);
 			this->AddShapeTab->PerformLayout();
+			this->ControlTab->ResumeLayout(false);
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridView))->EndInit();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataSet1))->EndInit();
 			this->ResumeLayout(false);
 
 		}
@@ -1081,6 +1310,44 @@ namespace Lab1
 
 		GL::InitNames();
 	}
+	private: void LoadData()
+	{
+		oleDbConnection1->Open();
+		oleDbDataAdapter1->Fill(dataSet1);
+		dataGridView->AutoGenerateColumns = true;
+		dataGridView->DataSource = dataSet1->Tables[0];
+		dataGridView->Update();
+		oleDbConnection1->Close();
+		dataGridView->AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode::Fill;
+		for (int i = 0; i < dataGridView->RowCount; i++)
+		{
+			ShapeType type = ShapeType::Pyramid;
+			bool t = Convert::ToBoolean(dataGridView->Rows[i]->Cells[8]->Value);
+			if (t) type = ShapeType::Cube;
+
+			Color color; int col = Convert::ToInt32(dataGridView->Rows[i]->Cells[9]->Value);
+			switch (col)
+			{
+			case 0: { color = Color::Red; } break;
+			case 1: { color = Color::Orange; } break;
+			case 2: { color = Color::Yellow; } break;
+			case 3: { color = Color::Green; } break;
+			case 4: { color = Color::Aqua; } break;
+			case 5: { color = Color::Blue; } break;
+			case 6: { color = Color::Purple; } break;
+			case 7: { color = Color::Brown; } break;
+			default: { color = Color::Gray; } break;
+			}
+			engine.CreateShape(type, color,	Convert::ToDouble(dataGridView->Rows[i]->Cells[4]->Value), 
+											Convert::ToDouble(dataGridView->Rows[i]->Cells[1]->Value), 
+											Convert::ToDouble(dataGridView->Rows[i]->Cells[2]->Value), 
+											Convert::ToDouble(dataGridView->Rows[i]->Cells[3]->Value), 
+											Convert::ToDouble(dataGridView->Rows[i]->Cells[5]->Value),
+											Convert::ToDouble(dataGridView->Rows[i]->Cells[6]->Value), 
+											Convert::ToDouble(dataGridView->Rows[i]->Cells[7]->Value));
+		}
+	}
+
 	private: void DrawAll()
 	{
 		GL::Clear(ClearBufferMask::ColorBufferBit | ClearBufferMask::DepthBufferBit);
@@ -1161,126 +1428,55 @@ namespace Lab1
 		}
 		GL::End();
 	}
+
+	// В дооолгий ящик
+			 /*
 	private: int SelectObject(double x, double y)
 	{
-		int objectsFound = 0;			// Общее количество кликнутых обьектов
-		int viewportCoords[4] = { 0 };	// Массив для хранения экранных координат
+		GL::Clear(ClearBufferMask::ColorBufferBit | ClearBufferMask::DepthBufferBit);
 
-		// Переменная для хранения ID обьектов, на которые мы кликнули.
-		// Мы делаем массив в 32 элемента, т.к. OpenGL также сохраняет другую
-		// информацию, которая нам сейчас не нужна. Для каждого обьекта нужно
-		// 4 слота.
-		unsigned int selectBuffer[32] = { 0 };
+		int objectsFound = 0;
+		int viewportCoords[4] = { 0 };
+		unsigned int selectBuffer[400] = { 0 };
 
-		// glSelectBuffer регистрирует массив как буфер выбора обьектов. Первый параметр - размер
-		// массива. Второй - сам массив для хранения информации.
-		GL::SelectBuffer(32, selectBuffer);
-		
-		// Эта функция возвращает информацию о многих вещах в OpenGL. Мы передаём GL_VIEWPOR,
-		// чтобы получить координаты экрана. Функция сохранит их в переданном вторым параметром массиве
-		// в виде top,left,bottom,right.
-		GL::GetInteger(GetPName::Viewport, viewportCoords); // Получаем текущие координаты экрана
+		GL::SelectBuffer(400, selectBuffer);
+		GL::GetInteger(GetPName::Viewport, viewportCoords);
+		GL::MatrixMode(MatrixMode::Projection);
+		GL::PushMatrix();
+		GL::RenderMode(RenderingMode::Select);
+		GL::LoadIdentity();
 
-		// Теперь выходим из матрицы GL_MODELVIEW и переходим в матрицу GL_PROJECTION.
-		// Это даёт возможность использовать X и Y координаты вместо 3D.
-	    GL::MatrixMode(MatrixMode::Projection);    // Переходим в матрицу проекции
-
-		GL::PushMatrix(); // Переходим в новые экранные координаты
-
-		// Эта функция делает так, что фреймбуфер не изменяется при рендере в него, вместо этого
-		// происходит запись имён (ID) примитивов, которые были бы отрисованы при режиме
-		// GL_RENDER. Информация помещается в selectBuffer.
-		GL::RenderMode(RenderingMode::Select);    // Позволяет рендерить обьекты без изменения фреймбуфера
-
-		GL::LoadIdentity(); // Сбросим матрицу проекции
-		
-		// gluPickMatrix позволяет создавать матрицу проекции около нашего курсора. Проще говоря,
-		// рендерится только область, которую мы укажем (вокруг курсора). Если обьект рендерится
-		// в этой области, его ID сохраняется (Вот он, смысл всей функции).
-		// Первые 2 параметра - X и Y координаты начала, следующие 2 - ширина и высота области
-		// отрисовки. Последний параметр - экранные координаты. Заметьте, мы вычитаем 'y' из
-		// НИЖНЕЙ экранной координаты. Мы сделали это, чтобы перевернуть Y координаты. 
-		// В 3д-пространстве нулевые y-координаты начинаются внизу, а в экранных координатах
-		// 0 по y находится вверху. Также передаём регион 2 на 2 пиксела для поиска в нём обьекта. 
-		// Это может быть изменено как вам удобнее.
 		PickMatrix(x, viewportCoords[3] - y, 2, 2, viewportCoords);
+		Perspective(45.0f, 742.0 / 536.0, 0.1f, 150.0f);
 
-		// Далее просто вызываем нашу нормальную функцию gluPerspective, точно так же, как
-		// делали при инициализации.
-		Perspective(45.0f, (float)FrameWidth / (float)FrameHeight, 0.1f, 150.0f);
+		GL::MatrixMode(MatrixMode::Modelview);
+		DrawAll();
+		objectsFound = GL::RenderMode(RenderingMode::Render);
+		GL::MatrixMode(MatrixMode::Projection);
+		GL::PopMatrix();
+		GL::MatrixMode(MatrixMode::Modelview);
 
-		GL::MatrixMode(MatrixMode::Modelview); // Возвращаемся в матрицу GL_MODELVIEW
-		
-		DrawAll();  // Теперь рендерим выбранную зону для выбора обьекта
-
-		// Если мы вернёмся в нормальный режим рендеринга из режима выбора, glRenderMode
-		// возвратит число обьектов, найденных в указанном регионе (в gluPickMatrix()).
-
-		objectsFound = GL::RenderMode(RenderingMode::Render); // Вернемся в режим отрисовки и получим число обьектов
-
-		GL::MatrixMode(MatrixMode::Projection);    // Вернемся в привычную матрицу проекции
-		GL::PopMatrix();              // Выходим из матрицы
-
-		GL::MatrixMode(MatrixMode::Modelview);  // Вернемся в матрицу GL_MODELVIEW
-
-		// УФФ! Это было немного сложно. Теперь нам нужно выяснить ID выбранных обьектов.
-		// Если они есть - objectsFound должно быть как минимум 1.
-
-		if (objectsFound == 0) return -1;
+		if (objectsFound == 0) return 0;
+		unsigned int lowestDepth = selectBuffer[1];
+		int selectedObject = selectBuffer[3];
+		for (int i = 1; i < objectsFound; i++)
 		{
-			// Если мы нашли более 1 обьекта, нужно проверить значения глубины всех
-			// выбоанных обьектов. Обьект с МЕНЬШИМ значением глубины - ближайший
-			// к нам обьект, значит и щелкнули мы на него. В зависимости от того, что
-			// мы программируем, нам могут понадобится и ВСЕ выбранные обьекты (если
-			// некоторые были за ближайшим), но в этом уроке мы позаботимся только о
-			// переднем обьекте. Итак, как нам получить значение глубины? Оно сохранено
-			// в буфере выбора (selectionBuffer). Для каждого обьекта в нем 4 значения.
-			// Первое - "число имен в массиве имен на момент события, далее минимум и
-			// максимум значений глубины для всех вершин, которые были выбраны при прошлом
-			// событии, далее по содержимое массива имен, нижнее имя - первое;
-			// ("the number of names in the name stack at the time of the event, followed
-			// by the minimum and maximum depth values of all vertices that hit since the
-			// previous event, then followed by the name stack contents, bottom name first.") - MSDN.
-			// Единстве, что нам нужно - минимальное значение глубины (второе значение) и
-			// ID обьекта, переданного в glLoadName() (четвертое значение).
-			// Итак, [0-3] - данные первого обьекта, [4-7] - второго, и т.д...
-			// Будте осторожны, так как если вы отображаете на экране 2Д текст, он будет 
-			// всегда находится как ближайший обьект. Так что убедитесь, что отключили вывод
-			// текста при рендеринге в режиме GL_SELECT. Я для этого использую флаг, передаваемый
-			// в RenderScene(). Итак, получим обьект с минимальной глубиной!
-
-			// При старте установим ближайшую глубину как глубину первого обьекта.
-			// 1 - это минимальное Z-значение первого обьекта.
-			unsigned int lowestDepth = selectBuffer[1];
-
-			// Установим выбранный обьект как первый при старте.
-			// 3 - ID первого обьекта, переданный в glLoadName().
-			int selectedObject = selectBuffer[3];
-
-			// Проходим через все найденные обьекты, начиная со второго (значения первого
-			// мы присвоили изначально).
-			for (int i = 1; i < objectsFound; i++)
+			if (selectBuffer[(i * 4) + 1] < lowestDepth)
 			{
-				// Проверяем, не ниже ли значение глубины текущего обьекта, чем предидущего.
-				// Заметьте, мы умножаем i на 4 (4 значения на каждый обьект) и прибавляем 1 для глубины.
-				if (selectBuffer[(i * 4) + 1] < lowestDepth)
-				{
-					// Установим новое низшее значение
-					lowestDepth = selectBuffer[(i * 4) + 1];
-
-					// Установим текущий ID обьекта
-					selectedObject = selectBuffer[(i * 4) + 3];
-				}
+				lowestDepth = selectBuffer[(i * 4) + 1];
+				selectedObject = selectBuffer[(i * 4) + 3];
 			}
-			// Вернем выбранный обьект
-			return selectedObject;
 		}
+		return selectedObject;
 	}
 	private: void PickMatrix(double x, double y, double deltax, double deltay, int* viewport)
 	{
 		if (deltax <= 0 || deltay <= 0) return;
 		// Translate and scale the picked region to cover the canvas
-		GL::Translate((viewport[2] - 2 * (x - viewport[0])) / deltax, (viewport[3] - 2 * (y - viewport[1])) / deltay, 0);
+		GL::Translate(
+			(viewport[2] - 2 * (x - viewport[0])) / deltax, 
+			(viewport[3] - 2 * (y - viewport[1])) / deltay, 
+			0);
 		GL::Scale(viewport[2] / deltax, viewport[3] / deltay, 1.0);
 	}
 	private: void Perspective(float a, float b, float c, float d)
@@ -1290,9 +1486,12 @@ namespace Lab1
 		GL::LoadMatrix(projectionMatrix);
 	}
 
+	*/
+
 	private: System::Void MyForm_Shown(System::Object^  sender, System::EventArgs^  e)
 	{
 		InitializeGL();
+		LoadData();
 		DrawAll();
 	}
 	private: System::Void GLFrame_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e)
@@ -1301,6 +1500,18 @@ namespace Lab1
 		tb1_LightX->Text = Convert::ToString(engine.GetLightX());
 		tb1_LightY->Text = Convert::ToString(engine.GetLightY());
 		tb1_LightZ->Text = Convert::ToString(engine.GetLightZ());
+		DrawAll();
+	}
+	private: System::Void GLFrame_MouseDown(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e)
+	{
+		if (e->Button == System::Windows::Forms::MouseButtons::Right) engine.DeselectAll();
+		else if (e->Button == System::Windows::Forms::MouseButtons::Left)
+		{
+			double x = 0; // (MousePosition.X - this->Left - GLFrame->Left - 8);// -(742 / 2.0);// / (742 / 2.0) - 1;
+			double y = 0; // -(MousePosition.Y - this->Top - GLFrame->Top - 31) + 536;// +(536 / 2.0);// / (536 / 2.0) + 1;
+						  //int selected = SelectObject(x, y);
+						  //engine.SelectShape(selected);
+		}
 		DrawAll();
 	}
 
@@ -1508,15 +1719,6 @@ namespace Lab1
 			Convert::ToDouble(tb2_Xrot->Text),
 			Convert::ToDouble(tb2_Yrot->Text),
 			Convert::ToDouble(tb2_Zrot->Text));
-		DrawAll();
-	}
-
-	private: System::Void GLFrame_Click(System::Object^  sender, System::EventArgs^  e) 
-	{
-		double x = (MousePosition.X - this->Left - GLFrame->Left - 8) / (742 / 2.0) - 1;
-		double y = -(MousePosition.Y - this->Top - GLFrame->Top - 31) / (536 / 2.0) + 1;
-		int selected = SelectObject(x, y);
-		
 		DrawAll();
 	}
 };

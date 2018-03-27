@@ -125,4 +125,55 @@
 
 Warning! Use English keyboard layout.</value>
   </data>
+  <metadata name="dataSet1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>393, 17</value>
+  </metadata>
+  <metadata name="oleDbSelectCommand1.DesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="oleDbSelectCommand1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>0, 0</value>
+  </metadata>
+  <metadata name="oleDbSelectCommand1.CommandDesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="oleDbConnection1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>209, 17</value>
+  </metadata>
+  <metadata name="oleDbInsertCommand1.DesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="oleDbInsertCommand1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>0, 0</value>
+  </metadata>
+  <metadata name="oleDbInsertCommand1.CommandDesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="oleDbUpdateCommand1.DesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="oleDbUpdateCommand1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>0, 0</value>
+  </metadata>
+  <metadata name="oleDbUpdateCommand1.CommandDesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <data name="oleDbUpdateCommand1.CommandText" xml:space="preserve">
+    <value>UPDATE `Shapes` SET `x_coor` = ?, `y_coor` = ?, `z_coor` = ?, `lenght` = ?, `x_rot` = ?, `y_rot` = ?, `z_rot` = ?, `Cube/Pyramid` = ?, `Color` = ? WHERE ((`Код` = ?) AND ((? = 1 AND `x_coor` IS NULL) OR (`x_coor` = ?)) AND ((? = 1 AND `y_coor` IS NULL) OR (`y_coor` = ?)) AND ((? = 1 AND `z_coor` IS NULL) OR (`z_coor` = ?)) AND ((? = 1 AND `lenght` IS NULL) OR (`lenght` = ?)) AND ((? = 1 AND `x_rot` IS NULL) OR (`x_rot` = ?)) AND ((? = 1 AND `y_rot` IS NULL) OR (`y_rot` = ?)) AND ((? = 1 AND `z_rot` IS NULL) OR (`z_rot` = ?)) AND ((? = 1 AND `Cube/Pyramid` IS NULL) OR (`Cube/Pyramid` = ?)) AND ((? = 1 AND `Color` IS NULL) OR (`Color` = ?)))</value>
+  </data>
+  <metadata name="oleDbDeleteCommand1.DesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="oleDbDeleteCommand1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>0, 0</value>
+  </metadata>
+  <metadata name="oleDbDeleteCommand1.CommandDesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <data name="oleDbDeleteCommand1.CommandText" xml:space="preserve">
+    <value>DELETE FROM `Shapes` WHERE ((`Код` = ?) AND ((? = 1 AND `x_coor` IS NULL) OR (`x_coor` = ?)) AND ((? = 1 AND `y_coor` IS NULL) OR (`y_coor` = ?)) AND ((? = 1 AND `z_coor` IS NULL) OR (`z_coor` = ?)) AND ((? = 1 AND `lenght` IS NULL) OR (`lenght` = ?)) AND ((? = 1 AND `x_rot` IS NULL) OR (`x_rot` = ?)) AND ((? = 1 AND `y_rot` IS NULL) OR (`y_rot` = ?)) AND ((? = 1 AND `z_rot` IS NULL) OR (`z_rot` = ?)) AND ((? = 1 AND `Cube/Pyramid` IS NULL) OR (`Cube/Pyramid` = ?)) AND ((? = 1 AND `Color` IS NULL) OR (`Color` = ?)))</value>
+  </data>
+  <metadata name="oleDbDataAdapter1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
+  </metadata>
 </root>
