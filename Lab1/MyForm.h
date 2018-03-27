@@ -3,8 +3,6 @@
 namespace Lab1 
 {
 	using namespace System;
-	using namespace Microsoft;
-	using namespace System::Xml;
 	using namespace System::ComponentModel;
 	using namespace System::Collections;
 	using namespace System::Collections::Generic;
@@ -19,7 +17,7 @@ namespace Lab1
 	int FrameHeight;
 	int FrameWidth;
 	int FrameDepth;
-	size_t cnt_shapes = 10;
+	size_t cnt_shapes = 1;
 
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
@@ -38,9 +36,9 @@ namespace Lab1
 			size_t l;
 			Color  color;
 		public:
-			virtual void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot)
+			virtual void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id)
 			{
-				this->id = 0;
+				this->id = id;
 				this->selected = false;
 				this->color = color;
 				this->l = l;
@@ -51,7 +49,9 @@ namespace Lab1
 				this->y_rot = y_rot;
 				this->z_rot = z_rot;
 			}
-			virtual void Draw() abstract;
+			virtual void Draw()
+			{
+			}
 			size_t GetID()
 			{
 				return this->id;
@@ -78,9 +78,9 @@ namespace Lab1
 			{
 				delete[] x, y, z;
 			}
-			virtual void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot) override
+			virtual void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id) override
 			{
-				Shape::SetData(color, l, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot);
+				Shape::SetData(color, l, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot, id);
 				x = new double[cnt];
 				y = new double[cnt];
 				z = new double[cnt];
@@ -118,8 +118,7 @@ namespace Lab1
 			}
 			virtual void Draw() override
 			{
-				this->id = cnt_shapes;
-				cnt_shapes++;
+				Shape::Draw();
 				GL::PushName(this->id);
 				GL::Begin(BeginMode::Quads);
 				if (this->selected) GL::Color3(Color::White);
@@ -197,9 +196,9 @@ namespace Lab1
 				delete[] x, y, z;
 			}
 
-			virtual void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot) override
+			virtual void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id) override
 			{
-				Shape::SetData(color, l, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot);
+				Shape::SetData(color, l, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot, id);
 				x = new double[cnt];
 				y = new double[cnt];
 				z = new double[cnt];
@@ -234,8 +233,7 @@ namespace Lab1
 			}
 			virtual void Draw() override
 			{
-				this->id = cnt_shapes;
-				cnt_shapes++;
+				Shape::Draw();
 				GL::PushName(this->id);
 				GL::Begin(BeginMode::Triangles);
 				if (this->selected) GL::Color3(Color::White);
@@ -310,13 +308,22 @@ namespace Lab1
 				this->RotareStep = val;
 			}
 
-			void CreateShape(ShapeType type, Color col, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot)
+			void CreateShape(ShapeType type, Color col, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id)
 			{
 				Shape^ s;
 				if (type == ShapeType::Cube) s = gcnew Cube();
 				else s = gcnew Pyramid();
-				s->SetData(col, l, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot);
+				s->SetData(col, l, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot, id);
 				this->shape_list.Add(s);
+			}
+			void DeleteShape(size_t id)
+			{
+				for (int i = 0; i < shape_list.Count; i++)
+					if (shape_list[i]->GetID() == id)
+					{
+						shape_list.RemoveAt(i);
+						return;
+					}
 			}
 			void DrawShapes()
 			{
@@ -455,7 +462,7 @@ namespace Lab1
 	private: System::Windows::Forms::Label^  label1LightY;
 	private: System::Windows::Forms::Label^  label1LightX;
 	private: System::Windows::Forms::Label^  label1LightPos;
-	private: System::Windows::Forms::Button^  b3_update;
+
 	private: System::Windows::Forms::DataGridView^  dataGridView;
 	private: System::Data::OleDb::OleDbCommand^  oleDbSelectCommand1;
 	private: System::Data::OleDb::OleDbConnection^  oleDbConnection1;
@@ -464,6 +471,8 @@ namespace Lab1
 	private: System::Data::OleDb::OleDbCommand^  oleDbDeleteCommand1;
 	private: System::Data::OleDb::OleDbDataAdapter^  oleDbDataAdapter1;
 	private: System::Data::DataSet^  dataSet1;
+
+
 	private: Engine engine;
 #pragma region Windows Form Designer generated code
 		void InitializeComponent(void)
@@ -521,7 +530,6 @@ namespace Lab1
 			this->ControlTab = (gcnew System::Windows::Forms::TabPage());
 			this->dataGridView = (gcnew System::Windows::Forms::DataGridView());
 			this->dataSet1 = (gcnew System::Data::DataSet());
-			this->b3_update = (gcnew System::Windows::Forms::Button());
 			this->oleDbSelectCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
 			this->oleDbConnection1 = (gcnew System::Data::OleDb::OleDbConnection());
 			this->oleDbInsertCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
@@ -1080,7 +1088,6 @@ namespace Lab1
 			// ControlTab
 			// 
 			this->ControlTab->Controls->Add(this->dataGridView);
-			this->ControlTab->Controls->Add(this->b3_update);
 			this->ControlTab->Location = System::Drawing::Point(4, 25);
 			this->ControlTab->Name = L"ControlTab";
 			this->ControlTab->Size = System::Drawing::Size(987, 127);
@@ -1098,21 +1105,14 @@ namespace Lab1
 			this->dataGridView->Name = L"dataGridView";
 			this->dataGridView->ReadOnly = true;
 			this->dataGridView->RowTemplate->Height = 24;
-			this->dataGridView->Size = System::Drawing::Size(817, 121);
+			this->dataGridView->Size = System::Drawing::Size(978, 121);
 			this->dataGridView->TabIndex = 2;
+			this->dataGridView->UserDeletedRow += gcnew System::Windows::Forms::DataGridViewRowEventHandler(this, &MyForm::dataGridView_UserDeletedRow);
+			this->dataGridView->UserDeletingRow += gcnew System::Windows::Forms::DataGridViewRowCancelEventHandler(this, &MyForm::dataGridView_UserDeletingRow);
 			// 
 			// dataSet1
 			// 
 			this->dataSet1->DataSetName = L"NewDataSet";
-			// 
-			// b3_update
-			// 
-			this->b3_update->Location = System::Drawing::Point(826, 3);
-			this->b3_update->Name = L"b3_update";
-			this->b3_update->Size = System::Drawing::Size(155, 28);
-			this->b3_update->TabIndex = 1;
-			this->b3_update->Text = L"Update Database";
-			this->b3_update->UseVisualStyleBackColor = true;
 			// 
 			// oleDbSelectCommand1
 			// 
@@ -1307,18 +1307,18 @@ namespace Lab1
 		GL::Enable(EnableCap::Lighting);
 		GL::Enable(EnableCap::Light0);
 		GL::Enable(EnableCap::DepthTest);
-
-		GL::InitNames();
 	}
 	private: void LoadData()
 	{
 		oleDbConnection1->Open();
 		oleDbDataAdapter1->Fill(dataSet1);
+		cnt_shapes = Convert::ToDouble(dataSet1->Tables[0]->Rows[dataSet1->Tables[0]->Rows->Count - 1]->ItemArray[0]) + 1;
 		dataGridView->AutoGenerateColumns = true;
 		dataGridView->DataSource = dataSet1->Tables[0];
 		dataGridView->Update();
 		oleDbConnection1->Close();
 		dataGridView->AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode::Fill;
+		dataGridView->Columns[0]->Visible = false;
 		for (int i = 0; i < dataGridView->RowCount; i++)
 		{
 			ShapeType type = ShapeType::Pyramid;
@@ -1344,15 +1344,14 @@ namespace Lab1
 											Convert::ToDouble(dataGridView->Rows[i]->Cells[3]->Value), 
 											Convert::ToDouble(dataGridView->Rows[i]->Cells[5]->Value),
 											Convert::ToDouble(dataGridView->Rows[i]->Cells[6]->Value), 
-											Convert::ToDouble(dataGridView->Rows[i]->Cells[7]->Value));
+											Convert::ToDouble(dataGridView->Rows[i]->Cells[7]->Value), 
+											Convert::ToDouble(dataGridView->Rows[i]->Cells[0]->Value));
 		}
 	}
 
 	private: void DrawAll()
 	{
 		GL::Clear(ClearBufferMask::ColorBufferBit | ClearBufferMask::DepthBufferBit);
-		GL::InitNames();
-		cnt_shapes = 10;
 		DrawOrthPlanes();
 		DrawOrthLines();
 		engine.DrawShapes();
@@ -1698,19 +1697,20 @@ namespace Lab1
 	{
 		SystemSounds::Beep->Play();
 		ShapeType type;
+		bool b = true;
 		if (ShapeListBox2->SelectedItem == ShapeListBox2->Items[0]) type = ShapeType::Cube;
-		else if (ShapeListBox2->SelectedItem == ShapeListBox2->Items[1]) type = ShapeType::Pyramid;
+		else if (ShapeListBox2->SelectedItem == ShapeListBox2->Items[1]) { type = ShapeType::Pyramid; b = false; }
 
-		Color col;
-		if (ColorBox2->SelectedItem == ColorBox2->Items[0]) col = Color::Red;
-		else if (ColorBox2->SelectedItem == ColorBox2->Items[1]) col = Color::Orange;
-		else if (ColorBox2->SelectedItem == ColorBox2->Items[2]) col = Color::Yellow;
-		else if (ColorBox2->SelectedItem == ColorBox2->Items[3]) col = Color::Green;
-		else if (ColorBox2->SelectedItem == ColorBox2->Items[4]) col = Color::Aqua;
-		else if (ColorBox2->SelectedItem == ColorBox2->Items[5]) col = Color::Blue;
-		else if (ColorBox2->SelectedItem == ColorBox2->Items[6]) col = Color::Purple;
-		else if (ColorBox2->SelectedItem == ColorBox2->Items[7]) col = Color::Brown;
-		else if (ColorBox2->SelectedItem == ColorBox2->Items[8]) col = Color::Gray;
+		Color col; int k;
+		if (ColorBox2->SelectedItem == ColorBox2->Items[0]) { col = Color::Red; k = 0; }
+		else if (ColorBox2->SelectedItem == ColorBox2->Items[1]) { col = Color::Orange; k = 1; }
+		else if (ColorBox2->SelectedItem == ColorBox2->Items[2]) { col = Color::Yellow; k = 2; }
+		else if (ColorBox2->SelectedItem == ColorBox2->Items[3]) { col = Color::Green; k = 3; }
+		else if (ColorBox2->SelectedItem == ColorBox2->Items[4]) { col = Color::Aqua; k = 4; }
+		else if (ColorBox2->SelectedItem == ColorBox2->Items[5]) { col = Color::Blue; k = 5; }
+		else if (ColorBox2->SelectedItem == ColorBox2->Items[6]) { col = Color::Purple; k = 6; }
+		else if (ColorBox2->SelectedItem == ColorBox2->Items[7]) { col = Color::Brown; k = 7; }
+		else if (ColorBox2->SelectedItem == ColorBox2->Items[8]) { col = Color::Gray; k = 8; }
 
 		engine.CreateShape(type, col, Convert::ToUInt32(tb2_leght->Text),
 			Convert::ToDouble(tb2_Xcoor->Text),
@@ -1718,8 +1718,24 @@ namespace Lab1
 			Convert::ToDouble(tb2_Zcoor->Text),
 			Convert::ToDouble(tb2_Xrot->Text),
 			Convert::ToDouble(tb2_Yrot->Text),
-			Convert::ToDouble(tb2_Zrot->Text));
+			Convert::ToDouble(tb2_Zrot->Text), cnt_shapes);
+
+		dataSet1->Tables[0]->Rows->Add(cnt_shapes, tb2_Xcoor->Text, tb2_Ycoor->Text, tb2_Ycoor->Text, tb2_leght->Text, tb2_Xrot->Text, tb2_Xrot->Text, tb2_Yrot->Text, b, k);
+		dataGridView->Update();
+		oleDbDataAdapter1->Update(dataSet1);
+		cnt_shapes++;
 		DrawAll();
+	}
+
+	private: System::Void dataGridView_UserDeletingRow(System::Object^  sender, System::Windows::Forms::DataGridViewRowCancelEventArgs^  e) 
+	{
+		int id = Convert::ToInt32(e->Row->Cells[0]->Value);
+		engine.DeleteShape(id);
+		DrawAll();
+	}
+	private: System::Void dataGridView_UserDeletedRow(System::Object^  sender, System::Windows::Forms::DataGridViewRowEventArgs^  e) 
+	{
+		oleDbDataAdapter1->Update(dataSet1);
 	}
 };
 }

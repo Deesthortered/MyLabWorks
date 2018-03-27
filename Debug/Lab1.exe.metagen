@@ -32,8 +32,8 @@ Struct Lab1.MyForm+ShapeType: AutoLayout, AnsiClass, Class, NestedPublic, Sealed
 Class Lab1.MyForm+Shape: AutoLayout, AnsiClass, Class, NestedPublic, Abstract, BeforeFieldInit
     Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
   Methods:
-    SetData(Color, UInt32, Double, Double, Double, Double, Double, Double): PrivateScope, Public, Virtual, HideBySig, VtableLayoutMask
-    Draw(): PrivateScope, Public, Virtual, HideBySig, VtableLayoutMask, Abstract
+    SetData(Color, UInt32, Double, Double, Double, Double, Double, Double, UInt32): PrivateScope, Public, Virtual, HideBySig, VtableLayoutMask
+    Draw(): PrivateScope, Public, Virtual, HideBySig, VtableLayoutMask
     GetID(): PrivateScope, Public, HideBySig
     Select(): PrivateScope, Public, HideBySig
     Deselect(): PrivateScope, Public, HideBySig
@@ -43,7 +43,7 @@ Class Lab1.MyForm+Cube: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFieldI
   Interfaces:
     System.IDisposable
   Methods:
-    SetData(Color, UInt32, Double, Double, Double, Double, Double, Double): PrivateScope, Public, Virtual, HideBySig
+    SetData(Color, UInt32, Double, Double, Double, Double, Double, Double, UInt32): PrivateScope, Public, Virtual, HideBySig
     Draw(): PrivateScope, Public, Virtual, HideBySig
     Dispose(): PrivateScope, Public, Final, Virtual, HideBySig
 Class Lab1.MyForm+Pyramid: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFieldInit
@@ -52,7 +52,7 @@ Class Lab1.MyForm+Pyramid: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFie
   Interfaces:
     System.IDisposable
   Methods:
-    SetData(Color, UInt32, Double, Double, Double, Double, Double, Double): PrivateScope, Public, Virtual, HideBySig
+    SetData(Color, UInt32, Double, Double, Double, Double, Double, Double, UInt32): PrivateScope, Public, Virtual, HideBySig
     Draw(): PrivateScope, Public, Virtual, HideBySig
     Dispose(): PrivateScope, Public, Final, Virtual, HideBySig
 Class Lab1.MyForm+Engine: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFieldInit
@@ -63,7 +63,8 @@ Class Lab1.MyForm+Engine: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFiel
     SetTranslateStep(Double): PrivateScope, Public, HideBySig
     SetScaleStep(Double): PrivateScope, Public, HideBySig
     SetRotareStep(Double): PrivateScope, Public, HideBySig
-    CreateShape(ShapeType, Color, UInt32, Double, Double, Double, Double, Double, Double): PrivateScope, Public, HideBySig
+    CreateShape(ShapeType, Color, UInt32, Double, Double, Double, Double, Double, Double, UInt32): PrivateScope, Public, HideBySig
+    DeleteShape(UInt32): PrivateScope, Public, HideBySig
     DrawShapes(): PrivateScope, Public, HideBySig
     CameraControl(KeyPressEventArgs* IsImplicitlyDereferenced): PrivateScope, Public, HideBySig
     NullLightPos(): PrivateScope, Public, HideBySig
