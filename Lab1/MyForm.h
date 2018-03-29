@@ -1297,34 +1297,42 @@ namespace Lab1
 		FrameWidth = GLFrame->Width;
 		FrameHeight = GLFrame->Height;
 		FrameDepth = GLFrame->Height;
+
+		float eyes[] = { 300.0f, 300.0f, 300.0f };
+		float target[] = { 0.0f, 0.0f, 0.0f };
+		OpenTK::Matrix4 projection = OpenTK::Matrix4::CreatePerspectiveFieldOfView(0.785398163f, (742.0f / 536.0f), 0.1f, 1000.0f);  //45 degree = 0.785398163 rads
+		OpenTK::Matrix4 view = OpenTK::Matrix4::LookAt(eyes[0], eyes[1], eyes[2], target[0], target[1], target[2], 0, 1, 0);
+		OpenTK::Matrix4 model = OpenTK::Matrix4::Identity;
+		OpenTK::Matrix4 MV = view * model;
+		GL::Clear(ClearBufferMask::ColorBufferBit | ClearBufferMask::DepthBufferBit);
+
 		GL::MatrixMode(MatrixMode::Projection);
 		GL::LoadIdentity();
-
-		GL::Ortho(-(FrameWidth >> 1), FrameWidth >> 1, -(FrameHeight >> 1), FrameHeight >> 1, -(FrameDepth >> 1), FrameDepth >> 1);
-		//OpenTK::Matrix4 perspective = OpenTK::Matrix4::Perspective(((45.0 * Math::PI) / 180.0), (float)FrameWidth/FrameHeight, 0.1f, 150.0f);
-		//GL::LoadMatrix(perspective);
-		
-		GL::Viewport(0, 0, FrameWidth, FrameHeight);
-		GL::Clear(ClearBufferMask::ColorBufferBit | ClearBufferMask::DepthBufferBit);
+		GL::LoadMatrix(projection);
 		GL::MatrixMode(MatrixMode::Modelview);
 		GL::LoadIdentity();
+		GL::LoadMatrix(MV);
+		GL::Viewport(0, 0, FrameWidth, FrameHeight);
+
+		GL::Enable(EnableCap::DepthTest);
+		GL::DepthFunc(DepthFunction::Less);
 
 		float specular[] = { 1.0, 1.0, 1.0, 1.0 };
 		float shininess = 50.0;
-		GL::ClearColor(80 / 255.0, 80 / 255.0, 80 / 255.0, 0.1);
+		GL::ClearColor(float(80 / 255.0), float(80 / 255.0), float(80 / 255.0), 0.1f);
 		GL::ShadeModel(ShadingModel::Smooth);
 		GL::Material(MaterialFace::Front, MaterialParameter::Specular, specular);
 		GL::Material(MaterialFace::Front, MaterialParameter::Shininess, shininess);
 		GL::Enable(EnableCap::ColorMaterial);
 		GL::Enable(EnableCap::Lighting);
 		GL::Enable(EnableCap::Light0);
-		GL::Enable(EnableCap::DepthTest);
+		GL::Clear(ClearBufferMask::ColorBufferBit | ClearBufferMask::DepthBufferBit);
 	}
 	private: void LoadData()
 	{
 		oleDbConnection1->Open();
 		oleDbDataAdapter1->Fill(dataSet1);
-		cnt_shapes = Convert::ToDouble(dataSet1->Tables[0]->Rows[dataSet1->Tables[0]->Rows->Count - 1]->ItemArray[0]) + 1;
+		cnt_shapes = Convert::ToUInt32(dataSet1->Tables[0]->Rows[dataSet1->Tables[0]->Rows->Count - 1]->ItemArray[0]) + 1;
 		dataGridView->AutoGenerateColumns = true;
 		dataGridView->DataSource = dataSet1->Tables[0];
 		dataGridView->Update();
@@ -1350,14 +1358,14 @@ namespace Lab1
 			case 7: { color = Color::Brown; } break;
 			default: { color = Color::Gray; } break;
 			}
-			engine.CreateShape(type, color,	Convert::ToDouble(dataGridView->Rows[i]->Cells[4]->Value), 
+			engine.CreateShape(type, color,	Convert::ToUInt32(dataGridView->Rows[i]->Cells[4]->Value),
 											Convert::ToDouble(dataGridView->Rows[i]->Cells[1]->Value), 
 											Convert::ToDouble(dataGridView->Rows[i]->Cells[2]->Value), 
 											Convert::ToDouble(dataGridView->Rows[i]->Cells[3]->Value), 
 											Convert::ToDouble(dataGridView->Rows[i]->Cells[5]->Value),
 											Convert::ToDouble(dataGridView->Rows[i]->Cells[6]->Value), 
 											Convert::ToDouble(dataGridView->Rows[i]->Cells[7]->Value), 
-											Convert::ToDouble(dataGridView->Rows[i]->Cells[0]->Value));
+											Convert::ToUInt32(dataGridView->Rows[i]->Cells[0]->Value));
 		}
 	}
 
@@ -1443,8 +1451,6 @@ namespace Lab1
 
 	private: int SelectObject(double x, double y)
 	{
-		GL::Clear(ClearBufferMask::ColorBufferBit | ClearBufferMask::DepthBufferBit);
-
 		int objectsFound = 0;
 		int viewportCoords[4] = { 0 };
 		unsigned int selectBuffer[400] = { 0 };
@@ -1455,10 +1461,9 @@ namespace Lab1
 		GL::PushMatrix();
 		GL::RenderMode(RenderingMode::Select);
 		GL::LoadIdentity();
-	
 		PickMatrix(x, viewportCoords[3] - y, 2, 2, viewportCoords);
-		Perspective(45.0f, 742.0 / 536.0, 0.1f, 150.0f);
-
+		OpenTK::Matrix4 projection = OpenTK::Matrix4::CreatePerspectiveFieldOfView(0.785398163f, (742.0f / 536.0f), 0.1f, 1000.0f);
+		GL::LoadMatrix(projection);
 		GL::MatrixMode(MatrixMode::Modelview);
 		DrawAll();
 		objectsFound = GL::RenderMode(RenderingMode::Render);
@@ -1466,7 +1471,7 @@ namespace Lab1
 		GL::PopMatrix();
 		GL::MatrixMode(MatrixMode::Modelview);
 
-		if (objectsFound == 0) return 0;
+		if (objectsFound == 0) return -1;
 		unsigned int lowestDepth = selectBuffer[1];
 		int selectedObject = selectBuffer[3];
 		for (int i = 1; i < objectsFound; i++)
@@ -1484,12 +1489,6 @@ namespace Lab1
 		if (deltax <= 0 || deltay <= 0) return;
 		GL::Translate((viewport[2] - 2 * (x - viewport[0])) / deltax, (viewport[3] - 2 * (y - viewport[1])) / deltay, 0);
 		GL::Scale(viewport[2] / deltax, viewport[3] / deltay, 1.0);
-	}
-	private: void Perspective(float a, float b, float c, float d)
-	{
-		OpenTK::Matrix4 projectionMatrix = OpenTK::Matrix4::CreatePerspectiveFieldOfView((float)((a*OpenTK::MathHelper::Pi)/180.0), b, c, d);
-		GL::MatrixMode(MatrixMode::Projection);
-		GL::LoadMatrix(projectionMatrix);
 	}
 
 	private: System::Void MyForm_Shown(System::Object^  sender, System::EventArgs^  e)
@@ -1779,14 +1778,14 @@ namespace Lab1
 		case 7: { color = Color::Brown; } break;
 		default: { color = Color::Gray; } break;
 		}
-		engine.ResetShape(type, color, Convert::ToDouble(dataGridView->CurrentRow->Cells[4]->Value),
-			Convert::ToDouble(dataGridView->CurrentRow->Cells[1]->Value),
-			Convert::ToDouble(dataGridView->CurrentRow->Cells[2]->Value),
-			Convert::ToDouble(dataGridView->CurrentRow->Cells[3]->Value),
-			Convert::ToDouble(dataGridView->CurrentRow->Cells[5]->Value),
-			Convert::ToDouble(dataGridView->CurrentRow->Cells[6]->Value),
-			Convert::ToDouble(dataGridView->CurrentRow->Cells[7]->Value),
-			Convert::ToDouble(dataGridView->CurrentRow->Cells[0]->Value));
+		engine.ResetShape(type, color,	Convert::ToUInt32(dataGridView->CurrentRow->Cells[4]->Value),
+										Convert::ToDouble(dataGridView->CurrentRow->Cells[1]->Value),
+										Convert::ToDouble(dataGridView->CurrentRow->Cells[2]->Value),
+										Convert::ToDouble(dataGridView->CurrentRow->Cells[3]->Value),
+										Convert::ToDouble(dataGridView->CurrentRow->Cells[5]->Value),
+										Convert::ToDouble(dataGridView->CurrentRow->Cells[6]->Value),
+										Convert::ToDouble(dataGridView->CurrentRow->Cells[7]->Value),
+										Convert::ToUInt32(dataGridView->CurrentRow->Cells[0]->Value));
 		oleDbDataAdapter1->Update(dataSet1);
 		DrawAll();
 	}
