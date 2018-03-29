@@ -58,7 +58,7 @@ namespace Lab1
 			}
 			void Select()
 			{
-				this->selected = !this->selected;
+				this->selected = true;
 			}
 			void Deselect()
 			{
@@ -316,6 +316,13 @@ namespace Lab1
 				s->SetData(col, l, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot, id);
 				this->shape_list.Add(s);
 			}
+			void ResetShape(ShapeType type, Color col, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id)
+			{
+				int i = 0;
+				for (; i < shape_list.Count; i++)
+					if (shape_list[i]->GetID() == id) break;
+				shape_list[i]->SetData(col, l, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot, id);
+			}
 			void DeleteShape(size_t id)
 			{
 				for (int i = 0; i < shape_list.Count; i++)
@@ -462,7 +469,6 @@ namespace Lab1
 	private: System::Windows::Forms::Label^  label1LightY;
 	private: System::Windows::Forms::Label^  label1LightX;
 	private: System::Windows::Forms::Label^  label1LightPos;
-
 	private: System::Windows::Forms::DataGridView^  dataGridView;
 	private: System::Data::OleDb::OleDbCommand^  oleDbSelectCommand1;
 	private: System::Data::OleDb::OleDbConnection^  oleDbConnection1;
@@ -471,7 +477,6 @@ namespace Lab1
 	private: System::Data::OleDb::OleDbCommand^  oleDbDeleteCommand1;
 	private: System::Data::OleDb::OleDbDataAdapter^  oleDbDataAdapter1;
 	private: System::Data::DataSet^  dataSet1;
-
 
 	private: Engine engine;
 #pragma region Windows Form Designer generated code
@@ -1103,10 +1108,12 @@ namespace Lab1
 			this->dataGridView->DataSource = this->dataSet1;
 			this->dataGridView->Location = System::Drawing::Point(3, 3);
 			this->dataGridView->Name = L"dataGridView";
-			this->dataGridView->ReadOnly = true;
 			this->dataGridView->RowTemplate->Height = 24;
 			this->dataGridView->Size = System::Drawing::Size(978, 121);
 			this->dataGridView->TabIndex = 2;
+			this->dataGridView->CellValueChanged += gcnew System::Windows::Forms::DataGridViewCellEventHandler(this, &MyForm::dataGridView_CellValueChanged);
+			this->dataGridView->RowLeave += gcnew System::Windows::Forms::DataGridViewCellEventHandler(this, &MyForm::dataGridView_RowLeave);
+			this->dataGridView->SelectionChanged += gcnew System::EventHandler(this, &MyForm::dataGridView_SelectionChanged);
 			this->dataGridView->UserDeletedRow += gcnew System::Windows::Forms::DataGridViewRowEventHandler(this, &MyForm::dataGridView_UserDeletedRow);
 			this->dataGridView->UserDeletingRow += gcnew System::Windows::Forms::DataGridViewRowCancelEventHandler(this, &MyForm::dataGridView_UserDeletingRow);
 			// 
@@ -1269,6 +1276,7 @@ namespace Lab1
 			this->MaximizeBox = false;
 			this->Name = L"MyForm";
 			this->Text = L"Lab1. 3D objects in OpenGL.";
+			this->FormClosing += gcnew System::Windows::Forms::FormClosingEventHandler(this, &MyForm::MyForm_FormClosing);
 			this->Shown += gcnew System::EventHandler(this, &MyForm::MyForm_Shown);
 			this->MainTabControl->ResumeLayout(false);
 			this->CameraTab->ResumeLayout(false);
@@ -1513,6 +1521,10 @@ namespace Lab1
 		}
 		DrawAll();
 	}
+	private: System::Void MyForm_FormClosing(System::Object^  sender, System::Windows::Forms::FormClosingEventArgs^  e)
+	{
+		oleDbDataAdapter1->Update(dataSet1);
+	}
 
 	private: System::Void tb1_trans_Leave(System::Object^  sender, System::EventArgs^  e) 
 	{
@@ -1736,6 +1748,49 @@ namespace Lab1
 	private: System::Void dataGridView_UserDeletedRow(System::Object^  sender, System::Windows::Forms::DataGridViewRowEventArgs^  e) 
 	{
 		oleDbDataAdapter1->Update(dataSet1);
+	}
+	private: System::Void dataGridView_RowLeave(System::Object^  sender, System::Windows::Forms::DataGridViewCellEventArgs^  e) 
+	{
+		engine.DeselectAll();
+		DrawAll();
+	}
+	private: System::Void dataGridView_SelectionChanged(System::Object^  sender, System::EventArgs^  e) 
+	{
+		int id = Convert::ToInt32(dataGridView->CurrentRow->Cells[0]->Value);
+		engine.SelectShape(id);
+		DrawAll();
+	}
+	private: System::Void dataGridView_CellValueChanged(System::Object^  sender, System::Windows::Forms::DataGridViewCellEventArgs^  e) 
+	{
+		oleDbDataAdapter1->Update(dataSet1);
+		int id = Convert::ToInt32(dataGridView->CurrentRow->Cells[0]->Value);
+		ShapeType type = ShapeType::Pyramid;
+		bool t = Convert::ToBoolean(dataGridView->CurrentRow->Cells[8]->Value);
+		if (t) type = ShapeType::Cube;
+
+		Color color; int col = Convert::ToInt32(dataGridView->CurrentRow->Cells[9]->Value);
+		switch (col)
+		{
+		case 0: { color = Color::Red; } break;
+		case 1: { color = Color::Orange; } break;
+		case 2: { color = Color::Yellow; } break;
+		case 3: { color = Color::Green; } break;
+		case 4: { color = Color::Aqua; } break;
+		case 5: { color = Color::Blue; } break;
+		case 6: { color = Color::Purple; } break;
+		case 7: { color = Color::Brown; } break;
+		default: { color = Color::Gray; } break;
+		}
+		engine.ResetShape(type, color, Convert::ToDouble(dataGridView->CurrentRow->Cells[4]->Value),
+			Convert::ToDouble(dataGridView->CurrentRow->Cells[1]->Value),
+			Convert::ToDouble(dataGridView->CurrentRow->Cells[2]->Value),
+			Convert::ToDouble(dataGridView->CurrentRow->Cells[3]->Value),
+			Convert::ToDouble(dataGridView->CurrentRow->Cells[5]->Value),
+			Convert::ToDouble(dataGridView->CurrentRow->Cells[6]->Value),
+			Convert::ToDouble(dataGridView->CurrentRow->Cells[7]->Value),
+			Convert::ToDouble(dataGridView->CurrentRow->Cells[0]->Value));
+		oleDbDataAdapter1->Update(dataSet1);
+		DrawAll();
 	}
 };
 }

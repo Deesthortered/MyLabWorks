@@ -64,6 +64,7 @@ Class Lab1.MyForm+Engine: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFiel
     SetScaleStep(Double): PrivateScope, Public, HideBySig
     SetRotareStep(Double): PrivateScope, Public, HideBySig
     CreateShape(ShapeType, Color, UInt32, Double, Double, Double, Double, Double, Double, UInt32): PrivateScope, Public, HideBySig
+    ResetShape(ShapeType, Color, UInt32, Double, Double, Double, Double, Double, Double, UInt32): PrivateScope, Public, HideBySig
     DeleteShape(UInt32): PrivateScope, Public, HideBySig
     DrawShapes(): PrivateScope, Public, HideBySig
     CameraControl(KeyPressEventArgs* IsImplicitlyDereferenced): PrivateScope, Public, HideBySig
