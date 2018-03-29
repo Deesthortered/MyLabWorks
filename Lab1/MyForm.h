@@ -52,6 +52,10 @@ namespace Lab1
 			virtual void Draw()
 			{
 			}
+			virtual void DrawProjections(bool xy, bool xz, bool yz)
+			{
+
+			}
 			size_t GetID()
 			{
 				return this->id;
@@ -187,6 +191,28 @@ namespace Lab1
 				GL::End();
 				GL::PopName();
 			}
+			virtual void DrawProjections(bool xy, bool xz, bool yz) override
+			{
+				GL::Color3(color);
+				if (xy)
+				{
+					GL::Begin(BeginMode::Polygon);
+
+					GL::End();
+				}
+				if (xz)
+				{
+					GL::Begin(BeginMode::Polygon);
+
+					GL::End();
+				}
+				if (yz)
+				{
+					GL::Begin(BeginMode::Polygon);
+
+					GL::End();
+				}
+			}
 		};
 		ref class Pyramid : public Shape
 		{
@@ -281,6 +307,28 @@ namespace Lab1
 				GL::End();
 				GL::PopName();
 			}
+			virtual void DrawProjections(bool xy, bool xz, bool yz) override
+			{
+				GL::Color3(color);
+				if (xy)
+				{
+					GL::Begin(BeginMode::Polygon);
+
+					GL::End();
+				}
+				if (xz)
+				{
+					GL::Begin(BeginMode::Polygon);
+
+					GL::End();
+				}
+				if (yz)
+				{
+					GL::Begin(BeginMode::Polygon);
+
+					GL::End();
+				}
+			}
 		};
 
 		ref class Engine
@@ -351,6 +399,13 @@ namespace Lab1
 					cur->Draw();
 				}
 				GL::Light(LightName::Light0, LightParameter::Position, light_pos);
+			}
+			void DrawProjections(bool xy, bool xz, bool yz)
+			{
+				for each (Shape^ cur in shape_list)
+				{
+					cur->DrawProjections(xy, xz, yz);
+				}
 			}
 
 			void CameraControl(System::Windows::Forms::KeyPressEventArgs^  &e)
@@ -1409,6 +1464,7 @@ namespace Lab1
 		DrawOrthPlanes();
 		DrawOrthLines();
 		GL::InitNames();
+		engine.DrawProjections(cb1_planeXY->Checked, cb1_planeXZ->Checked, cb1_planeYZ->Checked);
 		engine.DrawShapes();
 		GLFrame->SwapBuffers();
 	}

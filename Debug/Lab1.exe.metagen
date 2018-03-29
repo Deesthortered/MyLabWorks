@@ -34,6 +34,7 @@ Class Lab1.MyForm+Shape: AutoLayout, AnsiClass, Class, NestedPublic, Abstract, B
   Methods:
     SetData(Color, UInt32, Double, Double, Double, Double, Double, Double, UInt32): PrivateScope, Public, Virtual, HideBySig, VtableLayoutMask
     Draw(): PrivateScope, Public, Virtual, HideBySig, VtableLayoutMask
+    DrawProjections(Boolean(HasFieldMarshal), Boolean(HasFieldMarshal), Boolean(HasFieldMarshal)): PrivateScope, Public, Virtual, HideBySig, VtableLayoutMask
     GetID(): PrivateScope, Public, HideBySig
     Select(): PrivateScope, Public, HideBySig
     Deselect(): PrivateScope, Public, HideBySig
@@ -45,6 +46,7 @@ Class Lab1.MyForm+Cube: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFieldI
   Methods:
     SetData(Color, UInt32, Double, Double, Double, Double, Double, Double, UInt32): PrivateScope, Public, Virtual, HideBySig
     Draw(): PrivateScope, Public, Virtual, HideBySig
+    DrawProjections(Boolean(HasFieldMarshal), Boolean(HasFieldMarshal), Boolean(HasFieldMarshal)): PrivateScope, Public, Virtual, HideBySig
     Dispose(): PrivateScope, Public, Final, Virtual, HideBySig
 Class Lab1.MyForm+Pyramid: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFieldInit
   :Lab1.MyForm+Shape
@@ -54,6 +56,7 @@ Class Lab1.MyForm+Pyramid: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFie
   Methods:
     SetData(Color, UInt32, Double, Double, Double, Double, Double, Double, UInt32): PrivateScope, Public, Virtual, HideBySig
     Draw(): PrivateScope, Public, Virtual, HideBySig
+    DrawProjections(Boolean(HasFieldMarshal), Boolean(HasFieldMarshal), Boolean(HasFieldMarshal)): PrivateScope, Public, Virtual, HideBySig
     Dispose(): PrivateScope, Public, Final, Virtual, HideBySig
 Class Lab1.MyForm+Engine: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFieldInit
     Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
@@ -67,6 +70,7 @@ Class Lab1.MyForm+Engine: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFiel
     ResetShape(ShapeType, Color, UInt32, Double, Double, Double, Double, Double, Double, UInt32): PrivateScope, Public, HideBySig
     DeleteShape(UInt32): PrivateScope, Public, HideBySig
     DrawShapes(): PrivateScope, Public, HideBySig
+    DrawProjections(Boolean(HasFieldMarshal), Boolean(HasFieldMarshal), Boolean(HasFieldMarshal)): PrivateScope, Public, HideBySig
     CameraControl(KeyPressEventArgs* IsImplicitlyDereferenced): PrivateScope, Public, HideBySig
     NullLightPos(): PrivateScope, Public, HideBySig
     GetLightX(): PrivateScope, Public, HideBySig
