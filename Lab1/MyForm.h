@@ -84,12 +84,12 @@ namespace Lab1
 				x = new double[cnt];
 				y = new double[cnt];
 				z = new double[cnt];
-				x[0] = x[1] = x[4] = x[5] = x_coor - l / 2;
-				x[2] = x[3] = x[6] = x[7] = x_coor + l / 2;
-				y[0] = y[1] = y[2] = y[3] = y_coor - l / 2;
-				y[4] = y[5] = y[6] = y[7] = y_coor + l / 2;
-				z[0] = z[3] = z[4] = z[7] = z_coor - l / 2;
-				z[1] = z[2] = z[5] = z[6] = z_coor + l / 2;
+				x[0] = x[1] = x[4] = x[5] =  -((int)l / 2.0);
+				x[2] = x[3] = x[6] = x[7] =   ((int)l / 2.0);
+				y[0] = y[1] = y[2] = y[3] =  -((int)l / 2.0);
+				y[4] = y[5] = y[6] = y[7] =   ((int)l / 2.0);
+				z[0] = z[3] = z[4] = z[7] =  -((int)l / 2.0);
+				z[1] = z[2] = z[5] = z[6] =   ((int)l / 2.0);
 
 				double *_x = new double[cnt];
 				double *_y = new double[cnt];
@@ -115,6 +115,12 @@ namespace Lab1
 				}
 				for (size_t i = 0; i < cnt; i++) x[i] = _x[i], y[i] = _y[i], z[i] = _z[i];
 				delete[] _x, _y, _z;
+				for (size_t i = 0; i < cnt; i++)
+				{
+					x[i] += x_coor;
+					y[i] += y_coor;
+					z[i] += z_coor;
+				}
 			}
 			virtual void Draw() override
 			{
@@ -202,9 +208,9 @@ namespace Lab1
 				x = new double[cnt];
 				y = new double[cnt];
 				z = new double[cnt];
-				x[0] = x[2] = x_coor - (l / Math::Sqrt(12)); x[1] = x_coor + (l / Math::Sqrt(3)); x[3] = x_coor;
-				y[0] = y[1] = y[2] = y_coor; y[3] = y_coor + Math::Sqrt((2 * l*l) / 3);
-				z[0] = z_coor - (l / 2); z[1] = z[3] = z_coor; z[2] = z_coor + (l / 2);
+				x[0] = x[2] = -((int)l / Math::Sqrt(12)); x[1] = ((int)l / Math::Sqrt(3)); x[3] = 0;
+				y[0] = y[1] = y[2] = 0; y[3] = Math::Sqrt((2 * l*l) / 3);
+				z[0] =  -((int)l / 2); z[1] = z[3] = 0; z[2] = (l / 2);
 
 				double *_x = new double[cnt];
 				double *_y = new double[cnt];
@@ -230,6 +236,12 @@ namespace Lab1
 				}
 				for (size_t i = 0; i < cnt; i++) x[i] = _x[i], y[i] = _y[i], z[i] = _z[i];
 				delete[] _x, _y, _z;
+				for (size_t i = 0; i < cnt; i++)
+				{
+					x[i] += x_coor;
+					y[i] += y_coor;
+					z[i] += z_coor;
+				}
 			}
 			virtual void Draw() override
 			{
