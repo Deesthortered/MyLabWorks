@@ -154,7 +154,7 @@ namespace Lab1
 				GL::Vertex3(x[4], y[4], z[4]);
 				GL::End();
 
-				GL::Color3(Color::White);
+				GL::Color3(Color::Black);
 				GL::Begin(BeginMode::LineStrip);
 				GL::Vertex3(x[0], y[0], z[0]);
 				GL::Vertex3(x[1], y[1], z[1]);
@@ -256,7 +256,7 @@ namespace Lab1
 				GL::Vertex3(x[1], y[1], z[1]);
 				GL::End();
 
-				GL::Color3(Color::White);
+				GL::Color3(Color::Black);
 				GL::Begin(BeginMode::LineStrip);
 				GL::Vertex3(x[0], y[0], z[0]);
 				GL::Vertex3(x[1], y[1], z[1]);
@@ -419,6 +419,7 @@ namespace Lab1
 		}
 
 	private: OpenTK::GLControl^  GLFrame;
+	private: System::ComponentModel::IContainer^  components;
 	private: System::Windows::Forms::Label^  label2Shape;
 	private: System::Windows::Forms::Label^  label2EdgeLenght;
 	private: System::Windows::Forms::TextBox^  tb2_leght;
@@ -439,7 +440,6 @@ namespace Lab1
 	private: System::Windows::Forms::Label^  label2Rotation;
 	private: System::Windows::Forms::Label^  lable2General;
 	private: System::Windows::Forms::Button^  but2_AddShape;
-	private: System::ComponentModel::IContainer^  components;
 	private: System::Windows::Forms::TabControl^  MainTabControl;
 	private: System::Windows::Forms::TabPage^  CameraTab;
 	private: System::Windows::Forms::TabPage^  AddShapeTab;
@@ -1299,7 +1299,11 @@ namespace Lab1
 		FrameDepth = GLFrame->Height;
 		GL::MatrixMode(MatrixMode::Projection);
 		GL::LoadIdentity();
+
 		GL::Ortho(-(FrameWidth >> 1), FrameWidth >> 1, -(FrameHeight >> 1), FrameHeight >> 1, -(FrameDepth >> 1), FrameDepth >> 1);
+		//OpenTK::Matrix4 perspective = OpenTK::Matrix4::Perspective(((45.0 * Math::PI) / 180.0), (float)FrameWidth/FrameHeight, 0.1f, 150.0f);
+		//GL::LoadMatrix(perspective);
+		
 		GL::Viewport(0, 0, FrameWidth, FrameHeight);
 		GL::Clear(ClearBufferMask::ColorBufferBit | ClearBufferMask::DepthBufferBit);
 		GL::MatrixMode(MatrixMode::Modelview);
@@ -1362,6 +1366,7 @@ namespace Lab1
 		GL::Clear(ClearBufferMask::ColorBufferBit | ClearBufferMask::DepthBufferBit);
 		DrawOrthPlanes();
 		DrawOrthLines();
+		GL::InitNames();
 		engine.DrawShapes();
 		GLFrame->SwapBuffers();
 	}
@@ -1394,12 +1399,12 @@ namespace Lab1
 		if (cb1_planeXY->Checked)
 		{
 			GL::Color3(Color::Red);
-			for (double i = -FrameWidth >> 1; i <= FrameWidth >> 1; i += FrameWidth >> 4)
+			for (double i = -(FrameWidth >> 1); i <= (FrameWidth >> 1); i += (FrameWidth >> 4))
 			{
 				GL::Vertex3(i, (double)-FrameHeight, 0.0);
 				GL::Vertex3(i, (double)FrameHeight, 0.0);
 			}
-			for (double i = -FrameHeight >> 1; i <= FrameHeight >> 1; i += FrameHeight >> 4)
+			for (double i = -(FrameHeight >> 1); i <= (FrameHeight >> 1); i += (FrameHeight >> 4))
 			{
 				GL::Vertex3((double)-FrameWidth, i, 0.0);
 				GL::Vertex3((double)FrameWidth, i, 0.0);
@@ -1436,8 +1441,6 @@ namespace Lab1
 		GL::End();
 	}
 
-	// В дооолгий ящик
-			 /*
 	private: int SelectObject(double x, double y)
 	{
 		GL::Clear(ClearBufferMask::ColorBufferBit | ClearBufferMask::DepthBufferBit);
@@ -1452,7 +1455,7 @@ namespace Lab1
 		GL::PushMatrix();
 		GL::RenderMode(RenderingMode::Select);
 		GL::LoadIdentity();
-
+	
 		PickMatrix(x, viewportCoords[3] - y, 2, 2, viewportCoords);
 		Perspective(45.0f, 742.0 / 536.0, 0.1f, 150.0f);
 
@@ -1479,11 +1482,7 @@ namespace Lab1
 	private: void PickMatrix(double x, double y, double deltax, double deltay, int* viewport)
 	{
 		if (deltax <= 0 || deltay <= 0) return;
-		// Translate and scale the picked region to cover the canvas
-		GL::Translate(
-			(viewport[2] - 2 * (x - viewport[0])) / deltax, 
-			(viewport[3] - 2 * (y - viewport[1])) / deltay, 
-			0);
+		GL::Translate((viewport[2] - 2 * (x - viewport[0])) / deltax, (viewport[3] - 2 * (y - viewport[1])) / deltay, 0);
 		GL::Scale(viewport[2] / deltax, viewport[3] / deltay, 1.0);
 	}
 	private: void Perspective(float a, float b, float c, float d)
@@ -1493,12 +1492,11 @@ namespace Lab1
 		GL::LoadMatrix(projectionMatrix);
 	}
 
-	*/
-
 	private: System::Void MyForm_Shown(System::Object^  sender, System::EventArgs^  e)
 	{
 		InitializeGL();
 		LoadData();
+		DrawAll();
 		DrawAll();
 	}
 	private: System::Void GLFrame_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e)
@@ -1511,13 +1509,13 @@ namespace Lab1
 	}
 	private: System::Void GLFrame_MouseDown(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e)
 	{
-		if (e->Button == System::Windows::Forms::MouseButtons::Right) engine.DeselectAll();
-		else if (e->Button == System::Windows::Forms::MouseButtons::Left)
+		engine.DeselectAll();
+		if (e->Button == System::Windows::Forms::MouseButtons::Left)
 		{
-			double x = 0; // (MousePosition.X - this->Left - GLFrame->Left - 8);// -(742 / 2.0);// / (742 / 2.0) - 1;
-			double y = 0; // -(MousePosition.Y - this->Top - GLFrame->Top - 31) + 536;// +(536 / 2.0);// / (536 / 2.0) + 1;
-						  //int selected = SelectObject(x, y);
-						  //engine.SelectShape(selected);
+			double x = (MousePosition.X - this->Left - GLFrame->Left - 8);// -(742 / 2.0);// / (742 / 2.0) - 1;
+			double y = -(MousePosition.Y - this->Top - GLFrame->Top - 31) + 536;// +(536 / 2.0);// / (536 / 2.0) + 1;
+			int selected = SelectObject(x, y);
+			engine.SelectShape(selected);
 		}
 		DrawAll();
 	}
