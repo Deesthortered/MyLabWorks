@@ -196,20 +196,104 @@ namespace Lab1
 				GL::Color3(color);
 				if (xy)
 				{
-					GL::Begin(BeginMode::Polygon);
+					GL::Begin(BeginMode::Quads);
+					GL::Vertex3(x[0], y[0], 0.0);
+					GL::Vertex3(x[1], y[1], 0.0);
+					GL::Vertex3(x[2], y[2], 0.0);
+					GL::Vertex3(x[3], y[3], 0.0);
 
+					GL::Vertex3(x[2], y[2], 0.0);
+					GL::Vertex3(x[3], y[3], 0.0);
+					GL::Vertex3(x[7], y[7], 0.0);
+					GL::Vertex3(x[6], y[6], 0.0);
+
+					GL::Vertex3(x[7], y[7], 0.0);
+					GL::Vertex3(x[6], y[6], 0.0);
+					GL::Vertex3(x[5], y[5], 0.0);
+					GL::Vertex3(x[4], y[4], 0.0);
+
+					GL::Vertex3(x[5], y[5], 0.0);
+					GL::Vertex3(x[4], y[4], 0.0);
+					GL::Vertex3(x[0], y[0], 0.0);
+					GL::Vertex3(x[1], y[1], 0.0);
+
+					GL::Vertex3(x[1], y[1], 0.0);
+					GL::Vertex3(x[2], y[2], 0.0);
+					GL::Vertex3(x[6], y[6], 0.0);
+					GL::Vertex3(x[5], y[5], 0.0);
+
+					GL::Vertex3(x[0], y[0], 0.0);
+					GL::Vertex3(x[3], y[3], 0.0);
+					GL::Vertex3(x[7], y[7], 0.0);
+					GL::Vertex3(x[4], y[4], 0.0);
 					GL::End();
 				}
 				if (xz)
 				{
-					GL::Begin(BeginMode::Polygon);
+					GL::Begin(BeginMode::Quads);
+					GL::Vertex3(x[0], 0.0, z[0]);
+					GL::Vertex3(x[1], 0.0, z[1]);
+					GL::Vertex3(x[2], 0.0, z[2]);
+					GL::Vertex3(x[3], 0.0, z[3]);
 
+					GL::Vertex3(x[2], 0.0, z[2]);
+					GL::Vertex3(x[3], 0.0, z[3]);
+					GL::Vertex3(x[7], 0.0, z[7]);
+					GL::Vertex3(x[6], 0.0, z[6]);
+
+					GL::Vertex3(x[7], 0.0, z[7]);
+					GL::Vertex3(x[6], 0.0, z[6]);
+					GL::Vertex3(x[5], 0.0, z[5]);
+					GL::Vertex3(x[4], 0.0, z[4]);
+
+					GL::Vertex3(x[5], 0.0, z[5]);
+					GL::Vertex3(x[4], 0.0, z[4]);
+					GL::Vertex3(x[0], 0.0, z[0]);
+					GL::Vertex3(x[1], 0.0, z[1]);
+
+					GL::Vertex3(x[1], 0.0, z[1]);
+					GL::Vertex3(x[2], 0.0, z[2]);
+					GL::Vertex3(x[6], 0.0, z[6]);
+					GL::Vertex3(x[5], 0.0, z[5]);
+
+					GL::Vertex3(x[0], 0.0, z[0]);
+					GL::Vertex3(x[3], 0.0, z[3]);
+					GL::Vertex3(x[7], 0.0, z[7]);
+					GL::Vertex3(x[4], 0.0, z[4]);
 					GL::End();
 				}
 				if (yz)
 				{
-					GL::Begin(BeginMode::Polygon);
+					GL::Begin(BeginMode::Quads);
+					GL::Vertex3(0.0, y[0], z[0]);
+					GL::Vertex3(0.0, y[1], z[1]);
+					GL::Vertex3(0.0, y[2], z[2]);
+					GL::Vertex3(0.0, y[3], z[3]);
 
+					GL::Vertex3(0.0, y[2], z[2]);
+					GL::Vertex3(0.0, y[3], z[3]);
+					GL::Vertex3(0.0, y[7], z[7]);
+					GL::Vertex3(0.0, y[6], z[6]);
+
+					GL::Vertex3(0.0, y[7], z[7]);
+					GL::Vertex3(0.0, y[6], z[6]);
+					GL::Vertex3(0.0, y[5], z[5]);
+					GL::Vertex3(0.0, y[4], z[4]);
+
+					GL::Vertex3(0.0, y[5], z[5]);
+					GL::Vertex3(0.0, y[4], z[4]);
+					GL::Vertex3(0.0, y[0], z[0]);
+					GL::Vertex3(0.0, y[1], z[1]);
+
+					GL::Vertex3(0.0, y[1], z[1]);
+					GL::Vertex3(0.0, y[2], z[2]);
+					GL::Vertex3(0.0, y[6], z[6]);
+					GL::Vertex3(0.0, y[5], z[5]);
+
+					GL::Vertex3(0.0, y[0], z[0]);
+					GL::Vertex3(0.0, y[3], z[3]);
+					GL::Vertex3(0.0, y[7], z[7]);
+					GL::Vertex3(0.0, y[4], z[4]);
 					GL::End();
 				}
 			}
@@ -312,20 +396,62 @@ namespace Lab1
 				GL::Color3(color);
 				if (xy)
 				{
-					GL::Begin(BeginMode::Polygon);
+					GL::Begin(BeginMode::Triangles);
+					GL::Vertex3(x[0], y[0], 0.0);
+					GL::Vertex3(x[1], y[1], 0.0);
+					GL::Vertex3(x[2], y[2], 0.0);
 
+					GL::Vertex3(x[0], y[0], 0.0);
+					GL::Vertex3(x[3], y[3], 0.0);
+					GL::Vertex3(x[2], y[2], 0.0);
+
+					GL::Vertex3(x[0], y[0], 0.0);
+					GL::Vertex3(x[3], y[3], 0.0);
+					GL::Vertex3(x[1], y[1], 0.0);
+
+					GL::Vertex3(x[2], y[2], 0.0);
+					GL::Vertex3(x[3], y[3], 0.0);
+					GL::Vertex3(x[1], y[1], 0.0);
 					GL::End();
 				}
 				if (xz)
 				{
-					GL::Begin(BeginMode::Polygon);
+					GL::Begin(BeginMode::Triangles);
+					GL::Vertex3(x[0], 0.0, z[0]);
+					GL::Vertex3(x[1], 0.0, z[1]);
+					GL::Vertex3(x[2], 0.0, z[2]);
 
+					GL::Vertex3(x[0], 0.0, z[0]);
+					GL::Vertex3(x[3], 0.0, z[3]);
+					GL::Vertex3(x[2], 0.0, z[2]);
+
+					GL::Vertex3(x[0], 0.0, z[0]);
+					GL::Vertex3(x[3], 0.0, z[3]);
+					GL::Vertex3(x[1], 0.0, z[1]);
+
+					GL::Vertex3(x[2], 0.0, z[2]);
+					GL::Vertex3(x[3], 0.0, z[3]);
+					GL::Vertex3(x[1], 0.0, z[1]);
 					GL::End();
 				}
 				if (yz)
 				{
-					GL::Begin(BeginMode::Polygon);
+					GL::Begin(BeginMode::Triangles);
+					GL::Vertex3(0.0, y[0], z[0]);
+					GL::Vertex3(0.0, y[1], z[1]);
+					GL::Vertex3(0.0, y[2], z[2]);
 
+					GL::Vertex3(0.0, y[0], z[0]);
+					GL::Vertex3(0.0, y[3], z[3]);
+					GL::Vertex3(0.0, y[2], z[2]);
+
+					GL::Vertex3(0.0, y[0], z[0]);
+					GL::Vertex3(0.0, y[3], z[3]);
+					GL::Vertex3(0.0, y[1], z[1]);
+
+					GL::Vertex3(0.0, y[2], z[2]);
+					GL::Vertex3(0.0, y[3], z[3]);
+					GL::Vertex3(0.0, y[1], z[1]);
 					GL::End();
 				}
 			}
@@ -1859,8 +1985,12 @@ namespace Lab1
 	}
 	private: System::Void dataGridView_SelectionChanged(System::Object^  sender, System::EventArgs^  e) 
 	{
-		int id = Convert::ToInt32(dataGridView->CurrentRow->Cells[0]->Value);
-		engine.SelectShape(id);
+		try 
+		{
+			int id = Convert::ToInt32(dataGridView->CurrentRow->Cells[0]->Value);
+			engine.SelectShape(id);
+		}
+		catch (Exception^ ex) {}
 		DrawAll();
 	}
 	private: System::Void dataGridView_CellValueChanged(System::Object^  sender, System::Windows::Forms::DataGridViewCellEventArgs^  e) 
