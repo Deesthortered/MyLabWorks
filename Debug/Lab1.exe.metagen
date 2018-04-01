@@ -38,6 +38,7 @@ Class Lab1.MyForm+Shape: AutoLayout, AnsiClass, Class, NestedPublic, Abstract, B
     GetID(): PrivateScope, Public, HideBySig
     Select(): PrivateScope, Public, HideBySig
     Deselect(): PrivateScope, Public, HideBySig
+    Intersect(Vector3, Vector3): PrivateScope, Public, HideBySig
 Class Lab1.MyForm+Cube: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFieldInit
   :Lab1.MyForm+Shape
     Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
@@ -78,4 +79,5 @@ Class Lab1.MyForm+Engine: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFiel
     GetLightZ(): PrivateScope, Public, HideBySig
     SelectShape(UInt32): PrivateScope, Public, HideBySig
     DeselectAll(): PrivateScope, Public, HideBySig
+    Intersection(Vector3, Vector3): PrivateScope, Public, HideBySig
     Dispose(): PrivateScope, Public, Final, Virtual, HideBySig

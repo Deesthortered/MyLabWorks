@@ -19,6 +19,11 @@ namespace Lab1
 	int FrameDepth;
 	size_t next_id = 1;
 
+	OpenTK::Vector3 eyes(300.0f, 300.0f, 300.0f);
+	OpenTK::Vector3 direction(-1, -1 , -1);
+	OpenTK::Vector3 target(0, 0, 0);
+	OpenTK::Vector3 up(0, 1, 0);
+
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
 	public:
@@ -67,6 +72,20 @@ namespace Lab1
 			void Deselect()
 			{
 				this->selected = false;
+			}
+			int Intersect(OpenTK::Vector3 ray, OpenTK::Vector3 camera_pos)
+			{
+				int k = distance(ray, camera_pos, OpenTK::Vector3(x_coor, y_coor, z_coor));
+				if (k < 100) return k;
+				return -1;
+			}
+		private:
+			double distance(OpenTK::Vector3 vect, OpenTK::Vector3 point, OpenTK::Vector3 f_point)
+			{
+				OpenTK::Vector3 pnt(point.X - f_point.X, point.Y - f_point.Y, point.Z - f_point.Z);
+				OpenTK::Vector3 mlt((pnt.Y*vect.Z) - (pnt.Z*vect.Y), -((pnt.Z*vect.X) - (pnt.X*vect.Z)), (pnt.X*vect.Y) - (pnt.Y*vect.X));
+				double d = Math::Sqrt((mlt.X*mlt.X + mlt.Y*mlt.Y + mlt.Z*mlt.Z) / (vect.X*vect.X + vect.Y*vect.Y + vect.Z*vect.Z));
+				return d;
 			}
 		};
 		ref class Cube : public Shape
@@ -538,22 +557,45 @@ namespace Lab1
 			{
 				switch (e->KeyChar)
 				{
-				case 'a': { GL::Translate(TranslateStep, 0.0, 0.0); } break;
-				case 'd': { GL::Translate(-TranslateStep, 0.0, 0.0); } break;
-				case 'w': { GL::Translate(0.0, TranslateStep, 0.0); } break;
-				case 's': { GL::Translate(0.0, -TranslateStep, 0.0); } break;
-				case 'z': { GL::Translate(0.0, 0.0, TranslateStep); } break;
-				case 'c': { GL::Translate(0.0, 0.0, -TranslateStep); } break;
+				case 'w': 
+				{ 
+					eyes   += direction * TranslateStep;
+					target += direction * TranslateStep;
+				} break;
+				case 's': 
+				{ 
+					eyes   += (-direction) * TranslateStep;
+					target += (-direction) * TranslateStep;
+				} break;
+				case 'a': 
+				{ 
+					OpenTK::Vector3 new_dir(up.Y*direction.Z - up.Z*direction.Y, -(up.Z*direction.Y - up.X*direction.Z), up.X*direction.Y - up.Y*direction.X);
+					eyes   += new_dir * TranslateStep;
+					target += new_dir * TranslateStep;
+				} break;
+				case 'd': 
+				{ 
+					OpenTK::Vector3 new_dir(up.Y*direction.Z - up.Z*direction.Y, -(up.Z*direction.Y - up.X*direction.Z), up.X*direction.Y - up.Y*direction.X);
+					eyes   += (-new_dir) * TranslateStep;
+					target += (-new_dir) * TranslateStep;
+				} break;
 
-				case 'q': { GL::Scale(1.0 - ScaleStep, 1.0 - ScaleStep, 1.0 - ScaleStep); } break;
-				case 'e': { GL::Scale(1.0 + ScaleStep, 1.0 + ScaleStep, 1.0 + ScaleStep); } break;
+				case 't': 
+				{
 
-				case 'r': { GL::Rotate(RotareStep, 1.0, 0.0, 0.0); } break;
-				case 'f': { GL::Rotate(-RotareStep, 1.0, 0.0, 0.0); } break;
-				case 't': { GL::Rotate(RotareStep, 0.0, 1.0, 0.0); } break;
-				case 'g': { GL::Rotate(-RotareStep, 0.0, 1.0, 0.0); } break;
-				case 'y': { GL::Rotate(RotareStep, 0.0, 0.0, 1.0); } break;
-				case 'h': { GL::Rotate(-RotareStep, 0.0, 0.0, 1.0); } break;
+				} break;
+				case 'g': 
+				{ 
+					
+				} break;
+				case 'f': 
+				{
+
+				} break;
+				case 'h': 
+				{ 
+
+				} break;
 
 				case 'u': { light_pos[0] += (float)TranslateStep; } break;
 				case 'j': { light_pos[0] -= (float)TranslateStep; } break;
@@ -596,6 +638,17 @@ namespace Lab1
 			{
 				for (int i = 0; i < shape_list.Count; i++)
 					shape_list[i]->Deselect();
+			}
+
+			int Intersection(OpenTK::Vector3 ray, OpenTK::Vector3 camera_pos)
+			{
+				int id = -1, tmp = -1;
+				for each (Shape^ cur in shape_list)
+				{
+					int k = cur->Intersect(ray, camera_pos);
+					if (k != -1 && k > tmp) { tmp = k; id = cur->GetID(); }
+				}
+				return id;
 			}
 		};
 
@@ -669,7 +722,7 @@ namespace Lab1
 	private: System::Data::OleDb::OleDbConnection^  oleDbConnection1;
 	private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand1;
 	private: System::Data::OleDb::OleDbCommand^  oleDbUpdateCommand1;
-	private: System::Data::OleDb::OleDbCommand^  oleDbDeleteCommand1;
+	private: System::Data::OleDb::OleDbCommand^	 oleDbDeleteCommand1;
 	private: System::Data::OleDb::OleDbDataAdapter^  oleDbDataAdapter1;
 
 	private: Engine engine;
@@ -1523,10 +1576,10 @@ namespace Lab1
 		FrameHeight = GLFrame->Height;
 		FrameDepth = GLFrame->Height;
 
-		float eyes[] = { 300.0f, 300.0f, 300.0f };
-		float target[] = { 0.0f, 0.0f, 0.0f };
-		OpenTK::Matrix4 projection = OpenTK::Matrix4::CreatePerspectiveFieldOfView(0.785398163f, (742.0f / 536.0f), 0.1f, 1000.0f);  //45 degree = 0.785398163 rads
-		OpenTK::Matrix4 view = OpenTK::Matrix4::LookAt(eyes[0], eyes[1], eyes[2], target[0], target[1], target[2], 0, 1, 0);
+		direction.Normalize();
+		target = eyes + direction;
+		OpenTK::Matrix4 projection = OpenTK::Matrix4::CreatePerspectiveFieldOfView(OpenTK::MathHelper::DegreesToRadians(45.0), (742.0f / 536.0f), 0.1f, 1000.0f);
+		OpenTK::Matrix4 view = OpenTK::Matrix4::LookAt(eyes.X, eyes.Y, eyes.Z, target.X, target.Y, target.Z, up.X, up.Y, up.Z);
 		OpenTK::Matrix4 model = OpenTK::Matrix4::Identity;
 		OpenTK::Matrix4 MV = view * model;
 		GL::Clear(ClearBufferMask::ColorBufferBit | ClearBufferMask::DepthBufferBit);
@@ -1586,7 +1639,20 @@ namespace Lab1
 
 	private: void DrawAll()
 	{
+		target = eyes + direction;
+		OpenTK::Matrix4 projection = OpenTK::Matrix4::CreatePerspectiveFieldOfView(OpenTK::MathHelper::DegreesToRadians(45.0), (742.0f / 536.0f), 0.1f, 1000.0f);
+		OpenTK::Matrix4 view = OpenTK::Matrix4::LookAt(eyes.X, eyes.Y, eyes.Z, target.X, target.Y, target.Z, up.X, up.Y, up.Z);
+		OpenTK::Matrix4 model = OpenTK::Matrix4::Identity;
+		OpenTK::Matrix4 MV = view * model;
 		GL::Clear(ClearBufferMask::ColorBufferBit | ClearBufferMask::DepthBufferBit);
+
+		GL::MatrixMode(MatrixMode::Projection);
+		GL::LoadIdentity();
+		GL::LoadMatrix(projection);
+		GL::MatrixMode(MatrixMode::Modelview);
+		GL::LoadIdentity();
+		GL::LoadMatrix(MV);
+
 		DrawOrthPlanes();
 		DrawOrthLines();
 		GL::InitNames();
@@ -1665,46 +1731,26 @@ namespace Lab1
 		GL::End();
 	}
 
-	private: int SelectObject(double x, double y)
+	private: OpenTK::Vector3 GetRay(float x, float y)
 	{
-		int objectsFound = 0;
-		int viewportCoords[4] = { 0 };
-		unsigned int selectBuffer[400] = { 0 };
+		float z = 1.0;
+		OpenTK::Vector3 ray_nds(x, y, z);
+		OpenTK::Vector4 ray_clip(ray_nds.X, ray_nds.Y, -1.0, 1.0);
+		OpenTK::Matrix4 proj_inv = OpenTK::Matrix4::CreatePerspectiveFieldOfView(float(OpenTK::MathHelper::DegreesToRadians(45.0)), (742.0f / 536.0f), 0.1f, 1000.0f).Inverted();
+		OpenTK::Vector4 ray_eye = OpenTK::Vector4(	proj_inv.M11*ray_clip.X + proj_inv.M12*ray_clip.Y + proj_inv.M13*ray_clip.Z + proj_inv.M14*ray_clip.W, 
+													proj_inv.M21*ray_clip.X + proj_inv.M22*ray_clip.Y + proj_inv.M23*ray_clip.Z + proj_inv.M24*ray_clip.W, 
+													proj_inv.M31*ray_clip.X + proj_inv.M32*ray_clip.Y + proj_inv.M33*ray_clip.Z + proj_inv.M34*ray_clip.W, 
+													proj_inv.M41*ray_clip.X + proj_inv.M42*ray_clip.Y + proj_inv.M43*ray_clip.Z + proj_inv.M44*ray_clip.W  );
+		ray_eye = OpenTK::Vector4(ray_eye.X, ray_eye.Y, -1.0, 1.0);
 
-		GL::SelectBuffer(400, selectBuffer);
-		GL::GetInteger(GetPName::Viewport, viewportCoords);
-		GL::MatrixMode(MatrixMode::Projection);
-		GL::PushMatrix();
-		GL::RenderMode(RenderingMode::Select);
-		GL::LoadIdentity();
-		PickMatrix(x, viewportCoords[3] - y, 2, 2, viewportCoords);
-		OpenTK::Matrix4 projection = OpenTK::Matrix4::CreatePerspectiveFieldOfView(0.785398163f, (742.0f / 536.0f), 0.1f, 1000.0f);
-		GL::LoadMatrix(projection);
-		GL::MatrixMode(MatrixMode::Modelview);
-		DrawAll();
-		objectsFound = GL::RenderMode(RenderingMode::Render);
-		GL::MatrixMode(MatrixMode::Projection);
-		GL::PopMatrix();
-		GL::MatrixMode(MatrixMode::Modelview);
-
-		if (objectsFound == 0) return -1;
-		unsigned int lowestDepth = selectBuffer[1];
-		int selectedObject = selectBuffer[3];
-		for (int i = 1; i < objectsFound; i++)
-		{
-			if (selectBuffer[(i * 4) + 1] < lowestDepth)
-			{
-				lowestDepth = selectBuffer[(i * 4) + 1];
-				selectedObject = selectBuffer[(i * 4) + 3];
-			}
-		}
-		return selectedObject;
-	}
-	private: void PickMatrix(double x, double y, double deltax, double deltay, int* viewport)
-	{
-		if (deltax <= 0 || deltay <= 0) return;
-		GL::Translate((viewport[2] - 2 * (x - viewport[0])) / deltax, (viewport[3] - 2 * (y - viewport[1])) / deltay, 0);
-		GL::Scale(viewport[2] / deltax, viewport[3] / deltay, 1.0);
+		OpenTK::Matrix4 view_inv = OpenTK::Matrix4::LookAt(eyes.X, eyes.Y, eyes.Z, target.X, target.Y, target.Z, up.X, up.Y, up.Z).Inverted();
+		OpenTK::Vector4 tmp = OpenTK::Vector4(	view_inv.M11*ray_eye.X + view_inv.M12*ray_eye.Y + view_inv.M13*ray_eye.Z + view_inv.M14*ray_eye.W,
+												view_inv.M21*ray_eye.X + view_inv.M22*ray_eye.Y + view_inv.M23*ray_eye.Z + view_inv.M24*ray_eye.W,
+												view_inv.M31*ray_eye.X + view_inv.M32*ray_eye.Y + view_inv.M33*ray_eye.Z + view_inv.M34*ray_eye.W,
+												view_inv.M41*ray_eye.X + view_inv.M42*ray_eye.Y + view_inv.M43*ray_eye.Z + view_inv.M44*ray_eye.W);
+		OpenTK::Vector3 ray_wor(tmp.X, tmp.Y, tmp.Z);
+		ray_wor.Normalize();
+		return ray_wor;
 	}
 
 	private: System::Void MyForm_Shown(System::Object^  sender, System::EventArgs^  e)
@@ -1734,10 +1780,13 @@ namespace Lab1
 		engine.DeselectAll();
 		if (e->Button == System::Windows::Forms::MouseButtons::Left)
 		{
-			double x = (MousePosition.X - this->Left - GLFrame->Left - 8);// -(742 / 2.0);// / (742 / 2.0) - 1;
-			double y = -(MousePosition.Y - this->Top - GLFrame->Top - 31) + 536;// +(536 / 2.0);// / (536 / 2.0) + 1;
-			//int selected = SelectObject(x, y);
-			//engine.SelectShape(selected);
+			int viewport[4];
+			GL::GetInteger(GetPName::Viewport, viewport);
+			float x = float(((MousePosition.X - this->Left - GLFrame->Left - 8) - viewport[2] / 2.0) / (viewport[2] / 2.0));
+			float y = float((-(MousePosition.Y - this->Top - GLFrame->Top - 31) + viewport[3] / 2.0) / (viewport[3] / 2.0));
+			OpenTK::Vector3 ray = GetRay(x, y);
+			int selected = engine.Intersection(ray, OpenTK::Vector3(/*eyes[0], eyes[1], eyes[2]*/));
+			if (selected != -1) engine.SelectShape(selected);
 		}
 		DrawAll();
 	}
