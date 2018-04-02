@@ -40,6 +40,7 @@ namespace Lab1
 			double x_rot, y_rot, z_rot;
 			size_t l;
 			Color  color;
+			size_t cnt;
 		public:
 			virtual void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id)
 			{
@@ -73,28 +74,26 @@ namespace Lab1
 			{
 				this->selected = false;
 			}
-			int Intersect(OpenTK::Vector3 ray, OpenTK::Vector3 camera_pos)
-			{
-				int k = distance(ray, camera_pos, OpenTK::Vector3(x_coor, y_coor, z_coor));
-				if (k < 100) return k;
-				return -1;
-			}
-		private:
+			virtual double Intersect(OpenTK::Vector3 ray, OpenTK::Vector3 camera_pos) { return -1; }
+		protected:
 			double distance(OpenTK::Vector3 vect, OpenTK::Vector3 point, OpenTK::Vector3 f_point)
 			{
 				OpenTK::Vector3 pnt(point.X - f_point.X, point.Y - f_point.Y, point.Z - f_point.Z);
 				OpenTK::Vector3 mlt((pnt.Y*vect.Z) - (pnt.Z*vect.Y), -((pnt.Z*vect.X) - (pnt.X*vect.Z)), (pnt.X*vect.Y) - (pnt.Y*vect.X));
-				double d = Math::Sqrt((mlt.X*mlt.X + mlt.Y*mlt.Y + mlt.Z*mlt.Z) / (vect.X*vect.X + vect.Y*vect.Y + vect.Z*vect.Z));
-				return d;
+				return Math::Sqrt((mlt.X*mlt.X + mlt.Y*mlt.Y + mlt.Z*mlt.Z) / (vect.X*vect.X + vect.Y*vect.Y + vect.Z*vect.Z));
+			}
+			double distance(OpenTK::Vector3 p1, OpenTK::Vector3 p2)
+			{
+				return Math::Sqrt((p1.X - p2.X)*(p1.X - p2.X) + (p1.Y - p2.Y)*(p1.Y - p2.Y) + (p1.Z - p2.Z)*(p1.Z - p2.Z));
 			}
 		};
 		ref class Cube : public Shape
 		{
 			double *x, *y, *z;
-			const size_t cnt = 8;
 		public:
 			Cube()
 			{
+				cnt = 8;
 				x = y = z = nullptr;
 			}
 			~Cube()
@@ -216,36 +215,36 @@ namespace Lab1
 				if (xy)
 				{
 					GL::Begin(BeginMode::Quads);
-					GL::Vertex3(x[0], y[0], 0.0);
-					GL::Vertex3(x[1], y[1], 0.0);
-					GL::Vertex3(x[2], y[2], 0.0);
-					GL::Vertex3(x[3], y[3], 0.0);
+GL::Vertex3(x[0], y[0], 0.0);
+GL::Vertex3(x[1], y[1], 0.0);
+GL::Vertex3(x[2], y[2], 0.0);
+GL::Vertex3(x[3], y[3], 0.0);
 
-					GL::Vertex3(x[2], y[2], 0.0);
-					GL::Vertex3(x[3], y[3], 0.0);
-					GL::Vertex3(x[7], y[7], 0.0);
-					GL::Vertex3(x[6], y[6], 0.0);
+GL::Vertex3(x[2], y[2], 0.0);
+GL::Vertex3(x[3], y[3], 0.0);
+GL::Vertex3(x[7], y[7], 0.0);
+GL::Vertex3(x[6], y[6], 0.0);
 
-					GL::Vertex3(x[7], y[7], 0.0);
-					GL::Vertex3(x[6], y[6], 0.0);
-					GL::Vertex3(x[5], y[5], 0.0);
-					GL::Vertex3(x[4], y[4], 0.0);
+GL::Vertex3(x[7], y[7], 0.0);
+GL::Vertex3(x[6], y[6], 0.0);
+GL::Vertex3(x[5], y[5], 0.0);
+GL::Vertex3(x[4], y[4], 0.0);
 
-					GL::Vertex3(x[5], y[5], 0.0);
-					GL::Vertex3(x[4], y[4], 0.0);
-					GL::Vertex3(x[0], y[0], 0.0);
-					GL::Vertex3(x[1], y[1], 0.0);
+GL::Vertex3(x[5], y[5], 0.0);
+GL::Vertex3(x[4], y[4], 0.0);
+GL::Vertex3(x[0], y[0], 0.0);
+GL::Vertex3(x[1], y[1], 0.0);
 
-					GL::Vertex3(x[1], y[1], 0.0);
-					GL::Vertex3(x[2], y[2], 0.0);
-					GL::Vertex3(x[6], y[6], 0.0);
-					GL::Vertex3(x[5], y[5], 0.0);
+GL::Vertex3(x[1], y[1], 0.0);
+GL::Vertex3(x[2], y[2], 0.0);
+GL::Vertex3(x[6], y[6], 0.0);
+GL::Vertex3(x[5], y[5], 0.0);
 
-					GL::Vertex3(x[0], y[0], 0.0);
-					GL::Vertex3(x[3], y[3], 0.0);
-					GL::Vertex3(x[7], y[7], 0.0);
-					GL::Vertex3(x[4], y[4], 0.0);
-					GL::End();
+GL::Vertex3(x[0], y[0], 0.0);
+GL::Vertex3(x[3], y[3], 0.0);
+GL::Vertex3(x[7], y[7], 0.0);
+GL::Vertex3(x[4], y[4], 0.0);
+GL::End();
 				}
 				if (xz)
 				{
@@ -316,14 +315,22 @@ namespace Lab1
 					GL::End();
 				}
 			}
+			virtual double Intersect(OpenTK::Vector3 ray, OpenTK::Vector3 camera_pos) override
+			{
+				for (size_t i = 0; i < cnt; i++)
+				{
+					if (Shape::distance(ray, camera_pos, OpenTK::Vector3(float(x[i]), float(y[i]), float(z[i]))) > l*Math::Sqrt(3)) return -1;
+				}
+				return Shape::distance(OpenTK::Vector3(float(x_coor), float(y_coor), float(z_coor)), camera_pos);
+			}
 		};
 		ref class Pyramid : public Shape
 		{
 			double *x, *y, *z;
-			const size_t cnt = 4;
 		public:
 			Pyramid()
 			{
+				cnt = 4;
 				x = y = z = nullptr;
 			}
 			~Pyramid()
@@ -474,6 +481,14 @@ namespace Lab1
 					GL::End();
 				}
 			}
+			virtual double Intersect(OpenTK::Vector3 ray, OpenTK::Vector3 camera_pos) override
+			{
+				for (int i = 0; i < cnt; i++)
+				{
+					if (Shape::distance(ray, camera_pos, OpenTK::Vector3(x[i], y[i], z[i])) > (l*5)/6) return -1;
+				}
+				return Shape::distance(OpenTK::Vector3(x_coor, y_coor, z_coor), camera_pos);
+			}
 		};
 
 		ref class Engine
@@ -486,7 +501,7 @@ namespace Lab1
 		public:
 			Engine()
 			{
-				TranslateStep = 1;
+				TranslateStep = 10;
 				ScaleStep = 0.1;
 				RotareStep = 1;
 				light_pos = new float[4];
@@ -558,11 +573,21 @@ namespace Lab1
 				switch (e->KeyChar)
 				{
 				case 'w': 
+				{
+					eyes   += up * TranslateStep;
+					target += up * TranslateStep;
+				} break;
+				case 's': 
+				{
+					eyes +=   (-up) * TranslateStep;
+					target += (-up) * TranslateStep;
+				} break;
+				case 'e':
 				{ 
 					eyes   += direction * TranslateStep;
 					target += direction * TranslateStep;
 				} break;
-				case 's': 
+				case 'q': 
 				{ 
 					eyes   += (-direction) * TranslateStep;
 					target += (-direction) * TranslateStep;
@@ -582,19 +607,25 @@ namespace Lab1
 
 				case 't': 
 				{
-
+					direction += (up / 100.0f) * RotareStep;
+					direction.Normalize();
 				} break;
 				case 'g': 
 				{ 
-					
+					direction += (-up / 100.0f) * RotareStep;
+					direction.Normalize();
 				} break;
 				case 'f': 
 				{
-
+					OpenTK::Vector3 new_dir(up.Y*direction.Z - up.Z*direction.Y, -(up.Z*direction.Y - up.X*direction.Z), up.X*direction.Y - up.Y*direction.X);
+					direction += (new_dir / 100.0f) * RotareStep;
+					direction.Normalize();
 				} break;
 				case 'h': 
 				{ 
-
+					OpenTK::Vector3 new_dir(up.Y*direction.Z - up.Z*direction.Y, -(up.Z*direction.Y - up.X*direction.Z), up.X*direction.Y - up.Y*direction.X);
+					direction += (-new_dir / 100.0f) * RotareStep;
+					direction.Normalize();
 				} break;
 
 				case 'u': { light_pos[0] += (float)TranslateStep; } break;
@@ -642,11 +673,11 @@ namespace Lab1
 
 			int Intersection(OpenTK::Vector3 ray, OpenTK::Vector3 camera_pos)
 			{
-				int id = -1, tmp = -1;
+				int id = -1; double tmp = -1;
 				for each (Shape^ cur in shape_list)
 				{
-					int k = cur->Intersect(ray, camera_pos);
-					if (k != -1 && k > tmp) { tmp = k; id = cur->GetID(); }
+					double k = cur->Intersect(ray, camera_pos);
+					if (k != -1 && (k < tmp || tmp == -1)) { tmp = k; id = int(cur->GetID()); }
 				}
 				return id;
 			}
@@ -784,11 +815,11 @@ namespace Lab1
 			this->dataSet1 = (gcnew System::Data::DataSet());
 			this->colorDialog = (gcnew System::Windows::Forms::ColorDialog());
 			this->oleDbSelectCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
+			this->oleDbConnection1 = (gcnew System::Data::OleDb::OleDbConnection());
 			this->oleDbInsertCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
 			this->oleDbUpdateCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
 			this->oleDbDeleteCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
 			this->oleDbDataAdapter1 = (gcnew System::Data::OleDb::OleDbDataAdapter());
-			this->oleDbConnection1 = (gcnew System::Data::OleDb::OleDbConnection());
 			this->MainTabControl->SuspendLayout();
 			this->CameraTab->SuspendLayout();
 			this->AddShapeTab->SuspendLayout();
@@ -1058,7 +1089,7 @@ namespace Lab1
 			// 
 			// but1LightNull
 			// 
-			this->but1LightNull->Location = System::Drawing::Point(890, 31);
+			this->but1LightNull->Location = System::Drawing::Point(890, 30);
 			this->but1LightNull->Name = L"but1LightNull";
 			this->but1LightNull->Size = System::Drawing::Size(82, 76);
 			this->but1LightNull->TabIndex = 24;
@@ -1254,7 +1285,7 @@ namespace Lab1
 			this->tb1_trans->Name = L"tb1_trans";
 			this->tb1_trans->Size = System::Drawing::Size(100, 22);
 			this->tb1_trans->TabIndex = 3;
-			this->tb1_trans->Text = L"1";
+			this->tb1_trans->Text = L"10";
 			this->tb1_trans->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb1_trans_KeyPress);
 			this->tb1_trans->Leave += gcnew System::EventHandler(this, &MyForm::tb1_trans_Leave);
 			// 
@@ -1370,6 +1401,11 @@ namespace Lab1
 			// 
 			this->oleDbSelectCommand1->CommandText = L"SELECT Shapes.*\r\nFROM     Shapes";
 			this->oleDbSelectCommand1->Connection = this->oleDbConnection1;
+			// 
+			// oleDbConnection1
+			// 
+			this->oleDbConnection1->ConnectionString = L"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=D:\\2.Programming\\MyLabWorks\\Lab1\\dat"
+				L"abase.mdb";
 			// 
 			// oleDbInsertCommand1
 			// 
@@ -1537,11 +1573,6 @@ namespace Lab1
 			});
 			this->oleDbDataAdapter1->UpdateCommand = this->oleDbUpdateCommand1;
 			// 
-			// oleDbConnection1
-			// 
-			this->oleDbConnection1->ConnectionString = L"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=D:\\2.Programming\\MyLabWorks\\Lab1\\dat"
-				L"abase.mdb";
-			// 
 			// MyForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(8, 16);
@@ -1578,7 +1609,7 @@ namespace Lab1
 
 		direction.Normalize();
 		target = eyes + direction;
-		OpenTK::Matrix4 projection = OpenTK::Matrix4::CreatePerspectiveFieldOfView(OpenTK::MathHelper::DegreesToRadians(45.0), (742.0f / 536.0f), 0.1f, 1000.0f);
+		OpenTK::Matrix4 projection = OpenTK::Matrix4::CreatePerspectiveFieldOfView(float(OpenTK::MathHelper::DegreesToRadians(45.0)), (742.0f / 536.0f), 0.1f, 1000.0f);
 		OpenTK::Matrix4 view = OpenTK::Matrix4::LookAt(eyes.X, eyes.Y, eyes.Z, target.X, target.Y, target.Z, up.X, up.Y, up.Z);
 		OpenTK::Matrix4 model = OpenTK::Matrix4::Identity;
 		OpenTK::Matrix4 MV = view * model;
@@ -1610,9 +1641,16 @@ namespace Lab1
 	{
 		oleDbConnection1->Open();
 		oleDbDataAdapter1->Fill(dataSet1);
-		next_id = Convert::ToUInt32(dataSet1->Tables[0]->Rows[dataSet1->Tables[0]->Rows->Count - 1]->ItemArray[0]) + 1;
 		dataGridView->AutoGenerateColumns = true;
 		dataGridView->DataSource = dataSet1->Tables[0];
+		try 
+		{
+			next_id = Convert::ToUInt32(dataSet1->Tables[0]->Rows[dataSet1->Tables[0]->Rows->Count - 1]->ItemArray[0]) + 1;
+		}
+		catch (Exception ^ex)
+		{
+			next_id = 1;
+		}
 		dataGridView->Update();
 		oleDbConnection1->Close();
 		dataGridView->AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode::Fill;
@@ -1640,7 +1678,7 @@ namespace Lab1
 	private: void DrawAll()
 	{
 		target = eyes + direction;
-		OpenTK::Matrix4 projection = OpenTK::Matrix4::CreatePerspectiveFieldOfView(OpenTK::MathHelper::DegreesToRadians(45.0), (742.0f / 536.0f), 0.1f, 1000.0f);
+		OpenTK::Matrix4 projection = OpenTK::Matrix4::CreatePerspectiveFieldOfView(float(OpenTK::MathHelper::DegreesToRadians(45.0)), (742.0f / 536.0f), 0.1f, 10000.0f);
 		OpenTK::Matrix4 view = OpenTK::Matrix4::LookAt(eyes.X, eyes.Y, eyes.Z, target.X, target.Y, target.Z, up.X, up.Y, up.Z);
 		OpenTK::Matrix4 model = OpenTK::Matrix4::Identity;
 		OpenTK::Matrix4 MV = view * model;
@@ -1733,9 +1771,13 @@ namespace Lab1
 
 	private: OpenTK::Vector3 GetRay(float x, float y)
 	{
+		int viewport[4];
+		GL::GetInteger(GetPName::Viewport, viewport);
+		x = float(( x - viewport[2] / 2.0) / (viewport[2] / 2.0));
+		y = float((-y + viewport[3] / 2.0) / (viewport[3] / 2.0));
 		float z = 1.0;
 		OpenTK::Vector3 ray_nds(x, y, z);
-		OpenTK::Vector4 ray_clip(ray_nds.X, ray_nds.Y, -1.0, 1.0);
+		OpenTK::Vector4 ray_clip(ray_nds.X, ray_nds.Y, 0.0, 1.0);
 		OpenTK::Matrix4 proj_inv = OpenTK::Matrix4::CreatePerspectiveFieldOfView(float(OpenTK::MathHelper::DegreesToRadians(45.0)), (742.0f / 536.0f), 0.1f, 1000.0f).Inverted();
 		OpenTK::Vector4 ray_eye = OpenTK::Vector4(	proj_inv.M11*ray_clip.X + proj_inv.M12*ray_clip.Y + proj_inv.M13*ray_clip.Z + proj_inv.M14*ray_clip.W, 
 													proj_inv.M21*ray_clip.X + proj_inv.M22*ray_clip.Y + proj_inv.M23*ray_clip.Z + proj_inv.M24*ray_clip.W, 
@@ -1780,12 +1822,10 @@ namespace Lab1
 		engine.DeselectAll();
 		if (e->Button == System::Windows::Forms::MouseButtons::Left)
 		{
-			int viewport[4];
-			GL::GetInteger(GetPName::Viewport, viewport);
-			float x = float(((MousePosition.X - this->Left - GLFrame->Left - 8) - viewport[2] / 2.0) / (viewport[2] / 2.0));
-			float y = float((-(MousePosition.Y - this->Top - GLFrame->Top - 31) + viewport[3] / 2.0) / (viewport[3] / 2.0));
+			float x = float(MousePosition.X - this->Left - GLFrame->Left -  8);
+			float y = float(MousePosition.Y - this->Top  - GLFrame->Top  - 31);
 			OpenTK::Vector3 ray = GetRay(x, y);
-			int selected = engine.Intersection(ray, OpenTK::Vector3(/*eyes[0], eyes[1], eyes[2]*/));
+			int selected = engine.Intersection(ray, eyes);
 			if (selected != -1) engine.SelectShape(selected);
 		}
 		DrawAll();
