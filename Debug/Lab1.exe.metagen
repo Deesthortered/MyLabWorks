@@ -63,8 +63,6 @@ Class Lab1.MyForm+Pyramid: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFie
     Dispose(): PrivateScope, Public, Final, Virtual, HideBySig
 Class Lab1.MyForm+Engine: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFieldInit
     Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
-  Interfaces:
-    System.IDisposable
   Methods:
     SetTranslateStep(Double): PrivateScope, Public, HideBySig
     SetScaleStep(Double): PrivateScope, Public, HideBySig
@@ -80,4 +78,3 @@ Class Lab1.MyForm+Engine: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFiel
     SelectShape(UInt32): PrivateScope, Public, HideBySig
     DeselectAll(): PrivateScope, Public, HideBySig
     Intersection(Vector3, Vector3): PrivateScope, Public, HideBySig
-    Dispose(): PrivateScope, Public, Final, Virtual, HideBySig

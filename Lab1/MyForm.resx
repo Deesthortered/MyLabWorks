@@ -118,10 +118,10 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <metadata name="dataSet1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>393, 17</value>
+    <value>4, -3</value>
   </metadata>
   <metadata name="colorDialog.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>509, 17</value>
+    <value>249, 27</value>
   </metadata>
   <metadata name="oleDbSelectCommand1.DesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>False</value>
@@ -133,7 +133,7 @@
     <value>False</value>
   </metadata>
   <metadata name="oleDbConnection1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>836, 17</value>
+    <value>-2, 54</value>
   </metadata>
   <metadata name="oleDbUpdateCommand1.DesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>False</value>
@@ -160,7 +160,7 @@
     <value>DELETE FROM `Shapes` WHERE ((`Код` = ?) AND ((? = 1 AND `x_coor` IS NULL) OR (`x_coor` = ?)) AND ((? = 1 AND `y_coor` IS NULL) OR (`y_coor` = ?)) AND ((? = 1 AND `z_coor` IS NULL) OR (`z_coor` = ?)) AND ((? = 1 AND `lenght` IS NULL) OR (`lenght` = ?)) AND ((? = 1 AND `x_rot` IS NULL) OR (`x_rot` = ?)) AND ((? = 1 AND `y_rot` IS NULL) OR (`y_rot` = ?)) AND ((? = 1 AND `z_rot` IS NULL) OR (`z_rot` = ?)) AND ((? = 1 AND `ShapeType` IS NULL) OR (`ShapeType` = ?)) AND ((? = 1 AND `Color_R` IS NULL) OR (`Color_R` = ?)) AND ((? = 1 AND `Color_G` IS NULL) OR (`Color_G` = ?)) AND ((? = 1 AND `Color_B` IS NULL) OR (`Color_B` = ?)) AND ((? = 1 AND `Color_A` IS NULL) OR (`Color_A` = ?)) AND ((? = 1 AND `Scene` IS NULL) OR (`Scene` = ?)))</value>
   </data>
   <metadata name="oleDbDataAdapter1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>644, 17</value>
+    <value>5, 25</value>
   </metadata>
   <metadata name="oleDbInsertCommand.DesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>False</value>

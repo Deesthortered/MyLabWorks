@@ -1,4 +1,4 @@
-#pragma once
+Ôªø#pragma once
 
 namespace Lab1 
 {
@@ -19,6 +19,8 @@ namespace Lab1
 	int FrameDepth;
 	size_t next_id = 1;
 	int current_scene = 1;
+	bool selected = false;
+	int selected_shape_id = -1;
 
 	OpenTK::Vector3 eyes(300.0f, 300.0f, 300.0f);
 	OpenTK::Vector3 direction(0, 0, -1);
@@ -56,13 +58,8 @@ namespace Lab1
 				this->y_rot = y_rot;
 				this->z_rot = z_rot;
 			}
-			virtual void Draw()
-			{
-			}
-			virtual void DrawProjections(bool xy, bool xz, bool yz)
-			{
-
-			}
+			virtual void Draw() {}
+			virtual void DrawProjections(bool xy, bool xz, bool yz) {}
 			size_t GetID()
 			{
 				return this->id;
@@ -502,9 +499,6 @@ namespace Lab1
 				RotareStep = 5;
 				light_pos = OpenTK::Vector3(100, 100, 100);
 			}
-			~Engine()
-			{
-			}
 
 			void SetTranslateStep(double val)
 			{
@@ -640,15 +634,18 @@ namespace Lab1
 
 			void SelectShape(size_t id)
 			{
+				selected = false;
 				for (int i = 0; i < shape_list.Count; i++)
 					if (shape_list[i]->GetID() == id)
 					{
 						shape_list[i]->Select();
+						selected = true;
 						return;
 					}
 			}
 			void DeselectAll()
 			{
+				selected = false;
 				for (int i = 0; i < shape_list.Count; i++)
 					shape_list[i]->Deselect();
 			}
@@ -718,7 +715,6 @@ namespace Lab1
 	private: System::Windows::Forms::CheckBox^  cb1_planeXY;
 	private: System::Windows::Forms::CheckBox^  cb1_planeYZ;
 	private: System::Windows::Forms::RichTextBox^  rtb1_manual;
-
 	private: System::Windows::Forms::TextBox^  tb1_LightZ;
 	private: System::Windows::Forms::TextBox^  tb1_LightY;
 	private: System::Windows::Forms::TextBox^  tb1_LightX;
@@ -733,13 +729,51 @@ namespace Lab1
 	private: System::Windows::Forms::PictureBox^  picture2;
 	private: System::Data::OleDb::OleDbCommand^  oleDbSelectCommand1;
 	private: System::Data::OleDb::OleDbConnection^  oleDbConnection1;
-
 	private: System::Data::OleDb::OleDbCommand^  oleDbUpdateCommand1;
 	private: System::Data::OleDb::OleDbCommand^	 oleDbDeleteCommand1;
 	private: System::Data::OleDb::OleDbDataAdapter^  oleDbDataAdapter1;
 	private: System::Windows::Forms::TextBox^  tb1_Scene;
 	private: System::Windows::Forms::Label^  label1Scene;
-private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
+	private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
+	private: System::Windows::Forms::Panel^  panel3ControlUI;
+	private: System::Windows::Forms::Label^  label3None;
+	private: System::Windows::Forms::Label^  label3Selected;
+	private: System::Windows::Forms::ComboBox^  ShapeTypeBox3;
+	private: System::Windows::Forms::Label^  label3ShapeType;
+	private: System::Windows::Forms::Label^  label3ZPos;
+	private: System::Windows::Forms::TextBox^  tb3_ZPos;
+	private: System::Windows::Forms::TextBox^  tb3_YPos;
+	private: System::Windows::Forms::Label^  label3YPos;
+	private: System::Windows::Forms::Label^  label3XPos;
+	private: System::Windows::Forms::TextBox^  tb3_XPos;
+	private: System::Windows::Forms::Label^  label3Position;
+	private: System::Windows::Forms::Button^  b3_PosXdown;
+	private: System::Windows::Forms::Button^  b3_PosZdown;
+	private: System::Windows::Forms::Button^  b3_PosZup;
+	private: System::Windows::Forms::Button^  b3_PosYdown;
+	private: System::Windows::Forms::Button^  b3_PosXup;
+	private: System::Windows::Forms::Button^  b3_PosYup;
+	private: System::Windows::Forms::Button^  b3_RotXdown;
+	private: System::Windows::Forms::Button^  b3_RotZdown;
+	private: System::Windows::Forms::Button^  b3_RotZup;
+	private: System::Windows::Forms::Button^  b3_RotYdown;
+	private: System::Windows::Forms::Button^  b3_RotXup;
+	private: System::Windows::Forms::Button^  b3_RotYup;
+	private: System::Windows::Forms::Label^  label3ZRot;
+	private: System::Windows::Forms::TextBox^  tb3_ZRot;
+	private: System::Windows::Forms::TextBox^  tb3_YRot;
+	private: System::Windows::Forms::Label^  label3YRot;
+	private: System::Windows::Forms::Label^  label3XRot;
+	private: System::Windows::Forms::TextBox^  tb3_XRot;
+	private: System::Windows::Forms::Label^  label3Rotare;
+	private: System::Windows::Forms::Label^  label3Length;
+	private: System::Windows::Forms::Button^  b3_LengthUp;
+	private: System::Windows::Forms::Button^  b3_LengthDown;
+	private: System::Windows::Forms::TextBox^  tb3_Length;
+	private: System::Windows::Forms::TextBox^  tb3_Step;
+	private: System::Windows::Forms::Label^  label3Step;
+	private: System::Windows::Forms::Button^  b3_ok;
+	private: System::Windows::Forms::Button^  b3_cancel;
 
 	private: Engine engine;
 #pragma region Windows Form Designer generated code
@@ -797,6 +831,43 @@ private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
 			this->picture2 = (gcnew System::Windows::Forms::PictureBox());
 			this->b2_setColor = (gcnew System::Windows::Forms::Button());
 			this->ControlTab = (gcnew System::Windows::Forms::TabPage());
+			this->panel3ControlUI = (gcnew System::Windows::Forms::Panel());
+			this->tb3_Step = (gcnew System::Windows::Forms::TextBox());
+			this->label3Step = (gcnew System::Windows::Forms::Label());
+			this->b3_LengthUp = (gcnew System::Windows::Forms::Button());
+			this->b3_LengthDown = (gcnew System::Windows::Forms::Button());
+			this->tb3_Length = (gcnew System::Windows::Forms::TextBox());
+			this->label3Length = (gcnew System::Windows::Forms::Label());
+			this->b3_RotXdown = (gcnew System::Windows::Forms::Button());
+			this->b3_RotZdown = (gcnew System::Windows::Forms::Button());
+			this->b3_RotZup = (gcnew System::Windows::Forms::Button());
+			this->b3_RotYdown = (gcnew System::Windows::Forms::Button());
+			this->b3_RotXup = (gcnew System::Windows::Forms::Button());
+			this->b3_RotYup = (gcnew System::Windows::Forms::Button());
+			this->label3ZRot = (gcnew System::Windows::Forms::Label());
+			this->tb3_ZRot = (gcnew System::Windows::Forms::TextBox());
+			this->tb3_YRot = (gcnew System::Windows::Forms::TextBox());
+			this->label3YRot = (gcnew System::Windows::Forms::Label());
+			this->label3XRot = (gcnew System::Windows::Forms::Label());
+			this->tb3_XRot = (gcnew System::Windows::Forms::TextBox());
+			this->label3Rotare = (gcnew System::Windows::Forms::Label());
+			this->b3_PosXdown = (gcnew System::Windows::Forms::Button());
+			this->b3_PosZdown = (gcnew System::Windows::Forms::Button());
+			this->b3_PosZup = (gcnew System::Windows::Forms::Button());
+			this->b3_PosYdown = (gcnew System::Windows::Forms::Button());
+			this->b3_PosXup = (gcnew System::Windows::Forms::Button());
+			this->b3_PosYup = (gcnew System::Windows::Forms::Button());
+			this->label3ZPos = (gcnew System::Windows::Forms::Label());
+			this->tb3_ZPos = (gcnew System::Windows::Forms::TextBox());
+			this->tb3_YPos = (gcnew System::Windows::Forms::TextBox());
+			this->label3YPos = (gcnew System::Windows::Forms::Label());
+			this->label3XPos = (gcnew System::Windows::Forms::Label());
+			this->tb3_XPos = (gcnew System::Windows::Forms::TextBox());
+			this->label3Position = (gcnew System::Windows::Forms::Label());
+			this->ShapeTypeBox3 = (gcnew System::Windows::Forms::ComboBox());
+			this->label3ShapeType = (gcnew System::Windows::Forms::Label());
+			this->label3None = (gcnew System::Windows::Forms::Label());
+			this->label3Selected = (gcnew System::Windows::Forms::Label());
 			this->dataGridView = (gcnew System::Windows::Forms::DataGridView());
 			this->dataSet1 = (gcnew System::Data::DataSet());
 			this->colorDialog = (gcnew System::Windows::Forms::ColorDialog());
@@ -806,11 +877,14 @@ private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
 			this->oleDbDeleteCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
 			this->oleDbDataAdapter1 = (gcnew System::Data::OleDb::OleDbDataAdapter());
 			this->oleDbInsertCommand = (gcnew System::Data::OleDb::OleDbCommand());
+			this->b3_cancel = (gcnew System::Windows::Forms::Button());
+			this->b3_ok = (gcnew System::Windows::Forms::Button());
 			this->MainTabControl->SuspendLayout();
 			this->CameraTab->SuspendLayout();
 			this->AddShapeTab->SuspendLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->picture2))->BeginInit();
 			this->ControlTab->SuspendLayout();
+			this->panel3ControlUI->SuspendLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridView))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataSet1))->BeginInit();
 			this->SuspendLayout();
@@ -1034,10 +1108,10 @@ private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
 			this->MainTabControl->Controls->Add(this->CameraTab);
 			this->MainTabControl->Controls->Add(this->AddShapeTab);
 			this->MainTabControl->Controls->Add(this->ControlTab);
-			this->MainTabControl->Location = System::Drawing::Point(12, 12);
+			this->MainTabControl->Location = System::Drawing::Point(12, 6);
 			this->MainTabControl->Name = L"MainTabControl";
 			this->MainTabControl->SelectedIndex = 0;
-			this->MainTabControl->Size = System::Drawing::Size(995, 156);
+			this->MainTabControl->Size = System::Drawing::Size(995, 165);
 			this->MainTabControl->TabIndex = 21;
 			// 
 			// CameraTab
@@ -1069,7 +1143,7 @@ private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
 			this->CameraTab->Location = System::Drawing::Point(4, 25);
 			this->CameraTab->Name = L"CameraTab";
 			this->CameraTab->Padding = System::Windows::Forms::Padding(3);
-			this->CameraTab->Size = System::Drawing::Size(987, 127);
+			this->CameraTab->Size = System::Drawing::Size(987, 136);
 			this->CameraTab->TabIndex = 0;
 			this->CameraTab->Text = L"Camera";
 			this->CameraTab->UseVisualStyleBackColor = true;
@@ -1340,7 +1414,7 @@ private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
 			this->AddShapeTab->Location = System::Drawing::Point(4, 25);
 			this->AddShapeTab->Name = L"AddShapeTab";
 			this->AddShapeTab->Padding = System::Windows::Forms::Padding(3);
-			this->AddShapeTab->Size = System::Drawing::Size(987, 127);
+			this->AddShapeTab->Size = System::Drawing::Size(987, 136);
 			this->AddShapeTab->TabIndex = 1;
 			this->AddShapeTab->Text = L"Add shape";
 			this->AddShapeTab->UseVisualStyleBackColor = true;
@@ -1365,13 +1439,369 @@ private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
 			// 
 			// ControlTab
 			// 
+			this->ControlTab->Controls->Add(this->panel3ControlUI);
+			this->ControlTab->Controls->Add(this->label3None);
+			this->ControlTab->Controls->Add(this->label3Selected);
 			this->ControlTab->Controls->Add(this->dataGridView);
 			this->ControlTab->Location = System::Drawing::Point(4, 25);
 			this->ControlTab->Name = L"ControlTab";
-			this->ControlTab->Size = System::Drawing::Size(987, 127);
+			this->ControlTab->Size = System::Drawing::Size(987, 136);
 			this->ControlTab->TabIndex = 2;
 			this->ControlTab->Text = L"Control";
 			this->ControlTab->UseVisualStyleBackColor = true;
+			// 
+			// panel3ControlUI
+			// 
+			this->panel3ControlUI->Controls->Add(this->b3_ok);
+			this->panel3ControlUI->Controls->Add(this->b3_cancel);
+			this->panel3ControlUI->Controls->Add(this->tb3_Step);
+			this->panel3ControlUI->Controls->Add(this->label3Step);
+			this->panel3ControlUI->Controls->Add(this->b3_LengthUp);
+			this->panel3ControlUI->Controls->Add(this->b3_LengthDown);
+			this->panel3ControlUI->Controls->Add(this->tb3_Length);
+			this->panel3ControlUI->Controls->Add(this->label3Length);
+			this->panel3ControlUI->Controls->Add(this->b3_RotXdown);
+			this->panel3ControlUI->Controls->Add(this->b3_RotZdown);
+			this->panel3ControlUI->Controls->Add(this->b3_RotZup);
+			this->panel3ControlUI->Controls->Add(this->b3_RotYdown);
+			this->panel3ControlUI->Controls->Add(this->b3_RotXup);
+			this->panel3ControlUI->Controls->Add(this->b3_RotYup);
+			this->panel3ControlUI->Controls->Add(this->label3ZRot);
+			this->panel3ControlUI->Controls->Add(this->tb3_ZRot);
+			this->panel3ControlUI->Controls->Add(this->tb3_YRot);
+			this->panel3ControlUI->Controls->Add(this->label3YRot);
+			this->panel3ControlUI->Controls->Add(this->label3XRot);
+			this->panel3ControlUI->Controls->Add(this->tb3_XRot);
+			this->panel3ControlUI->Controls->Add(this->label3Rotare);
+			this->panel3ControlUI->Controls->Add(this->b3_PosXdown);
+			this->panel3ControlUI->Controls->Add(this->b3_PosZdown);
+			this->panel3ControlUI->Controls->Add(this->b3_PosZup);
+			this->panel3ControlUI->Controls->Add(this->b3_PosYdown);
+			this->panel3ControlUI->Controls->Add(this->b3_PosXup);
+			this->panel3ControlUI->Controls->Add(this->b3_PosYup);
+			this->panel3ControlUI->Controls->Add(this->label3ZPos);
+			this->panel3ControlUI->Controls->Add(this->tb3_ZPos);
+			this->panel3ControlUI->Controls->Add(this->tb3_YPos);
+			this->panel3ControlUI->Controls->Add(this->label3YPos);
+			this->panel3ControlUI->Controls->Add(this->label3XPos);
+			this->panel3ControlUI->Controls->Add(this->tb3_XPos);
+			this->panel3ControlUI->Controls->Add(this->label3Position);
+			this->panel3ControlUI->Controls->Add(this->ShapeTypeBox3);
+			this->panel3ControlUI->Controls->Add(this->label3ShapeType);
+			this->panel3ControlUI->Enabled = false;
+			this->panel3ControlUI->Location = System::Drawing::Point(3, 24);
+			this->panel3ControlUI->Name = L"panel3ControlUI";
+			this->panel3ControlUI->Size = System::Drawing::Size(648, 109);
+			this->panel3ControlUI->TabIndex = 5;
+			// 
+			// tb3_Step
+			// 
+			this->tb3_Step->Location = System::Drawing::Point(48, 54);
+			this->tb3_Step->Name = L"tb3_Step";
+			this->tb3_Step->Size = System::Drawing::Size(63, 22);
+			this->tb3_Step->TabIndex = 22;
+			this->tb3_Step->Text = L"5";
+			// 
+			// label3Step
+			// 
+			this->label3Step->AutoSize = true;
+			this->label3Step->Location = System::Drawing::Point(4, 55);
+			this->label3Step->Name = L"label3Step";
+			this->label3Step->Size = System::Drawing::Size(41, 17);
+			this->label3Step->TabIndex = 32;
+			this->label3Step->Text = L"Step:";
+			// 
+			// b3_LengthUp
+			// 
+			this->b3_LengthUp->Location = System::Drawing::Point(597, 56);
+			this->b3_LengthUp->Name = L"b3_LengthUp";
+			this->b3_LengthUp->Size = System::Drawing::Size(40, 30);
+			this->b3_LengthUp->TabIndex = 31;
+			this->b3_LengthUp->Text = L"‚ñ∂";
+			this->b3_LengthUp->UseVisualStyleBackColor = true;
+			// 
+			// b3_LengthDown
+			// 
+			this->b3_LengthDown->Location = System::Drawing::Point(551, 56);
+			this->b3_LengthDown->Name = L"b3_LengthDown";
+			this->b3_LengthDown->Size = System::Drawing::Size(40, 30);
+			this->b3_LengthDown->TabIndex = 30;
+			this->b3_LengthDown->Text = L"‚óÄ";
+			this->b3_LengthDown->UseVisualStyleBackColor = true;
+			// 
+			// tb3_Length
+			// 
+			this->tb3_Length->Location = System::Drawing::Point(551, 30);
+			this->tb3_Length->Name = L"tb3_Length";
+			this->tb3_Length->Size = System::Drawing::Size(82, 22);
+			this->tb3_Length->TabIndex = 29;
+			// 
+			// label3Length
+			// 
+			this->label3Length->AutoSize = true;
+			this->label3Length->Location = System::Drawing::Point(548, 7);
+			this->label3Length->Name = L"label3Length";
+			this->label3Length->Size = System::Drawing::Size(56, 17);
+			this->label3Length->TabIndex = 28;
+			this->label3Length->Text = L"Length:";
+			// 
+			// b3_RotXdown
+			// 
+			this->b3_RotXdown->Location = System::Drawing::Point(452, 47);
+			this->b3_RotXdown->Name = L"b3_RotXdown";
+			this->b3_RotXdown->Size = System::Drawing::Size(30, 30);
+			this->b3_RotXdown->TabIndex = 27;
+			this->b3_RotXdown->Text = L"‚Üê";
+			this->b3_RotXdown->UseVisualStyleBackColor = true;
+			// 
+			// b3_RotZdown
+			// 
+			this->b3_RotZdown->Location = System::Drawing::Point(452, 77);
+			this->b3_RotZdown->Name = L"b3_RotZdown";
+			this->b3_RotZdown->Size = System::Drawing::Size(30, 30);
+			this->b3_RotZdown->TabIndex = 26;
+			this->b3_RotZdown->Text = L"‚Üô";
+			this->b3_RotZdown->UseVisualStyleBackColor = true;
+			// 
+			// b3_RotZup
+			// 
+			this->b3_RotZup->Location = System::Drawing::Point(512, 17);
+			this->b3_RotZup->Name = L"b3_RotZup";
+			this->b3_RotZup->Size = System::Drawing::Size(30, 30);
+			this->b3_RotZup->TabIndex = 25;
+			this->b3_RotZup->Text = L"‚Üó";
+			this->b3_RotZup->UseVisualStyleBackColor = true;
+			// 
+			// b3_RotYdown
+			// 
+			this->b3_RotYdown->Location = System::Drawing::Point(482, 77);
+			this->b3_RotYdown->Name = L"b3_RotYdown";
+			this->b3_RotYdown->Size = System::Drawing::Size(30, 30);
+			this->b3_RotYdown->TabIndex = 24;
+			this->b3_RotYdown->Text = L"‚Üì";
+			this->b3_RotYdown->UseVisualStyleBackColor = true;
+			// 
+			// b3_RotXup
+			// 
+			this->b3_RotXup->Location = System::Drawing::Point(512, 43);
+			this->b3_RotXup->Name = L"b3_RotXup";
+			this->b3_RotXup->Size = System::Drawing::Size(30, 30);
+			this->b3_RotXup->TabIndex = 23;
+			this->b3_RotXup->Text = L"‚Üí";
+			this->b3_RotXup->UseVisualStyleBackColor = true;
+			// 
+			// b3_RotYup
+			// 
+			this->b3_RotYup->Location = System::Drawing::Point(482, 17);
+			this->b3_RotYup->Name = L"b3_RotYup";
+			this->b3_RotYup->Size = System::Drawing::Size(30, 30);
+			this->b3_RotYup->TabIndex = 22;
+			this->b3_RotYup->Text = L"‚Üë";
+			this->b3_RotYup->UseVisualStyleBackColor = true;
+			// 
+			// label3ZRot
+			// 
+			this->label3ZRot->AutoSize = true;
+			this->label3ZRot->Location = System::Drawing::Point(362, 84);
+			this->label3ZRot->Name = L"label3ZRot";
+			this->label3ZRot->Size = System::Drawing::Size(25, 17);
+			this->label3ZRot->TabIndex = 21;
+			this->label3ZRot->Text = L"Z :";
+			// 
+			// tb3_ZRot
+			// 
+			this->tb3_ZRot->Location = System::Drawing::Point(393, 81);
+			this->tb3_ZRot->Name = L"tb3_ZRot";
+			this->tb3_ZRot->Size = System::Drawing::Size(53, 22);
+			this->tb3_ZRot->TabIndex = 20;
+			// 
+			// tb3_YRot
+			// 
+			this->tb3_YRot->Location = System::Drawing::Point(393, 53);
+			this->tb3_YRot->Name = L"tb3_YRot";
+			this->tb3_YRot->Size = System::Drawing::Size(53, 22);
+			this->tb3_YRot->TabIndex = 19;
+			// 
+			// label3YRot
+			// 
+			this->label3YRot->AutoSize = true;
+			this->label3YRot->Location = System::Drawing::Point(362, 56);
+			this->label3YRot->Name = L"label3YRot";
+			this->label3YRot->Size = System::Drawing::Size(25, 17);
+			this->label3YRot->TabIndex = 18;
+			this->label3YRot->Text = L"Y :";
+			// 
+			// label3XRot
+			// 
+			this->label3XRot->AutoSize = true;
+			this->label3XRot->Location = System::Drawing::Point(362, 30);
+			this->label3XRot->Name = L"label3XRot";
+			this->label3XRot->Size = System::Drawing::Size(25, 17);
+			this->label3XRot->TabIndex = 17;
+			this->label3XRot->Text = L"X :";
+			// 
+			// tb3_XRot
+			// 
+			this->tb3_XRot->Location = System::Drawing::Point(393, 25);
+			this->tb3_XRot->Name = L"tb3_XRot";
+			this->tb3_XRot->Size = System::Drawing::Size(53, 22);
+			this->tb3_XRot->TabIndex = 16;
+			// 
+			// label3Rotare
+			// 
+			this->label3Rotare->AutoSize = true;
+			this->label3Rotare->Location = System::Drawing::Point(340, 7);
+			this->label3Rotare->Name = L"label3Rotare";
+			this->label3Rotare->Size = System::Drawing::Size(55, 17);
+			this->label3Rotare->TabIndex = 15;
+			this->label3Rotare->Text = L"Rotare:";
+			// 
+			// b3_PosXdown
+			// 
+			this->b3_PosXdown->Location = System::Drawing::Point(240, 44);
+			this->b3_PosXdown->Name = L"b3_PosXdown";
+			this->b3_PosXdown->Size = System::Drawing::Size(30, 30);
+			this->b3_PosXdown->TabIndex = 14;
+			this->b3_PosXdown->Text = L"‚Üê";
+			this->b3_PosXdown->UseVisualStyleBackColor = true;
+			// 
+			// b3_PosZdown
+			// 
+			this->b3_PosZdown->Location = System::Drawing::Point(240, 74);
+			this->b3_PosZdown->Name = L"b3_PosZdown";
+			this->b3_PosZdown->Size = System::Drawing::Size(30, 30);
+			this->b3_PosZdown->TabIndex = 13;
+			this->b3_PosZdown->Text = L"‚Üô";
+			this->b3_PosZdown->UseVisualStyleBackColor = true;
+			// 
+			// b3_PosZup
+			// 
+			this->b3_PosZup->Location = System::Drawing::Point(300, 14);
+			this->b3_PosZup->Name = L"b3_PosZup";
+			this->b3_PosZup->Size = System::Drawing::Size(30, 30);
+			this->b3_PosZup->TabIndex = 12;
+			this->b3_PosZup->Text = L"‚Üó";
+			this->b3_PosZup->UseVisualStyleBackColor = true;
+			// 
+			// b3_PosYdown
+			// 
+			this->b3_PosYdown->Location = System::Drawing::Point(270, 74);
+			this->b3_PosYdown->Name = L"b3_PosYdown";
+			this->b3_PosYdown->Size = System::Drawing::Size(30, 30);
+			this->b3_PosYdown->TabIndex = 11;
+			this->b3_PosYdown->Text = L"‚Üì";
+			this->b3_PosYdown->UseVisualStyleBackColor = true;
+			// 
+			// b3_PosXup
+			// 
+			this->b3_PosXup->Location = System::Drawing::Point(300, 40);
+			this->b3_PosXup->Name = L"b3_PosXup";
+			this->b3_PosXup->Size = System::Drawing::Size(30, 30);
+			this->b3_PosXup->TabIndex = 10;
+			this->b3_PosXup->Text = L"‚Üí";
+			this->b3_PosXup->UseVisualStyleBackColor = true;
+			// 
+			// b3_PosYup
+			// 
+			this->b3_PosYup->Location = System::Drawing::Point(270, 14);
+			this->b3_PosYup->Name = L"b3_PosYup";
+			this->b3_PosYup->Size = System::Drawing::Size(30, 30);
+			this->b3_PosYup->TabIndex = 9;
+			this->b3_PosYup->Text = L"‚Üë";
+			this->b3_PosYup->UseVisualStyleBackColor = true;
+			// 
+			// label3ZPos
+			// 
+			this->label3ZPos->AutoSize = true;
+			this->label3ZPos->Location = System::Drawing::Point(150, 81);
+			this->label3ZPos->Name = L"label3ZPos";
+			this->label3ZPos->Size = System::Drawing::Size(25, 17);
+			this->label3ZPos->TabIndex = 8;
+			this->label3ZPos->Text = L"Z :";
+			// 
+			// tb3_ZPos
+			// 
+			this->tb3_ZPos->Location = System::Drawing::Point(181, 78);
+			this->tb3_ZPos->Name = L"tb3_ZPos";
+			this->tb3_ZPos->Size = System::Drawing::Size(53, 22);
+			this->tb3_ZPos->TabIndex = 7;
+			// 
+			// tb3_YPos
+			// 
+			this->tb3_YPos->Location = System::Drawing::Point(181, 50);
+			this->tb3_YPos->Name = L"tb3_YPos";
+			this->tb3_YPos->Size = System::Drawing::Size(53, 22);
+			this->tb3_YPos->TabIndex = 6;
+			// 
+			// label3YPos
+			// 
+			this->label3YPos->AutoSize = true;
+			this->label3YPos->Location = System::Drawing::Point(150, 53);
+			this->label3YPos->Name = L"label3YPos";
+			this->label3YPos->Size = System::Drawing::Size(25, 17);
+			this->label3YPos->TabIndex = 5;
+			this->label3YPos->Text = L"Y :";
+			// 
+			// label3XPos
+			// 
+			this->label3XPos->AutoSize = true;
+			this->label3XPos->Location = System::Drawing::Point(150, 27);
+			this->label3XPos->Name = L"label3XPos";
+			this->label3XPos->Size = System::Drawing::Size(25, 17);
+			this->label3XPos->TabIndex = 4;
+			this->label3XPos->Text = L"X :";
+			// 
+			// tb3_XPos
+			// 
+			this->tb3_XPos->Location = System::Drawing::Point(181, 22);
+			this->tb3_XPos->Name = L"tb3_XPos";
+			this->tb3_XPos->Size = System::Drawing::Size(53, 22);
+			this->tb3_XPos->TabIndex = 3;
+			// 
+			// label3Position
+			// 
+			this->label3Position->AutoSize = true;
+			this->label3Position->Location = System::Drawing::Point(128, 4);
+			this->label3Position->Name = L"label3Position";
+			this->label3Position->Size = System::Drawing::Size(62, 17);
+			this->label3Position->TabIndex = 2;
+			this->label3Position->Text = L"Position:";
+			// 
+			// ShapeTypeBox3
+			// 
+			this->ShapeTypeBox3->FormattingEnabled = true;
+			this->ShapeTypeBox3->Items->AddRange(gcnew cli::array< System::Object^  >(2) { L"Cube", L"Pyramid" });
+			this->ShapeTypeBox3->Location = System::Drawing::Point(7, 24);
+			this->ShapeTypeBox3->Name = L"ShapeTypeBox3";
+			this->ShapeTypeBox3->Size = System::Drawing::Size(104, 24);
+			this->ShapeTypeBox3->TabIndex = 1;
+			// 
+			// label3ShapeType
+			// 
+			this->label3ShapeType->AutoSize = true;
+			this->label3ShapeType->Location = System::Drawing::Point(4, 4);
+			this->label3ShapeType->Name = L"label3ShapeType";
+			this->label3ShapeType->Size = System::Drawing::Size(84, 17);
+			this->label3ShapeType->TabIndex = 0;
+			this->label3ShapeType->Text = L"Shape type:";
+			// 
+			// label3None
+			// 
+			this->label3None->AutoSize = true;
+			this->label3None->Location = System::Drawing::Point(120, 4);
+			this->label3None->Name = L"label3None";
+			this->label3None->Size = System::Drawing::Size(42, 17);
+			this->label3None->TabIndex = 4;
+			this->label3None->Text = L"None";
+			// 
+			// label3Selected
+			// 
+			this->label3Selected->AutoSize = true;
+			this->label3Selected->Location = System::Drawing::Point(4, 4);
+			this->label3Selected->Name = L"label3Selected";
+			this->label3Selected->Size = System::Drawing::Size(110, 17);
+			this->label3Selected->TabIndex = 3;
+			this->label3Selected->Text = L"Selected shape:";
 			// 
 			// dataGridView
 			// 
@@ -1379,10 +1809,10 @@ private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
 			this->dataGridView->AutoGenerateColumns = false;
 			this->dataGridView->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->dataGridView->DataSource = this->dataSet1;
-			this->dataGridView->Location = System::Drawing::Point(3, 3);
+			this->dataGridView->Location = System::Drawing::Point(657, 3);
 			this->dataGridView->Name = L"dataGridView";
 			this->dataGridView->RowTemplate->Height = 24;
-			this->dataGridView->Size = System::Drawing::Size(978, 121);
+			this->dataGridView->Size = System::Drawing::Size(324, 121);
 			this->dataGridView->TabIndex = 2;
 			this->dataGridView->CellValueChanged += gcnew System::Windows::Forms::DataGridViewCellEventHandler(this, &MyForm::dataGridView_CellValueChanged);
 			this->dataGridView->RowLeave += gcnew System::Windows::Forms::DataGridViewCellEventHandler(this, &MyForm::dataGridView_RowLeave);
@@ -1420,8 +1850,8 @@ private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
 											0, L"Color_G")), (gcnew System::Data::OleDb::OleDbParameter(L"Color_B", System::Data::OleDb::OleDbType::UnsignedTinyInt,
 												0, L"Color_B")), (gcnew System::Data::OleDb::OleDbParameter(L"Color_A", System::Data::OleDb::OleDbType::UnsignedTinyInt,
 													0, L"Color_A")), (gcnew System::Data::OleDb::OleDbParameter(L"Scene", System::Data::OleDb::OleDbType::Integer, 0, L"Scene")),
-													(gcnew System::Data::OleDb::OleDbParameter(L"Original_ Ó‰", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-														false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L" Ó‰", System::Data::DataRowVersion::Original, nullptr)),
+													(gcnew System::Data::OleDb::OleDbParameter(L"Original_–ö–æ–¥", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+														false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"–ö–æ–¥", System::Data::DataRowVersion::Original, nullptr)),
 														(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_x_coor", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
 															static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"x_coor", System::Data::DataRowVersion::Original, true, nullptr)),
 															(gcnew System::Data::OleDb::OleDbParameter(L"Original_x_coor", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
@@ -1481,9 +1911,9 @@ private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
 			this->oleDbDeleteCommand1->CommandText = resources->GetString(L"oleDbDeleteCommand1.CommandText");
 			this->oleDbDeleteCommand1->Connection = this->oleDbConnection1;
 			this->oleDbDeleteCommand1->Parameters->AddRange(gcnew cli::array< System::Data::OleDb::OleDbParameter^  >(27) {
-				(gcnew System::Data::OleDb::OleDbParameter(L"Original_ Ó‰",
+				(gcnew System::Data::OleDb::OleDbParameter(L"Original_–ö–æ–¥",
 					System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
-					static_cast<System::Byte>(0), L" Ó‰", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_x_coor",
+					static_cast<System::Byte>(0), L"–ö–æ–¥", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_x_coor",
 						System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
 						L"x_coor", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_x_coor",
 							System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
@@ -1544,8 +1974,8 @@ private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
 			this->oleDbDataAdapter1->InsertCommand = this->oleDbInsertCommand;
 			this->oleDbDataAdapter1->SelectCommand = this->oleDbSelectCommand1;
 			cli::array< System::Data::Common::DataColumnMapping^ >^ __mcTemp__1 = gcnew cli::array< System::Data::Common::DataColumnMapping^  >(14) {
-				(gcnew System::Data::Common::DataColumnMapping(L" Ó‰",
-					L" Ó‰")), (gcnew System::Data::Common::DataColumnMapping(L"x_coor", L"x_coor")), (gcnew System::Data::Common::DataColumnMapping(L"y_coor",
+				(gcnew System::Data::Common::DataColumnMapping(L"–ö–æ–¥",
+					L"–ö–æ–¥")), (gcnew System::Data::Common::DataColumnMapping(L"x_coor", L"x_coor")), (gcnew System::Data::Common::DataColumnMapping(L"y_coor",
 						L"y_coor")), (gcnew System::Data::Common::DataColumnMapping(L"z_coor", L"z_coor")), (gcnew System::Data::Common::DataColumnMapping(L"lenght",
 							L"lenght")), (gcnew System::Data::Common::DataColumnMapping(L"x_rot", L"x_rot")), (gcnew System::Data::Common::DataColumnMapping(L"y_rot",
 								L"y_rot")), (gcnew System::Data::Common::DataColumnMapping(L"z_rot", L"z_rot")), (gcnew System::Data::Common::DataColumnMapping(L"ShapeType",
@@ -1577,6 +2007,24 @@ private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
 													0, L"Color_A")), (gcnew System::Data::OleDb::OleDbParameter(L"Scene", System::Data::OleDb::OleDbType::Integer, 0, L"Scene"))
 			});
 			// 
+			// b3_cancel
+			// 
+			this->b3_cancel->Location = System::Drawing::Point(7, 84);
+			this->b3_cancel->Name = L"b3_cancel";
+			this->b3_cancel->Size = System::Drawing::Size(61, 23);
+			this->b3_cancel->TabIndex = 33;
+			this->b3_cancel->Text = L"Cancel";
+			this->b3_cancel->UseVisualStyleBackColor = true;
+			// 
+			// b3_ok
+			// 
+			this->b3_ok->Location = System::Drawing::Point(74, 84);
+			this->b3_ok->Name = L"b3_ok";
+			this->b3_ok->Size = System::Drawing::Size(61, 23);
+			this->b3_ok->TabIndex = 34;
+			this->b3_ok->Text = L"OK";
+			this->b3_ok->UseVisualStyleBackColor = true;
+			// 
 			// MyForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(8, 16);
@@ -1597,6 +2045,9 @@ private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
 			this->AddShapeTab->PerformLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->picture2))->EndInit();
 			this->ControlTab->ResumeLayout(false);
+			this->ControlTab->PerformLayout();
+			this->panel3ControlUI->ResumeLayout(false);
+			this->panel3ControlUI->PerformLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridView))->EndInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataSet1))->EndInit();
 			this->ResumeLayout(false);
@@ -1648,9 +2099,9 @@ private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
 		dataSet1->Reset();
 		oleDbSelectCommand1->CommandText = (L"SELECT * FROM Shapes WHERE Scene = " + Convert::ToString(current_scene));
 		oleDbDataAdapter1->Fill(dataSet1);
+
 		dataGridView->AutoGenerateColumns = true;
 		dataGridView->DataSource = dataSet1->Tables[0];
-		dataGridView->AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode::Fill;
 		dataGridView->Update();
 		try 
 		{
@@ -1664,7 +2115,7 @@ private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
 		{
 			ShapeType type = ShapeType::Pyramid;
 			String^ t = dataGridView->Rows[i]->Cells[8]->Value->ToString();
-			if (t == " Û·") type = ShapeType::Cube;
+			if (t == "–ö—É–±") type = ShapeType::Cube;
 			engine.CreateShape(type, Color::FromArgb(	Convert::ToInt32(dataGridView->Rows[i]->Cells[12]->Value), 
 														Convert::ToInt32(dataGridView->Rows[i]->Cells[9]->Value), 
 														Convert::ToInt32(dataGridView->Rows[i]->Cells[10]->Value), 
@@ -1677,6 +2128,28 @@ private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
 											Convert::ToDouble(dataGridView->Rows[i]->Cells[6]->Value), 
 											Convert::ToDouble(dataGridView->Rows[i]->Cells[7]->Value), 
 											Convert::ToUInt32(dataGridView->Rows[i]->Cells[0]->Value));
+		}
+	}
+	private: void ControlPanel()
+	{
+		if (selected)
+		{
+			panel3ControlUI->Enabled = true;
+			label3None->Text = "ID " + Convert::ToString(selected_shape_id);
+
+		}
+		else
+		{
+			panel3ControlUI->Enabled = false;
+			label3None->Text = "None";
+			ShapeTypeBox3->Text = "";
+			tb3_XPos->Text = "";
+			tb3_YPos->Text = "";
+			tb3_ZPos->Text = "";
+			tb3_XRot->Text = "";
+			tb3_YRot->Text = "";
+			tb3_ZRot->Text = "";
+			tb3_Length->Text = "";
 		}
 	}
 
@@ -1773,7 +2246,6 @@ private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
 		}
 		GL::End();
 	}
-
 	private: OpenTK::Vector3 GetRay(double x, double y)
 	{
 		int viewport[4];
@@ -1811,6 +2283,12 @@ private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
 	}
 	private: System::Void GLFrame_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e)
 	{
+		if (e->KeyChar == 27)
+		{
+			engine.DeselectAll();
+			selected = false;
+			ControlPanel();
+		}
 		engine.CameraControl(e);
 		OpenTK::Vector3 light = engine.GetLight();
 		tb1_LightX->Text = Convert::ToString(light.X);
@@ -1826,9 +2304,14 @@ private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
 			float x = float(MousePosition.X - this->Left - GLFrame->Left -  8);
 			float y = float(MousePosition.Y - this->Top  - GLFrame->Top  - 31);
 			OpenTK::Vector3 ray = GetRay(x, y);
-			int selected = engine.Intersection(ray, eyes);
-			if (selected != -1) engine.SelectShape(selected);
+			int selected_id = engine.Intersection(ray, eyes);
+			if (selected_id != -1)
+			{
+				selected_shape_id = selected_id;
+				engine.SelectShape(selected_id);
+			}
 		}
+		ControlPanel();
 		DrawAll();
 	}
 	private: System::Void MyForm_FormClosing(System::Object^  sender, System::Windows::Forms::FormClosingEventArgs^  e)
@@ -2041,9 +2524,9 @@ private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
 	{
 		SystemSounds::Beep->Play();
 		ShapeType type;
-		String^ b = " Û·";
+		String^ b = "–ö—É–±";
 		if (ShapeListBox2->SelectedItem == ShapeListBox2->Items[0]) type = ShapeType::Cube;
-		else if (ShapeListBox2->SelectedItem == ShapeListBox2->Items[1]) { type = ShapeType::Pyramid; b = "œË‡ÏË‰‡"; }
+		else if (ShapeListBox2->SelectedItem == ShapeListBox2->Items[1]) { type = ShapeType::Pyramid; b = "–ü–∏—Ä–∞–º–∏–¥–∞"; }
 		engine.CreateShape(type, colorDialog->Color,	Convert::ToUInt32(tb2_leght->Text),
 														Convert::ToDouble(tb2_Xcoor->Text),
 														Convert::ToDouble(tb2_Ycoor->Text),
@@ -2094,7 +2577,7 @@ private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
 			int id = Convert::ToInt32(dataGridView->CurrentRow->Cells[0]->Value);
 			engine.SelectShape(id);
 		}
-		catch (Exception^ ex) {}
+		catch (Exception^ nothing) {}
 		DrawAll();
 	}
 	private: System::Void dataGridView_CellValueChanged(System::Object^  sender, System::Windows::Forms::DataGridViewCellEventArgs^  e) 
@@ -2102,7 +2585,7 @@ private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
 		int id = Convert::ToInt32(dataGridView->CurrentRow->Cells[0]->Value);
 		ShapeType type = ShapeType::Pyramid;
 		String^ t = dataGridView->CurrentRow->Cells[8]->Value->ToString();
-		if (t == " Û·") type = ShapeType::Cube;
+		if (t == "–ö—É–±") type = ShapeType::Cube;
 		engine.ResetShape(type, Color::FromArgb(Convert::ToInt32(dataGridView->CurrentRow->Cells[12]->Value),
 												Convert::ToInt32(dataGridView->CurrentRow->Cells[9]->Value), 
 												Convert::ToInt32(dataGridView->CurrentRow->Cells[10]->Value), 
