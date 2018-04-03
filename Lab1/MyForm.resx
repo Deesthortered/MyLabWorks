@@ -117,14 +117,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="rtb1_manual.Text" xml:space="preserve">
-    <value>Translation:          Rotare:          Scale: Q-E
-   X : A-D                    X : R-F
-   Y : W-S                  Y : T-G
-   Z : Z-C                     Z : Y-H
-
-Warning! Use English keyboard layout.</value>
-  </data>
   <metadata name="dataSet1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>393, 17</value>
   </metadata>
@@ -143,15 +135,6 @@ Warning! Use English keyboard layout.</value>
   <metadata name="oleDbConnection1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>836, 17</value>
   </metadata>
-  <metadata name="oleDbInsertCommand1.DesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="oleDbInsertCommand1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>0, 0</value>
-  </metadata>
-  <metadata name="oleDbInsertCommand1.CommandDesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
   <metadata name="oleDbUpdateCommand1.DesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>False</value>
   </metadata>
@@ -162,7 +145,7 @@ Warning! Use English keyboard layout.</value>
     <value>False</value>
   </metadata>
   <data name="oleDbUpdateCommand1.CommandText" xml:space="preserve">
-    <value>UPDATE `Shapes` SET `x_coor` = ?, `y_coor` = ?, `z_coor` = ?, `lenght` = ?, `x_rot` = ?, `y_rot` = ?, `z_rot` = ?, `ShapeType` = ?, `Color_R` = ?, `Color_G` = ?, `Color_B` = ?, `Color_A` = ? WHERE ((`Код` = ?) AND ((? = 1 AND `x_coor` IS NULL) OR (`x_coor` = ?)) AND ((? = 1 AND `y_coor` IS NULL) OR (`y_coor` = ?)) AND ((? = 1 AND `z_coor` IS NULL) OR (`z_coor` = ?)) AND ((? = 1 AND `lenght` IS NULL) OR (`lenght` = ?)) AND ((? = 1 AND `x_rot` IS NULL) OR (`x_rot` = ?)) AND ((? = 1 AND `y_rot` IS NULL) OR (`y_rot` = ?)) AND ((? = 1 AND `z_rot` IS NULL) OR (`z_rot` = ?)) AND ((? = 1 AND `ShapeType` IS NULL) OR (`ShapeType` = ?)) AND ((? = 1 AND `Color_R` IS NULL) OR (`Color_R` = ?)) AND ((? = 1 AND `Color_G` IS NULL) OR (`Color_G` = ?)) AND ((? = 1 AND `Color_B` IS NULL) OR (`Color_B` = ?)) AND ((? = 1 AND `Color_A` IS NULL) OR (`Color_A` = ?)))</value>
+    <value>UPDATE `Shapes` SET `x_coor` = ?, `y_coor` = ?, `z_coor` = ?, `lenght` = ?, `x_rot` = ?, `y_rot` = ?, `z_rot` = ?, `ShapeType` = ?, `Color_R` = ?, `Color_G` = ?, `Color_B` = ?, `Color_A` = ?, `Scene` = ? WHERE ((`Код` = ?) AND ((? = 1 AND `x_coor` IS NULL) OR (`x_coor` = ?)) AND ((? = 1 AND `y_coor` IS NULL) OR (`y_coor` = ?)) AND ((? = 1 AND `z_coor` IS NULL) OR (`z_coor` = ?)) AND ((? = 1 AND `lenght` IS NULL) OR (`lenght` = ?)) AND ((? = 1 AND `x_rot` IS NULL) OR (`x_rot` = ?)) AND ((? = 1 AND `y_rot` IS NULL) OR (`y_rot` = ?)) AND ((? = 1 AND `z_rot` IS NULL) OR (`z_rot` = ?)) AND ((? = 1 AND `ShapeType` IS NULL) OR (`ShapeType` = ?)) AND ((? = 1 AND `Color_R` IS NULL) OR (`Color_R` = ?)) AND ((? = 1 AND `Color_G` IS NULL) OR (`Color_G` = ?)) AND ((? = 1 AND `Color_B` IS NULL) OR (`Color_B` = ?)) AND ((? = 1 AND `Color_A` IS NULL) OR (`Color_A` = ?)) AND ((? = 1 AND `Scene` IS NULL) OR (`Scene` = ?)))</value>
   </data>
   <metadata name="oleDbDeleteCommand1.DesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>False</value>
@@ -174,9 +157,21 @@ Warning! Use English keyboard layout.</value>
     <value>False</value>
   </metadata>
   <data name="oleDbDeleteCommand1.CommandText" xml:space="preserve">
-    <value>DELETE FROM `Shapes` WHERE ((`Код` = ?) AND ((? = 1 AND `x_coor` IS NULL) OR (`x_coor` = ?)) AND ((? = 1 AND `y_coor` IS NULL) OR (`y_coor` = ?)) AND ((? = 1 AND `z_coor` IS NULL) OR (`z_coor` = ?)) AND ((? = 1 AND `lenght` IS NULL) OR (`lenght` = ?)) AND ((? = 1 AND `x_rot` IS NULL) OR (`x_rot` = ?)) AND ((? = 1 AND `y_rot` IS NULL) OR (`y_rot` = ?)) AND ((? = 1 AND `z_rot` IS NULL) OR (`z_rot` = ?)) AND ((? = 1 AND `ShapeType` IS NULL) OR (`ShapeType` = ?)) AND ((? = 1 AND `Color_R` IS NULL) OR (`Color_R` = ?)) AND ((? = 1 AND `Color_G` IS NULL) OR (`Color_G` = ?)) AND ((? = 1 AND `Color_B` IS NULL) OR (`Color_B` = ?)) AND ((? = 1 AND `Color_A` IS NULL) OR (`Color_A` = ?)))</value>
+    <value>DELETE FROM `Shapes` WHERE ((`Код` = ?) AND ((? = 1 AND `x_coor` IS NULL) OR (`x_coor` = ?)) AND ((? = 1 AND `y_coor` IS NULL) OR (`y_coor` = ?)) AND ((? = 1 AND `z_coor` IS NULL) OR (`z_coor` = ?)) AND ((? = 1 AND `lenght` IS NULL) OR (`lenght` = ?)) AND ((? = 1 AND `x_rot` IS NULL) OR (`x_rot` = ?)) AND ((? = 1 AND `y_rot` IS NULL) OR (`y_rot` = ?)) AND ((? = 1 AND `z_rot` IS NULL) OR (`z_rot` = ?)) AND ((? = 1 AND `ShapeType` IS NULL) OR (`ShapeType` = ?)) AND ((? = 1 AND `Color_R` IS NULL) OR (`Color_R` = ?)) AND ((? = 1 AND `Color_G` IS NULL) OR (`Color_G` = ?)) AND ((? = 1 AND `Color_B` IS NULL) OR (`Color_B` = ?)) AND ((? = 1 AND `Color_A` IS NULL) OR (`Color_A` = ?)) AND ((? = 1 AND `Scene` IS NULL) OR (`Scene` = ?)))</value>
   </data>
   <metadata name="oleDbDataAdapter1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>644, 17</value>
   </metadata>
+  <metadata name="oleDbInsertCommand.DesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="oleDbInsertCommand.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>0, 0</value>
+  </metadata>
+  <metadata name="oleDbInsertCommand.CommandDesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <data name="oleDbInsertCommand.CommandText" xml:space="preserve">
+    <value>INSERT INTO `Shapes` (`x_coor`, `y_coor`, `z_coor`, `lenght`, `x_rot`, `y_rot`, `z_rot`, `ShapeType`, `Color_R`, `Color_G`, `Color_B`, `Color_A`, `Scene`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)</value>
+  </data>
 </root>

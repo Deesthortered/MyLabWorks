@@ -18,8 +18,9 @@ namespace Lab1
 	int FrameWidth;
 	int FrameDepth;
 	size_t next_id = 1;
+	int current_scene = 1;
 
-	OpenTK::Vector3 eyes(0.0f, 0.0f, 300.0f);
+	OpenTK::Vector3 eyes(300.0f, 300.0f, 300.0f);
 	OpenTK::Vector3 direction(0, 0, -1);
 	OpenTK::Vector3 target(0, 0, 0);
 	OpenTK::Vector3 up(0, 1, 0);
@@ -492,22 +493,17 @@ namespace Lab1
 			double TranslateStep;
 			double ScaleStep;
 			double RotareStep;
-			float *light_pos;
+			OpenTK::Vector3 light_pos;
 		public:
 			Engine()
 			{
 				TranslateStep = 10;
 				ScaleStep = 0.1;
 				RotareStep = 5;
-				light_pos = new float[4];
-				light_pos[0] = 100;
-				light_pos[1] = 100;
-				light_pos[2] = 100;
-				light_pos[3] = 1;
+				light_pos = OpenTK::Vector3(100, 100, 100);
 			}
 			~Engine()
 			{
-				//delete[] light_pos;
 			}
 
 			void SetTranslateStep(double val)
@@ -547,13 +543,18 @@ namespace Lab1
 						return;
 					}
 			}
+			void RemoveShapes()
+			{
+				shape_list.Clear();
+			}
 			void DrawShapes()
 			{
 				for each (Shape^ cur in shape_list)
 				{
 					cur->Draw();
 				}
-				GL::Light(LightName::Light0, LightParameter::Position, light_pos);
+				float l[4] = { light_pos.X, light_pos.Y, light_pos.Z, 1 };
+				GL::Light(LightName::Light0, LightParameter::Position, l);
 			}
 			void DrawProjections(bool xy, bool xz, bool yz)
 			{
@@ -631,24 +632,10 @@ namespace Lab1
 				case 'l': { light_pos[2] -= (float)TranslateStep; } break;
 				}
 			}
-			void NullLightPos()
-			{
-				light_pos[0] = 0;
-				light_pos[1] = 0;
-				light_pos[2] = 0;
-			}
 
-			float GetLightX()
+			OpenTK::Vector3 GetLight()
 			{
-				return light_pos[0];
-			}
-			float GetLightY()
-			{
-				return light_pos[1];
-			}
-			float GetLightZ()
-			{
-				return light_pos[2];
+				return light_pos;
 			}
 
 			void SelectShape(size_t id)
@@ -731,7 +718,7 @@ namespace Lab1
 	private: System::Windows::Forms::CheckBox^  cb1_planeXY;
 	private: System::Windows::Forms::CheckBox^  cb1_planeYZ;
 	private: System::Windows::Forms::RichTextBox^  rtb1_manual;
-	private: System::Windows::Forms::Button^  but1LightNull;
+
 	private: System::Windows::Forms::TextBox^  tb1_LightZ;
 	private: System::Windows::Forms::TextBox^  tb1_LightY;
 	private: System::Windows::Forms::TextBox^  tb1_LightX;
@@ -746,10 +733,13 @@ namespace Lab1
 	private: System::Windows::Forms::PictureBox^  picture2;
 	private: System::Data::OleDb::OleDbCommand^  oleDbSelectCommand1;
 	private: System::Data::OleDb::OleDbConnection^  oleDbConnection1;
-	private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand1;
+
 	private: System::Data::OleDb::OleDbCommand^  oleDbUpdateCommand1;
 	private: System::Data::OleDb::OleDbCommand^	 oleDbDeleteCommand1;
 	private: System::Data::OleDb::OleDbDataAdapter^  oleDbDataAdapter1;
+	private: System::Windows::Forms::TextBox^  tb1_Scene;
+	private: System::Windows::Forms::Label^  label1Scene;
+private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand;
 
 	private: Engine engine;
 #pragma region Windows Form Designer generated code
@@ -779,7 +769,8 @@ namespace Lab1
 			this->but2_AddShape = (gcnew System::Windows::Forms::Button());
 			this->MainTabControl = (gcnew System::Windows::Forms::TabControl());
 			this->CameraTab = (gcnew System::Windows::Forms::TabPage());
-			this->but1LightNull = (gcnew System::Windows::Forms::Button());
+			this->tb1_Scene = (gcnew System::Windows::Forms::TextBox());
+			this->label1Scene = (gcnew System::Windows::Forms::Label());
 			this->tb1_LightZ = (gcnew System::Windows::Forms::TextBox());
 			this->tb1_LightY = (gcnew System::Windows::Forms::TextBox());
 			this->tb1_LightX = (gcnew System::Windows::Forms::TextBox());
@@ -811,10 +802,10 @@ namespace Lab1
 			this->colorDialog = (gcnew System::Windows::Forms::ColorDialog());
 			this->oleDbSelectCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
 			this->oleDbConnection1 = (gcnew System::Data::OleDb::OleDbConnection());
-			this->oleDbInsertCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
 			this->oleDbUpdateCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
 			this->oleDbDeleteCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
 			this->oleDbDataAdapter1 = (gcnew System::Data::OleDb::OleDbDataAdapter());
+			this->oleDbInsertCommand = (gcnew System::Data::OleDb::OleDbCommand());
 			this->MainTabControl->SuspendLayout();
 			this->CameraTab->SuspendLayout();
 			this->AddShapeTab->SuspendLayout();
@@ -1051,7 +1042,8 @@ namespace Lab1
 			// 
 			// CameraTab
 			// 
-			this->CameraTab->Controls->Add(this->but1LightNull);
+			this->CameraTab->Controls->Add(this->tb1_Scene);
+			this->CameraTab->Controls->Add(this->label1Scene);
 			this->CameraTab->Controls->Add(this->tb1_LightZ);
 			this->CameraTab->Controls->Add(this->tb1_LightY);
 			this->CameraTab->Controls->Add(this->tb1_LightX);
@@ -1082,47 +1074,56 @@ namespace Lab1
 			this->CameraTab->Text = L"Camera";
 			this->CameraTab->UseVisualStyleBackColor = true;
 			// 
-			// but1LightNull
+			// tb1_Scene
 			// 
-			this->but1LightNull->Location = System::Drawing::Point(890, 30);
-			this->but1LightNull->Name = L"but1LightNull";
-			this->but1LightNull->Size = System::Drawing::Size(82, 76);
-			this->but1LightNull->TabIndex = 24;
-			this->but1LightNull->Text = L"Set light to null";
-			this->but1LightNull->UseVisualStyleBackColor = true;
-			this->but1LightNull->Click += gcnew System::EventHandler(this, &MyForm::but1LightNull_Click);
+			this->tb1_Scene->Location = System::Drawing::Point(752, 31);
+			this->tb1_Scene->Name = L"tb1_Scene";
+			this->tb1_Scene->Size = System::Drawing::Size(100, 22);
+			this->tb1_Scene->TabIndex = 25;
+			this->tb1_Scene->Text = L"1";
+			this->tb1_Scene->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb1_Scene_KeyPress);
+			this->tb1_Scene->Leave += gcnew System::EventHandler(this, &MyForm::tb1_Scene_Leave);
+			// 
+			// label1Scene
+			// 
+			this->label1Scene->AutoSize = true;
+			this->label1Scene->Location = System::Drawing::Point(749, 11);
+			this->label1Scene->Name = L"label1Scene";
+			this->label1Scene->Size = System::Drawing::Size(102, 17);
+			this->label1Scene->TabIndex = 24;
+			this->label1Scene->Text = L"Choose scene:";
 			// 
 			// tb1_LightZ
 			// 
-			this->tb1_LightZ->Location = System::Drawing::Point(814, 87);
+			this->tb1_LightZ->Location = System::Drawing::Point(662, 86);
 			this->tb1_LightZ->Name = L"tb1_LightZ";
 			this->tb1_LightZ->ReadOnly = true;
-			this->tb1_LightZ->Size = System::Drawing::Size(70, 22);
+			this->tb1_LightZ->Size = System::Drawing::Size(59, 22);
 			this->tb1_LightZ->TabIndex = 23;
 			this->tb1_LightZ->Text = L"100";
 			// 
 			// tb1_LightY
 			// 
-			this->tb1_LightY->Location = System::Drawing::Point(814, 59);
+			this->tb1_LightY->Location = System::Drawing::Point(662, 58);
 			this->tb1_LightY->Name = L"tb1_LightY";
 			this->tb1_LightY->ReadOnly = true;
-			this->tb1_LightY->Size = System::Drawing::Size(70, 22);
+			this->tb1_LightY->Size = System::Drawing::Size(59, 22);
 			this->tb1_LightY->TabIndex = 22;
 			this->tb1_LightY->Text = L"100";
 			// 
 			// tb1_LightX
 			// 
-			this->tb1_LightX->Location = System::Drawing::Point(814, 31);
+			this->tb1_LightX->Location = System::Drawing::Point(662, 30);
 			this->tb1_LightX->Name = L"tb1_LightX";
 			this->tb1_LightX->ReadOnly = true;
-			this->tb1_LightX->Size = System::Drawing::Size(70, 22);
+			this->tb1_LightX->Size = System::Drawing::Size(59, 22);
 			this->tb1_LightX->TabIndex = 21;
 			this->tb1_LightX->Text = L"100";
 			// 
 			// label1LightZ
 			// 
 			this->label1LightZ->AutoSize = true;
-			this->label1LightZ->Location = System::Drawing::Point(792, 90);
+			this->label1LightZ->Location = System::Drawing::Point(640, 89);
 			this->label1LightZ->Name = L"label1LightZ";
 			this->label1LightZ->Size = System::Drawing::Size(25, 17);
 			this->label1LightZ->TabIndex = 20;
@@ -1131,7 +1132,7 @@ namespace Lab1
 			// label1LightY
 			// 
 			this->label1LightY->AutoSize = true;
-			this->label1LightY->Location = System::Drawing::Point(791, 64);
+			this->label1LightY->Location = System::Drawing::Point(639, 63);
 			this->label1LightY->Name = L"label1LightY";
 			this->label1LightY->Size = System::Drawing::Size(25, 17);
 			this->label1LightY->TabIndex = 19;
@@ -1140,7 +1141,7 @@ namespace Lab1
 			// label1LightX
 			// 
 			this->label1LightX->AutoSize = true;
-			this->label1LightX->Location = System::Drawing::Point(792, 36);
+			this->label1LightX->Location = System::Drawing::Point(640, 35);
 			this->label1LightX->Name = L"label1LightX";
 			this->label1LightX->Size = System::Drawing::Size(25, 17);
 			this->label1LightX->TabIndex = 18;
@@ -1149,7 +1150,7 @@ namespace Lab1
 			// label1LightPos
 			// 
 			this->label1LightPos->AutoSize = true;
-			this->label1LightPos->Location = System::Drawing::Point(777, 12);
+			this->label1LightPos->Location = System::Drawing::Point(625, 11);
 			this->label1LightPos->Name = L"label1LightPos";
 			this->label1LightPos->Size = System::Drawing::Size(96, 17);
 			this->label1LightPos->TabIndex = 17;
@@ -1157,12 +1158,13 @@ namespace Lab1
 			// 
 			// rtb1_manual
 			// 
-			this->rtb1_manual->Location = System::Drawing::Point(357, 12);
+			this->rtb1_manual->Location = System::Drawing::Point(357, 27);
 			this->rtb1_manual->Name = L"rtb1_manual";
 			this->rtb1_manual->ReadOnly = true;
-			this->rtb1_manual->Size = System::Drawing::Size(413, 109);
+			this->rtb1_manual->Size = System::Drawing::Size(262, 80);
 			this->rtb1_manual->TabIndex = 16;
-			this->rtb1_manual->Text = resources->GetString(L"rtb1_manual.Text");
+			this->rtb1_manual->Text = L"Translation:           Rotare:          Scale:\n  A-D/W-S               F-H/T-G   "
+				L"     Q-E\n\nWarning! Use English keyboard layout.";
 			// 
 			// cb1_planeYZ
 			// 
@@ -1394,7 +1396,7 @@ namespace Lab1
 			// 
 			// oleDbSelectCommand1
 			// 
-			this->oleDbSelectCommand1->CommandText = L"SELECT Shapes.*\r\nFROM     Shapes";
+			this->oleDbSelectCommand1->CommandText = L"SELECT * FROM Shapes WHERE Scene = ";
 			this->oleDbSelectCommand1->Connection = this->oleDbConnection1;
 			// 
 			// oleDbConnection1
@@ -1402,31 +1404,11 @@ namespace Lab1
 			this->oleDbConnection1->ConnectionString = L"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=D:\\2.Programming\\MyLabWorks\\Lab1\\dat"
 				L"abase.mdb";
 			// 
-			// oleDbInsertCommand1
-			// 
-			this->oleDbInsertCommand1->CommandText = L"INSERT INTO `Shapes` (`x_coor`, `y_coor`, `z_coor`, `lenght`, `x_rot`, `y_rot`, `"
-				L"z_rot`, `ShapeType`, `Color_R`, `Color_G`, `Color_B`, `Color_A`) VALUES (\?, \?, \?"
-				L", \?, \?, \?, \?, \?, \?, \?, \?, \?)";
-			this->oleDbInsertCommand1->Connection = this->oleDbConnection1;
-			this->oleDbInsertCommand1->Parameters->AddRange(gcnew cli::array< System::Data::OleDb::OleDbParameter^  >(12) {
-				(gcnew System::Data::OleDb::OleDbParameter(L"x_coor",
-					System::Data::OleDb::OleDbType::Integer, 0, L"x_coor")), (gcnew System::Data::OleDb::OleDbParameter(L"y_coor", System::Data::OleDb::OleDbType::Integer,
-						0, L"y_coor")), (gcnew System::Data::OleDb::OleDbParameter(L"z_coor", System::Data::OleDb::OleDbType::Integer, 0, L"z_coor")),
-						(gcnew System::Data::OleDb::OleDbParameter(L"lenght", System::Data::OleDb::OleDbType::Integer, 0, L"lenght")), (gcnew System::Data::OleDb::OleDbParameter(L"x_rot",
-							System::Data::OleDb::OleDbType::Integer, 0, L"x_rot")), (gcnew System::Data::OleDb::OleDbParameter(L"y_rot", System::Data::OleDb::OleDbType::Integer,
-								0, L"y_rot")), (gcnew System::Data::OleDb::OleDbParameter(L"z_rot", System::Data::OleDb::OleDbType::Integer, 0, L"z_rot")), (gcnew System::Data::OleDb::OleDbParameter(L"ShapeType",
-									System::Data::OleDb::OleDbType::VarWChar, 0, L"ShapeType")), (gcnew System::Data::OleDb::OleDbParameter(L"Color_R", System::Data::OleDb::OleDbType::UnsignedTinyInt,
-										0, L"Color_R")), (gcnew System::Data::OleDb::OleDbParameter(L"Color_G", System::Data::OleDb::OleDbType::UnsignedTinyInt,
-											0, L"Color_G")), (gcnew System::Data::OleDb::OleDbParameter(L"Color_B", System::Data::OleDb::OleDbType::UnsignedTinyInt,
-												0, L"Color_B")), (gcnew System::Data::OleDb::OleDbParameter(L"Color_A", System::Data::OleDb::OleDbType::UnsignedTinyInt,
-													0, L"Color_A"))
-			});
-			// 
 			// oleDbUpdateCommand1
 			// 
 			this->oleDbUpdateCommand1->CommandText = resources->GetString(L"oleDbUpdateCommand1.CommandText");
 			this->oleDbUpdateCommand1->Connection = this->oleDbConnection1;
-			this->oleDbUpdateCommand1->Parameters->AddRange(gcnew cli::array< System::Data::OleDb::OleDbParameter^  >(37) {
+			this->oleDbUpdateCommand1->Parameters->AddRange(gcnew cli::array< System::Data::OleDb::OleDbParameter^  >(40) {
 				(gcnew System::Data::OleDb::OleDbParameter(L"x_coor",
 					System::Data::OleDb::OleDbType::Integer, 0, L"x_coor")), (gcnew System::Data::OleDb::OleDbParameter(L"y_coor", System::Data::OleDb::OleDbType::Integer,
 						0, L"y_coor")), (gcnew System::Data::OleDb::OleDbParameter(L"z_coor", System::Data::OleDb::OleDbType::Integer, 0, L"z_coor")),
@@ -1437,9 +1419,10 @@ namespace Lab1
 										0, L"Color_R")), (gcnew System::Data::OleDb::OleDbParameter(L"Color_G", System::Data::OleDb::OleDbType::UnsignedTinyInt,
 											0, L"Color_G")), (gcnew System::Data::OleDb::OleDbParameter(L"Color_B", System::Data::OleDb::OleDbType::UnsignedTinyInt,
 												0, L"Color_B")), (gcnew System::Data::OleDb::OleDbParameter(L"Color_A", System::Data::OleDb::OleDbType::UnsignedTinyInt,
-													0, L"Color_A")), (gcnew System::Data::OleDb::OleDbParameter(L"Original_Код", System::Data::OleDb::OleDbType::Integer, 0,
-														System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Код", System::Data::DataRowVersion::Original,
-														nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_x_coor", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+													0, L"Color_A")), (gcnew System::Data::OleDb::OleDbParameter(L"Scene", System::Data::OleDb::OleDbType::Integer, 0, L"Scene")),
+													(gcnew System::Data::OleDb::OleDbParameter(L"Original_Код", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+														false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Код", System::Data::DataRowVersion::Original, nullptr)),
+														(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_x_coor", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
 															static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"x_coor", System::Data::DataRowVersion::Original, true, nullptr)),
 															(gcnew System::Data::OleDb::OleDbParameter(L"Original_x_coor", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
 																false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"x_coor", System::Data::DataRowVersion::Original, nullptr)),
@@ -1486,14 +1469,18 @@ namespace Lab1
 																																				(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Color_A", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
 																																					static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Color_A", System::Data::DataRowVersion::Original, true, nullptr)),
 																																					(gcnew System::Data::OleDb::OleDbParameter(L"Original_Color_A", System::Data::OleDb::OleDbType::UnsignedTinyInt, 0, System::Data::ParameterDirection::Input,
-																																						false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Color_A", System::Data::DataRowVersion::Original, nullptr))
+																																						false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Color_A", System::Data::DataRowVersion::Original, nullptr)),
+																																						(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Scene", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+																																							static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Scene", System::Data::DataRowVersion::Original, true, nullptr)),
+																																							(gcnew System::Data::OleDb::OleDbParameter(L"Original_Scene", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+																																								false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Scene", System::Data::DataRowVersion::Original, nullptr))
 			});
 			// 
 			// oleDbDeleteCommand1
 			// 
 			this->oleDbDeleteCommand1->CommandText = resources->GetString(L"oleDbDeleteCommand1.CommandText");
 			this->oleDbDeleteCommand1->Connection = this->oleDbConnection1;
-			this->oleDbDeleteCommand1->Parameters->AddRange(gcnew cli::array< System::Data::OleDb::OleDbParameter^  >(25) {
+			this->oleDbDeleteCommand1->Parameters->AddRange(gcnew cli::array< System::Data::OleDb::OleDbParameter^  >(27) {
 				(gcnew System::Data::OleDb::OleDbParameter(L"Original_Код",
 					System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
 					static_cast<System::Byte>(0), L"Код", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_x_coor",
@@ -1544,15 +1531,19 @@ namespace Lab1
 																												System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
 																												L"Color_A", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_Color_A",
 																													System::Data::OleDb::OleDbType::UnsignedTinyInt, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
-																													static_cast<System::Byte>(0), L"Color_A", System::Data::DataRowVersion::Original, nullptr))
+																													static_cast<System::Byte>(0), L"Color_A", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Scene",
+																														System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
+																														L"Scene", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_Scene",
+																															System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
+																															static_cast<System::Byte>(0), L"Scene", System::Data::DataRowVersion::Original, nullptr))
 			});
 			// 
 			// oleDbDataAdapter1
 			// 
 			this->oleDbDataAdapter1->DeleteCommand = this->oleDbDeleteCommand1;
-			this->oleDbDataAdapter1->InsertCommand = this->oleDbInsertCommand1;
+			this->oleDbDataAdapter1->InsertCommand = this->oleDbInsertCommand;
 			this->oleDbDataAdapter1->SelectCommand = this->oleDbSelectCommand1;
-			cli::array< System::Data::Common::DataColumnMapping^ >^ __mcTemp__1 = gcnew cli::array< System::Data::Common::DataColumnMapping^  >(13) {
+			cli::array< System::Data::Common::DataColumnMapping^ >^ __mcTemp__1 = gcnew cli::array< System::Data::Common::DataColumnMapping^  >(14) {
 				(gcnew System::Data::Common::DataColumnMapping(L"Код",
 					L"Код")), (gcnew System::Data::Common::DataColumnMapping(L"x_coor", L"x_coor")), (gcnew System::Data::Common::DataColumnMapping(L"y_coor",
 						L"y_coor")), (gcnew System::Data::Common::DataColumnMapping(L"z_coor", L"z_coor")), (gcnew System::Data::Common::DataColumnMapping(L"lenght",
@@ -1560,13 +1551,31 @@ namespace Lab1
 								L"y_rot")), (gcnew System::Data::Common::DataColumnMapping(L"z_rot", L"z_rot")), (gcnew System::Data::Common::DataColumnMapping(L"ShapeType",
 									L"ShapeType")), (gcnew System::Data::Common::DataColumnMapping(L"Color_R", L"Color_R")), (gcnew System::Data::Common::DataColumnMapping(L"Color_G",
 										L"Color_G")), (gcnew System::Data::Common::DataColumnMapping(L"Color_B", L"Color_B")), (gcnew System::Data::Common::DataColumnMapping(L"Color_A",
-											L"Color_A"))
+											L"Color_A")), (gcnew System::Data::Common::DataColumnMapping(L"Scene", L"Scene"))
 			};
 			this->oleDbDataAdapter1->TableMappings->AddRange(gcnew cli::array< System::Data::Common::DataTableMapping^  >(1) {
 				(gcnew System::Data::Common::DataTableMapping(L"Table",
 					L"Shapes", __mcTemp__1))
 			});
 			this->oleDbDataAdapter1->UpdateCommand = this->oleDbUpdateCommand1;
+			// 
+			// oleDbInsertCommand
+			// 
+			this->oleDbInsertCommand->CommandText = resources->GetString(L"oleDbInsertCommand.CommandText");
+			this->oleDbInsertCommand->Connection = this->oleDbConnection1;
+			this->oleDbInsertCommand->Parameters->AddRange(gcnew cli::array< System::Data::OleDb::OleDbParameter^  >(13) {
+				(gcnew System::Data::OleDb::OleDbParameter(L"x_coor",
+					System::Data::OleDb::OleDbType::Integer, 0, L"x_coor")), (gcnew System::Data::OleDb::OleDbParameter(L"y_coor", System::Data::OleDb::OleDbType::Integer,
+						0, L"y_coor")), (gcnew System::Data::OleDb::OleDbParameter(L"z_coor", System::Data::OleDb::OleDbType::Integer, 0, L"z_coor")),
+						(gcnew System::Data::OleDb::OleDbParameter(L"lenght", System::Data::OleDb::OleDbType::Integer, 0, L"lenght")), (gcnew System::Data::OleDb::OleDbParameter(L"x_rot",
+							System::Data::OleDb::OleDbType::Integer, 0, L"x_rot")), (gcnew System::Data::OleDb::OleDbParameter(L"y_rot", System::Data::OleDb::OleDbType::Integer,
+								0, L"y_rot")), (gcnew System::Data::OleDb::OleDbParameter(L"z_rot", System::Data::OleDb::OleDbType::Integer, 0, L"z_rot")), (gcnew System::Data::OleDb::OleDbParameter(L"ShapeType",
+									System::Data::OleDb::OleDbType::VarWChar, 0, L"ShapeType")), (gcnew System::Data::OleDb::OleDbParameter(L"Color_R", System::Data::OleDb::OleDbType::UnsignedTinyInt,
+										0, L"Color_R")), (gcnew System::Data::OleDb::OleDbParameter(L"Color_G", System::Data::OleDb::OleDbType::UnsignedTinyInt,
+											0, L"Color_G")), (gcnew System::Data::OleDb::OleDbParameter(L"Color_B", System::Data::OleDb::OleDbType::UnsignedTinyInt,
+												0, L"Color_B")), (gcnew System::Data::OleDb::OleDbParameter(L"Color_A", System::Data::OleDb::OleDbType::UnsignedTinyInt,
+													0, L"Color_A")), (gcnew System::Data::OleDb::OleDbParameter(L"Scene", System::Data::OleDb::OleDbType::Integer, 0, L"Scene"))
+			});
 			// 
 			// MyForm
 			// 
@@ -1601,6 +1610,7 @@ namespace Lab1
 		FrameWidth = GLFrame->Width;
 		FrameHeight = GLFrame->Height;
 		FrameDepth = GLFrame->Height;
+		direction.Normalize();
 
 		direction.Normalize();
 		target = eyes + direction;
@@ -1634,22 +1644,22 @@ namespace Lab1
 	}
 	private: void LoadData()
 	{
-		oleDbConnection1->Open();
+		engine.RemoveShapes();
+		dataSet1->Reset();
+		oleDbSelectCommand1->CommandText = (L"SELECT * FROM Shapes WHERE Scene = " + Convert::ToString(current_scene));
 		oleDbDataAdapter1->Fill(dataSet1);
 		dataGridView->AutoGenerateColumns = true;
 		dataGridView->DataSource = dataSet1->Tables[0];
+		dataGridView->AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode::Fill;
+		dataGridView->Update();
 		try 
 		{
 			next_id = Convert::ToUInt32(dataSet1->Tables[0]->Rows[dataSet1->Tables[0]->Rows->Count - 1]->ItemArray[0]) + 1;
 		}
-		catch (Exception ^ex)
+		catch (Exception^ nothing)
 		{
 			next_id = 1;
 		}
-		dataGridView->Update();
-		oleDbConnection1->Close();
-		dataGridView->AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode::Fill;
-		dataGridView->Columns[0]->Visible = false;
 		for (int i = 0; i < dataGridView->RowCount; i++)
 		{
 			ShapeType type = ShapeType::Pyramid;
@@ -1688,7 +1698,6 @@ namespace Lab1
 
 		DrawOrthPlanes();
 		DrawOrthLines();
-		GL::InitNames();
 		engine.DrawProjections(cb1_planeXY->Checked, cb1_planeXZ->Checked, cb1_planeYZ->Checked);
 		engine.DrawShapes();
 
@@ -1765,22 +1774,22 @@ namespace Lab1
 		GL::End();
 	}
 
-	private: OpenTK::Vector3 GetRay(float x, float y)
+	private: OpenTK::Vector3 GetRay(double x, double y)
 	{
 		int viewport[4];
 		GL::GetInteger(GetPName::Viewport, viewport);
-		float norm_x = float(( x - viewport[2] / 2.0) / (viewport[2] / 2.0));
-		float norm_y = float((-y + viewport[3] / 2.0) / (viewport[3] / 2.0));
+		double norm_x = double(( x - viewport[2] / 2.0) / (viewport[2] / 2.0));
+		double norm_y = double((-y + viewport[3] / 2.0) / (viewport[3] / 2.0));
 
-		OpenTK::Vector3 res = direction;
 		OpenTK::Vector3 left_dir(up.Y*direction.Z - up.Z*direction.Y, -(up.Z*direction.Y - up.X*direction.Z), up.X*direction.Y - up.Y*direction.X);
 		OpenTK::Vector3 up_dir(left_dir.Y*direction.Z - left_dir.Z*direction.Y, -(left_dir.Z*direction.Y - left_dir.X*direction.Z), left_dir.X*direction.Y - left_dir.Y*direction.X);
 		left_dir.Normalize();
 		up_dir.Normalize();
 		
-		left_dir *= (371.0f / 650.0f)*norm_x;
-		up_dir *= (268.0f / 650.0f)*norm_y;
+		left_dir *= float((371.0 / 650.0)*norm_x);
+		up_dir   *= float((268.0 / 650.0)*norm_y);
 
+		OpenTK::Vector3 res = direction;
 		res += -left_dir;
 		res += up_dir;
 		return res;
@@ -1803,9 +1812,10 @@ namespace Lab1
 	private: System::Void GLFrame_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e)
 	{
 		engine.CameraControl(e);
-		tb1_LightX->Text = Convert::ToString(engine.GetLightX());
-		tb1_LightY->Text = Convert::ToString(engine.GetLightY());
-		tb1_LightZ->Text = Convert::ToString(engine.GetLightZ());
+		OpenTK::Vector3 light = engine.GetLight();
+		tb1_LightX->Text = Convert::ToString(light.X);
+		tb1_LightY->Text = Convert::ToString(light.Y);
+		tb1_LightZ->Text = Convert::ToString(light.Z);
 		DrawAll();
 	}
 	private: System::Void GLFrame_MouseDown(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e)
@@ -1892,12 +1902,25 @@ namespace Lab1
 	{
 		DrawAll();
 	}
-	private: System::Void but1LightNull_Click(System::Object^  sender, System::EventArgs^  e)
+	private: System::Void tb1_Scene_Leave(System::Object^  sender, System::EventArgs^  e) 
 	{
-		engine.NullLightPos();
-		tb1_LightX->Text = "0";
-		tb1_LightY->Text = "0";
-		tb1_LightZ->Text = "0";
+		if (tb1_Scene->Text->Length == 0) tb1_Scene->Text = "0";
+		current_scene = Convert::ToInt32(tb1_Scene->Text);
+		LoadData();
+		DrawAll();
+	}
+	private: System::Void tb1_Scene_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
+	{
+		if (e->KeyChar == 13)
+		{
+			current_scene = Convert::ToInt32(tb1_Scene->Text);
+			LoadData();
+			DrawAll();
+		}
+		else if ((e->KeyChar <= 47 || e->KeyChar >= 59) && e->KeyChar != 8)
+		{
+			if (tb1_rot->Text->Length != 0) e->Handled = true;
+		}
 	}
 
 	private: System::Void tb2_Xcoor_Click(System::Object^  sender, System::EventArgs^  e)
@@ -2041,7 +2064,8 @@ namespace Lab1
 										Convert::ToInt32(colorDialog->Color.R), 
 										Convert::ToInt32(colorDialog->Color.G),
 										Convert::ToInt32(colorDialog->Color.B),
-										Convert::ToInt32(colorDialog->Color.A));
+										Convert::ToInt32(colorDialog->Color.A),
+										current_scene);
 		oleDbDataAdapter1->Update(dataSet1);
 		dataGridView->Update();
 		next_id++;
