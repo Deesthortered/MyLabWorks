@@ -19,8 +19,8 @@ namespace Lab1
 	int FrameDepth;
 	size_t next_id = 1;
 
-	OpenTK::Vector3 eyes(300.0f, 300.0f, 300.0f);
-	OpenTK::Vector3 direction(-1, -1 , -1);
+	OpenTK::Vector3 eyes(0.0f, 0.0f, 300.0f);
+	OpenTK::Vector3 direction(0, 0, -1);
 	OpenTK::Vector3 target(0, 0, 0);
 	OpenTK::Vector3 up(0, 1, 0);
 
@@ -146,8 +146,6 @@ namespace Lab1
 			}
 			virtual void Draw() override
 			{
-				Shape::Draw();
-				GL::PushName(this->id);
 				GL::Begin(BeginMode::Quads);
 				if (this->selected) GL::Color3(Color::White);
 				else GL::Color3(color);
@@ -207,7 +205,6 @@ namespace Lab1
 				GL::Vertex3(x[3], y[3], z[3]);
 				GL::Vertex3(x[7], y[7], z[7]);
 				GL::End();
-				GL::PopName();
 			}
 			virtual void DrawProjections(bool xy, bool xz, bool yz) override
 			{
@@ -215,36 +212,36 @@ namespace Lab1
 				if (xy)
 				{
 					GL::Begin(BeginMode::Quads);
-GL::Vertex3(x[0], y[0], 0.0);
-GL::Vertex3(x[1], y[1], 0.0);
-GL::Vertex3(x[2], y[2], 0.0);
-GL::Vertex3(x[3], y[3], 0.0);
+					GL::Vertex3(x[0], y[0], 0.0);
+					GL::Vertex3(x[1], y[1], 0.0);
+					GL::Vertex3(x[2], y[2], 0.0);
+					GL::Vertex3(x[3], y[3], 0.0);
 
-GL::Vertex3(x[2], y[2], 0.0);
-GL::Vertex3(x[3], y[3], 0.0);
-GL::Vertex3(x[7], y[7], 0.0);
-GL::Vertex3(x[6], y[6], 0.0);
+					GL::Vertex3(x[2], y[2], 0.0);
+					GL::Vertex3(x[3], y[3], 0.0);
+					GL::Vertex3(x[7], y[7], 0.0);
+					GL::Vertex3(x[6], y[6], 0.0);
 
-GL::Vertex3(x[7], y[7], 0.0);
-GL::Vertex3(x[6], y[6], 0.0);
-GL::Vertex3(x[5], y[5], 0.0);
-GL::Vertex3(x[4], y[4], 0.0);
+					GL::Vertex3(x[7], y[7], 0.0);
+					GL::Vertex3(x[6], y[6], 0.0);
+					GL::Vertex3(x[5], y[5], 0.0);
+					GL::Vertex3(x[4], y[4], 0.0);
 
-GL::Vertex3(x[5], y[5], 0.0);
-GL::Vertex3(x[4], y[4], 0.0);
-GL::Vertex3(x[0], y[0], 0.0);
-GL::Vertex3(x[1], y[1], 0.0);
+					GL::Vertex3(x[5], y[5], 0.0);
+					GL::Vertex3(x[4], y[4], 0.0);
+					GL::Vertex3(x[0], y[0], 0.0);
+					GL::Vertex3(x[1], y[1], 0.0);
 
-GL::Vertex3(x[1], y[1], 0.0);
-GL::Vertex3(x[2], y[2], 0.0);
-GL::Vertex3(x[6], y[6], 0.0);
-GL::Vertex3(x[5], y[5], 0.0);
+					GL::Vertex3(x[1], y[1], 0.0);
+					GL::Vertex3(x[2], y[2], 0.0);
+					GL::Vertex3(x[6], y[6], 0.0);
+					GL::Vertex3(x[5], y[5], 0.0);
 
-GL::Vertex3(x[0], y[0], 0.0);
-GL::Vertex3(x[3], y[3], 0.0);
-GL::Vertex3(x[7], y[7], 0.0);
-GL::Vertex3(x[4], y[4], 0.0);
-GL::End();
+					GL::Vertex3(x[0], y[0], 0.0);
+					GL::Vertex3(x[3], y[3], 0.0);
+					GL::Vertex3(x[7], y[7], 0.0);
+					GL::Vertex3(x[4], y[4], 0.0);
+					GL::End();
 				}
 				if (xz)
 				{
@@ -319,7 +316,8 @@ GL::End();
 			{
 				for (size_t i = 0; i < cnt; i++)
 				{
-					if (Shape::distance(ray, camera_pos, OpenTK::Vector3(float(x[i]), float(y[i]), float(z[i]))) > l*Math::Sqrt(3)) return -1;
+					double k = Shape::distance(ray, camera_pos, OpenTK::Vector3(float(x[i]), float(y[i]), float(z[i])));
+					if (k > l*Math::Sqrt(3)) return -1;
 				}
 				return Shape::distance(OpenTK::Vector3(float(x_coor), float(y_coor), float(z_coor)), camera_pos);
 			}
@@ -381,8 +379,6 @@ GL::End();
 			}
 			virtual void Draw() override
 			{
-				Shape::Draw();
-				GL::PushName(this->id);
 				GL::Begin(BeginMode::Triangles);
 				if (this->selected) GL::Color3(Color::White);
 				else GL::Color3(color);
@@ -415,7 +411,6 @@ GL::End();
 				GL::Vertex3(x[1], y[1], z[1]);
 				GL::Vertex3(x[3], y[3], z[3]);
 				GL::End();
-				GL::PopName();
 			}
 			virtual void DrawProjections(bool xy, bool xz, bool yz) override
 			{
@@ -503,7 +498,7 @@ GL::End();
 			{
 				TranslateStep = 10;
 				ScaleStep = 0.1;
-				RotareStep = 1;
+				RotareStep = 5;
 				light_pos = new float[4];
 				light_pos[0] = 100;
 				light_pos[1] = 100;
@@ -1275,7 +1270,7 @@ GL::End();
 			this->tb1_rot->Name = L"tb1_rot";
 			this->tb1_rot->Size = System::Drawing::Size(100, 22);
 			this->tb1_rot->TabIndex = 4;
-			this->tb1_rot->Text = L"1";
+			this->tb1_rot->Text = L"5";
 			this->tb1_rot->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb1_rot_KeyPress);
 			this->tb1_rot->Leave += gcnew System::EventHandler(this, &MyForm::tb1_rot_Leave);
 			// 
@@ -1696,6 +1691,7 @@ GL::End();
 		GL::InitNames();
 		engine.DrawProjections(cb1_planeXY->Checked, cb1_planeXZ->Checked, cb1_planeYZ->Checked);
 		engine.DrawShapes();
+
 		GLFrame->SwapBuffers();
 	}
 	private: void DrawOrthLines()
@@ -1773,26 +1769,21 @@ GL::End();
 	{
 		int viewport[4];
 		GL::GetInteger(GetPName::Viewport, viewport);
-		x = float(( x - viewport[2] / 2.0) / (viewport[2] / 2.0));
-		y = float((-y + viewport[3] / 2.0) / (viewport[3] / 2.0));
-		float z = 1.0;
-		OpenTK::Vector3 ray_nds(x, y, z);
-		OpenTK::Vector4 ray_clip(ray_nds.X, ray_nds.Y, 0.0, 1.0);
-		OpenTK::Matrix4 proj_inv = OpenTK::Matrix4::CreatePerspectiveFieldOfView(float(OpenTK::MathHelper::DegreesToRadians(45.0)), (742.0f / 536.0f), 0.1f, 1000.0f).Inverted();
-		OpenTK::Vector4 ray_eye = OpenTK::Vector4(	proj_inv.M11*ray_clip.X + proj_inv.M12*ray_clip.Y + proj_inv.M13*ray_clip.Z + proj_inv.M14*ray_clip.W, 
-													proj_inv.M21*ray_clip.X + proj_inv.M22*ray_clip.Y + proj_inv.M23*ray_clip.Z + proj_inv.M24*ray_clip.W, 
-													proj_inv.M31*ray_clip.X + proj_inv.M32*ray_clip.Y + proj_inv.M33*ray_clip.Z + proj_inv.M34*ray_clip.W, 
-													proj_inv.M41*ray_clip.X + proj_inv.M42*ray_clip.Y + proj_inv.M43*ray_clip.Z + proj_inv.M44*ray_clip.W  );
-		ray_eye = OpenTK::Vector4(ray_eye.X, ray_eye.Y, -1.0, 1.0);
+		float norm_x = float(( x - viewport[2] / 2.0) / (viewport[2] / 2.0));
+		float norm_y = float((-y + viewport[3] / 2.0) / (viewport[3] / 2.0));
 
-		OpenTK::Matrix4 view_inv = OpenTK::Matrix4::LookAt(eyes.X, eyes.Y, eyes.Z, target.X, target.Y, target.Z, up.X, up.Y, up.Z).Inverted();
-		OpenTK::Vector4 tmp = OpenTK::Vector4(	view_inv.M11*ray_eye.X + view_inv.M12*ray_eye.Y + view_inv.M13*ray_eye.Z + view_inv.M14*ray_eye.W,
-												view_inv.M21*ray_eye.X + view_inv.M22*ray_eye.Y + view_inv.M23*ray_eye.Z + view_inv.M24*ray_eye.W,
-												view_inv.M31*ray_eye.X + view_inv.M32*ray_eye.Y + view_inv.M33*ray_eye.Z + view_inv.M34*ray_eye.W,
-												view_inv.M41*ray_eye.X + view_inv.M42*ray_eye.Y + view_inv.M43*ray_eye.Z + view_inv.M44*ray_eye.W);
-		OpenTK::Vector3 ray_wor(tmp.X, tmp.Y, tmp.Z);
-		ray_wor.Normalize();
-		return ray_wor;
+		OpenTK::Vector3 res = direction;
+		OpenTK::Vector3 left_dir(up.Y*direction.Z - up.Z*direction.Y, -(up.Z*direction.Y - up.X*direction.Z), up.X*direction.Y - up.Y*direction.X);
+		OpenTK::Vector3 up_dir(left_dir.Y*direction.Z - left_dir.Z*direction.Y, -(left_dir.Z*direction.Y - left_dir.X*direction.Z), left_dir.X*direction.Y - left_dir.Y*direction.X);
+		left_dir.Normalize();
+		up_dir.Normalize();
+		
+		left_dir *= (371.0f / 650.0f)*norm_x;
+		up_dir *= (268.0f / 650.0f)*norm_y;
+
+		res += -left_dir;
+		res += up_dir;
+		return res;
 	}
 
 	private: System::Void MyForm_Shown(System::Object^  sender, System::EventArgs^  e)
