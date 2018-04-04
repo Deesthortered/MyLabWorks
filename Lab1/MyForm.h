@@ -60,10 +60,6 @@ namespace Lab1
 			}
 			virtual void Draw() {}
 			virtual void DrawProjections(bool xy, bool xz, bool yz) {}
-			size_t GetID()
-			{
-				return this->id;
-			}
 			void Select()
 			{
 				this->selected = true;
@@ -73,6 +69,27 @@ namespace Lab1
 				this->selected = false;
 			}
 			virtual double Intersect(OpenTK::Vector3 ray, OpenTK::Vector3 camera_pos) { return -1; }
+
+			size_t GetID()
+			{
+				return this->id;
+			}
+			OpenTK::Vector3 GetPos()
+			{
+				return OpenTK::Vector3(x_coor, y_coor, z_coor);
+			}
+			OpenTK::Vector3 GetDirection()
+			{
+				return OpenTK::Vector3(x_rot, y_rot, z_rot);
+			}
+			size_t GetLength()
+			{
+				return l;
+			}
+			Color GetColor()
+			{
+				return color;
+			}
 		protected:
 			double distance(OpenTK::Vector3 vect, OpenTK::Vector3 point, OpenTK::Vector3 f_point)
 			{
@@ -100,6 +117,9 @@ namespace Lab1
 			}
 			virtual void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id) override
 			{
+				x_rot = OpenTK::MathHelper::DegreesToRadians(x_rot);
+				y_rot = OpenTK::MathHelper::DegreesToRadians(y_rot);
+				z_rot = OpenTK::MathHelper::DegreesToRadians(z_rot);
 				Shape::SetData(color, l, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot, id);
 				x = new double[cnt];
 				y = new double[cnt];
@@ -336,6 +356,9 @@ namespace Lab1
 
 			virtual void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id) override
 			{
+				x_rot = OpenTK::MathHelper::DegreesToRadians(x_rot);
+				y_rot = OpenTK::MathHelper::DegreesToRadians(y_rot);
+				z_rot = OpenTK::MathHelper::DegreesToRadians(z_rot);
 				Shape::SetData(color, l, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot, id);
 				x = new double[cnt];
 				y = new double[cnt];
@@ -495,7 +518,7 @@ namespace Lab1
 			Engine()
 			{
 				TranslateStep = 10;
-				ScaleStep = 0.1;
+				ScaleStep = 10;
 				RotareStep = 5;
 				light_pos = OpenTK::Vector3(100, 100, 100);
 			}
@@ -511,6 +534,78 @@ namespace Lab1
 			void SetRotareStep(double val)
 			{
 				this->RotareStep = val;
+			}
+			OpenTK::Vector3 GetLight()
+			{
+				return light_pos;
+			}
+			void CameraControl(System::Windows::Forms::KeyPressEventArgs^  &e)
+			{
+				switch (e->KeyChar)
+				{
+				case 'w':
+				{
+					eyes += up * TranslateStep;
+					target += up * TranslateStep;
+				} break;
+				case 's':
+				{
+					eyes += (-up) * TranslateStep;
+					target += (-up) * TranslateStep;
+				} break;
+				case 'e':
+				{
+					eyes += direction * ScaleStep;
+					target += direction * ScaleStep;
+				} break;
+				case 'q':
+				{
+					eyes += (-direction) * ScaleStep;
+					target += (-direction) * ScaleStep;
+				} break;
+				case 'a':
+				{
+					OpenTK::Vector3 new_dir(up.Y*direction.Z - up.Z*direction.Y, -(up.Z*direction.Y - up.X*direction.Z), up.X*direction.Y - up.Y*direction.X);
+					eyes += new_dir * TranslateStep;
+					target += new_dir * TranslateStep;
+				} break;
+				case 'd':
+				{
+					OpenTK::Vector3 new_dir(up.Y*direction.Z - up.Z*direction.Y, -(up.Z*direction.Y - up.X*direction.Z), up.X*direction.Y - up.Y*direction.X);
+					eyes += (-new_dir) * TranslateStep;
+					target += (-new_dir) * TranslateStep;
+				} break;
+
+				case 't':
+				{
+					direction += (up / 100.0f) * RotareStep;
+					direction.Normalize();
+				} break;
+				case 'g':
+				{
+					direction += (-up / 100.0f) * RotareStep;
+					direction.Normalize();
+				} break;
+				case 'f':
+				{
+					OpenTK::Vector3 new_dir(up.Y*direction.Z - up.Z*direction.Y, -(up.Z*direction.Y - up.X*direction.Z), up.X*direction.Y - up.Y*direction.X);
+					direction += (new_dir / 100.0f) * RotareStep;
+					direction.Normalize();
+				} break;
+				case 'h':
+				{
+					OpenTK::Vector3 new_dir(up.Y*direction.Z - up.Z*direction.Y, -(up.Z*direction.Y - up.X*direction.Z), up.X*direction.Y - up.Y*direction.X);
+					direction += (-new_dir / 100.0f) * RotareStep;
+					direction.Normalize();
+				} break;
+
+				case 'u': { light_pos[0] += (float)TranslateStep; } break;
+				case 'j': { light_pos[0] -= (float)TranslateStep; } break;
+				case 'i': { light_pos[1] += (float)TranslateStep; } break;
+				case 'k': { light_pos[1] -= (float)TranslateStep; } break;
+				case 'o': { light_pos[2] += (float)TranslateStep; } break;
+				case 'l': { light_pos[2] -= (float)TranslateStep; } break;
+				}
 			}
 
 			void CreateShape(ShapeType type, Color col, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id)
@@ -558,80 +653,6 @@ namespace Lab1
 				}
 			}
 
-			void CameraControl(System::Windows::Forms::KeyPressEventArgs^  &e)
-			{
-				switch (e->KeyChar)
-				{
-				case 'w': 
-				{
-					eyes   += up * TranslateStep;
-					target += up * TranslateStep;
-				} break;
-				case 's': 
-				{
-					eyes +=   (-up) * TranslateStep;
-					target += (-up) * TranslateStep;
-				} break;
-				case 'e':
-				{ 
-					eyes   += direction * TranslateStep;
-					target += direction * TranslateStep;
-				} break;
-				case 'q': 
-				{ 
-					eyes   += (-direction) * TranslateStep;
-					target += (-direction) * TranslateStep;
-				} break;
-				case 'a': 
-				{ 
-					OpenTK::Vector3 new_dir(up.Y*direction.Z - up.Z*direction.Y, -(up.Z*direction.Y - up.X*direction.Z), up.X*direction.Y - up.Y*direction.X);
-					eyes   += new_dir * TranslateStep;
-					target += new_dir * TranslateStep;
-				} break;
-				case 'd': 
-				{ 
-					OpenTK::Vector3 new_dir(up.Y*direction.Z - up.Z*direction.Y, -(up.Z*direction.Y - up.X*direction.Z), up.X*direction.Y - up.Y*direction.X);
-					eyes   += (-new_dir) * TranslateStep;
-					target += (-new_dir) * TranslateStep;
-				} break;
-
-				case 't': 
-				{
-					direction += (up / 100.0f) * RotareStep;
-					direction.Normalize();
-				} break;
-				case 'g': 
-				{ 
-					direction += (-up / 100.0f) * RotareStep;
-					direction.Normalize();
-				} break;
-				case 'f': 
-				{
-					OpenTK::Vector3 new_dir(up.Y*direction.Z - up.Z*direction.Y, -(up.Z*direction.Y - up.X*direction.Z), up.X*direction.Y - up.Y*direction.X);
-					direction += (new_dir / 100.0f) * RotareStep;
-					direction.Normalize();
-				} break;
-				case 'h': 
-				{ 
-					OpenTK::Vector3 new_dir(up.Y*direction.Z - up.Z*direction.Y, -(up.Z*direction.Y - up.X*direction.Z), up.X*direction.Y - up.Y*direction.X);
-					direction += (-new_dir / 100.0f) * RotareStep;
-					direction.Normalize();
-				} break;
-
-				case 'u': { light_pos[0] += (float)TranslateStep; } break;
-				case 'j': { light_pos[0] -= (float)TranslateStep; } break;
-				case 'i': { light_pos[1] += (float)TranslateStep; } break;
-				case 'k': { light_pos[1] -= (float)TranslateStep; } break;
-				case 'o': { light_pos[2] += (float)TranslateStep; } break;
-				case 'l': { light_pos[2] -= (float)TranslateStep; } break;
-				}
-			}
-
-			OpenTK::Vector3 GetLight()
-			{
-				return light_pos;
-			}
-
 			void SelectShape(size_t id)
 			{
 				selected = false;
@@ -659,6 +680,14 @@ namespace Lab1
 					if (k != -1 && (k < tmp || tmp == -1)) { tmp = k; id = int(cur->GetID()); }
 				}
 				return id;
+			}
+			Shape^ GetShape(size_t id)
+			{
+				int i = 0;
+				for (; i < shape_list.Count; i++)
+					if (shape_list[i]->GetID() == id) break;
+				if (i == shape_list.Count) throw "Out of range";
+				return shape_list[i];
 			}
 		};
 
@@ -772,10 +801,12 @@ namespace Lab1
 	private: System::Windows::Forms::TextBox^  tb3_Length;
 	private: System::Windows::Forms::TextBox^  tb3_Step;
 	private: System::Windows::Forms::Label^  label3Step;
-	private: System::Windows::Forms::Button^  b3_ok;
-	private: System::Windows::Forms::Button^  b3_cancel;
+	private: System::Windows::Forms::Button^  b3_Color;
+	private: System::Windows::Forms::PictureBox^  picture3_Color;
+	private: System::Windows::Forms::ColorDialog^  colorDialog3;
 
 	private: Engine engine;
+	private: Shape^ current_shape;
 #pragma region Windows Form Designer generated code
 		void InitializeComponent(void)
 		{
@@ -832,6 +863,8 @@ namespace Lab1
 			this->b2_setColor = (gcnew System::Windows::Forms::Button());
 			this->ControlTab = (gcnew System::Windows::Forms::TabPage());
 			this->panel3ControlUI = (gcnew System::Windows::Forms::Panel());
+			this->picture3_Color = (gcnew System::Windows::Forms::PictureBox());
+			this->b3_Color = (gcnew System::Windows::Forms::Button());
 			this->tb3_Step = (gcnew System::Windows::Forms::TextBox());
 			this->label3Step = (gcnew System::Windows::Forms::Label());
 			this->b3_LengthUp = (gcnew System::Windows::Forms::Button());
@@ -877,14 +910,14 @@ namespace Lab1
 			this->oleDbDeleteCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
 			this->oleDbDataAdapter1 = (gcnew System::Data::OleDb::OleDbDataAdapter());
 			this->oleDbInsertCommand = (gcnew System::Data::OleDb::OleDbCommand());
-			this->b3_cancel = (gcnew System::Windows::Forms::Button());
-			this->b3_ok = (gcnew System::Windows::Forms::Button());
+			this->colorDialog3 = (gcnew System::Windows::Forms::ColorDialog());
 			this->MainTabControl->SuspendLayout();
 			this->CameraTab->SuspendLayout();
 			this->AddShapeTab->SuspendLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->picture2))->BeginInit();
 			this->ControlTab->SuspendLayout();
 			this->panel3ControlUI->SuspendLayout();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->picture3_Color))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridView))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataSet1))->BeginInit();
 			this->SuspendLayout();
@@ -893,7 +926,7 @@ namespace Lab1
 			// 
 			this->GLFrame->BackColor = System::Drawing::Color::Black;
 			this->GLFrame->Cursor = System::Windows::Forms::Cursors::NoMove2D;
-			this->GLFrame->Location = System::Drawing::Point(7, 171);
+			this->GLFrame->Location = System::Drawing::Point(9, 178);
 			this->GLFrame->Margin = System::Windows::Forms::Padding(4, 4, 4, 4);
 			this->GLFrame->Name = L"GLFrame";
 			this->GLFrame->Size = System::Drawing::Size(990, 660);
@@ -1336,7 +1369,7 @@ namespace Lab1
 			this->tb1_scal->Name = L"tb1_scal";
 			this->tb1_scal->Size = System::Drawing::Size(100, 22);
 			this->tb1_scal->TabIndex = 5;
-			this->tb1_scal->Text = L"0,1";
+			this->tb1_scal->Text = L"10";
 			this->tb1_scal->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb1_scal_KeyPress);
 			this->tb1_scal->Leave += gcnew System::EventHandler(this, &MyForm::tb1_scal_Leave);
 			// 
@@ -1452,8 +1485,8 @@ namespace Lab1
 			// 
 			// panel3ControlUI
 			// 
-			this->panel3ControlUI->Controls->Add(this->b3_ok);
-			this->panel3ControlUI->Controls->Add(this->b3_cancel);
+			this->panel3ControlUI->Controls->Add(this->picture3_Color);
+			this->panel3ControlUI->Controls->Add(this->b3_Color);
 			this->panel3ControlUI->Controls->Add(this->tb3_Step);
 			this->panel3ControlUI->Controls->Add(this->label3Step);
 			this->panel3ControlUI->Controls->Add(this->b3_LengthUp);
@@ -1494,18 +1527,38 @@ namespace Lab1
 			this->panel3ControlUI->Size = System::Drawing::Size(648, 109);
 			this->panel3ControlUI->TabIndex = 5;
 			// 
+			// picture3_Color
+			// 
+			this->picture3_Color->Location = System::Drawing::Point(90, 54);
+			this->picture3_Color->Name = L"picture3_Color";
+			this->picture3_Color->Size = System::Drawing::Size(30, 25);
+			this->picture3_Color->TabIndex = 34;
+			this->picture3_Color->TabStop = false;
+			// 
+			// b3_Color
+			// 
+			this->b3_Color->Location = System::Drawing::Point(7, 53);
+			this->b3_Color->Name = L"b3_Color";
+			this->b3_Color->Size = System::Drawing::Size(81, 26);
+			this->b3_Color->TabIndex = 33;
+			this->b3_Color->Text = L"Set color";
+			this->b3_Color->UseVisualStyleBackColor = true;
+			this->b3_Color->Click += gcnew System::EventHandler(this, &MyForm::b3_Color_Click);
+			// 
 			// tb3_Step
 			// 
-			this->tb3_Step->Location = System::Drawing::Point(48, 54);
+			this->tb3_Step->Location = System::Drawing::Point(48, 82);
 			this->tb3_Step->Name = L"tb3_Step";
-			this->tb3_Step->Size = System::Drawing::Size(63, 22);
+			this->tb3_Step->Size = System::Drawing::Size(72, 22);
 			this->tb3_Step->TabIndex = 22;
 			this->tb3_Step->Text = L"5";
+			this->tb3_Step->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb3_Step_KeyPress);
+			this->tb3_Step->Leave += gcnew System::EventHandler(this, &MyForm::tb3_Step_Leave);
 			// 
 			// label3Step
 			// 
 			this->label3Step->AutoSize = true;
-			this->label3Step->Location = System::Drawing::Point(4, 55);
+			this->label3Step->Location = System::Drawing::Point(4, 83);
 			this->label3Step->Name = L"label3Step";
 			this->label3Step->Size = System::Drawing::Size(41, 17);
 			this->label3Step->TabIndex = 32;
@@ -1519,6 +1572,7 @@ namespace Lab1
 			this->b3_LengthUp->TabIndex = 31;
 			this->b3_LengthUp->Text = L"▶";
 			this->b3_LengthUp->UseVisualStyleBackColor = true;
+			this->b3_LengthUp->Click += gcnew System::EventHandler(this, &MyForm::b3_LengthUp_Click);
 			// 
 			// b3_LengthDown
 			// 
@@ -1528,6 +1582,7 @@ namespace Lab1
 			this->b3_LengthDown->TabIndex = 30;
 			this->b3_LengthDown->Text = L"◀";
 			this->b3_LengthDown->UseVisualStyleBackColor = true;
+			this->b3_LengthDown->Click += gcnew System::EventHandler(this, &MyForm::b3_LengthDown_Click);
 			// 
 			// tb3_Length
 			// 
@@ -1535,6 +1590,8 @@ namespace Lab1
 			this->tb3_Length->Name = L"tb3_Length";
 			this->tb3_Length->Size = System::Drawing::Size(82, 22);
 			this->tb3_Length->TabIndex = 29;
+			this->tb3_Length->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb3_Length_KeyPress);
+			this->tb3_Length->Leave += gcnew System::EventHandler(this, &MyForm::tb3_Length_Leave);
 			// 
 			// label3Length
 			// 
@@ -1553,6 +1610,7 @@ namespace Lab1
 			this->b3_RotXdown->TabIndex = 27;
 			this->b3_RotXdown->Text = L"←";
 			this->b3_RotXdown->UseVisualStyleBackColor = true;
+			this->b3_RotXdown->Click += gcnew System::EventHandler(this, &MyForm::b3_RotXdown_Click);
 			// 
 			// b3_RotZdown
 			// 
@@ -1562,6 +1620,7 @@ namespace Lab1
 			this->b3_RotZdown->TabIndex = 26;
 			this->b3_RotZdown->Text = L"↙";
 			this->b3_RotZdown->UseVisualStyleBackColor = true;
+			this->b3_RotZdown->Click += gcnew System::EventHandler(this, &MyForm::b3_RotZdown_Click);
 			// 
 			// b3_RotZup
 			// 
@@ -1571,6 +1630,7 @@ namespace Lab1
 			this->b3_RotZup->TabIndex = 25;
 			this->b3_RotZup->Text = L"↗";
 			this->b3_RotZup->UseVisualStyleBackColor = true;
+			this->b3_RotZup->Click += gcnew System::EventHandler(this, &MyForm::b3_RotZup_Click);
 			// 
 			// b3_RotYdown
 			// 
@@ -1580,6 +1640,7 @@ namespace Lab1
 			this->b3_RotYdown->TabIndex = 24;
 			this->b3_RotYdown->Text = L"↓";
 			this->b3_RotYdown->UseVisualStyleBackColor = true;
+			this->b3_RotYdown->Click += gcnew System::EventHandler(this, &MyForm::b3_RotYdown_Click);
 			// 
 			// b3_RotXup
 			// 
@@ -1589,6 +1650,7 @@ namespace Lab1
 			this->b3_RotXup->TabIndex = 23;
 			this->b3_RotXup->Text = L"→";
 			this->b3_RotXup->UseVisualStyleBackColor = true;
+			this->b3_RotXup->Click += gcnew System::EventHandler(this, &MyForm::b3_RotXup_Click);
 			// 
 			// b3_RotYup
 			// 
@@ -1598,6 +1660,7 @@ namespace Lab1
 			this->b3_RotYup->TabIndex = 22;
 			this->b3_RotYup->Text = L"↑";
 			this->b3_RotYup->UseVisualStyleBackColor = true;
+			this->b3_RotYup->Click += gcnew System::EventHandler(this, &MyForm::b3_RotYup_Click);
 			// 
 			// label3ZRot
 			// 
@@ -1614,6 +1677,8 @@ namespace Lab1
 			this->tb3_ZRot->Name = L"tb3_ZRot";
 			this->tb3_ZRot->Size = System::Drawing::Size(53, 22);
 			this->tb3_ZRot->TabIndex = 20;
+			this->tb3_ZRot->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb3_ZRot_KeyPress);
+			this->tb3_ZRot->Leave += gcnew System::EventHandler(this, &MyForm::tb3_ZRot_Leave);
 			// 
 			// tb3_YRot
 			// 
@@ -1621,6 +1686,8 @@ namespace Lab1
 			this->tb3_YRot->Name = L"tb3_YRot";
 			this->tb3_YRot->Size = System::Drawing::Size(53, 22);
 			this->tb3_YRot->TabIndex = 19;
+			this->tb3_YRot->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb3_YRot_KeyPress);
+			this->tb3_YRot->Leave += gcnew System::EventHandler(this, &MyForm::tb3_YRot_Leave);
 			// 
 			// label3YRot
 			// 
@@ -1646,6 +1713,8 @@ namespace Lab1
 			this->tb3_XRot->Name = L"tb3_XRot";
 			this->tb3_XRot->Size = System::Drawing::Size(53, 22);
 			this->tb3_XRot->TabIndex = 16;
+			this->tb3_XRot->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb3_XRot_KeyPress);
+			this->tb3_XRot->Leave += gcnew System::EventHandler(this, &MyForm::tb3_XRot_Leave);
 			// 
 			// label3Rotare
 			// 
@@ -1664,6 +1733,7 @@ namespace Lab1
 			this->b3_PosXdown->TabIndex = 14;
 			this->b3_PosXdown->Text = L"←";
 			this->b3_PosXdown->UseVisualStyleBackColor = true;
+			this->b3_PosXdown->Click += gcnew System::EventHandler(this, &MyForm::b3_PosXdown_Click);
 			// 
 			// b3_PosZdown
 			// 
@@ -1673,6 +1743,7 @@ namespace Lab1
 			this->b3_PosZdown->TabIndex = 13;
 			this->b3_PosZdown->Text = L"↙";
 			this->b3_PosZdown->UseVisualStyleBackColor = true;
+			this->b3_PosZdown->Click += gcnew System::EventHandler(this, &MyForm::b3_PosZdown_Click);
 			// 
 			// b3_PosZup
 			// 
@@ -1682,6 +1753,7 @@ namespace Lab1
 			this->b3_PosZup->TabIndex = 12;
 			this->b3_PosZup->Text = L"↗";
 			this->b3_PosZup->UseVisualStyleBackColor = true;
+			this->b3_PosZup->Click += gcnew System::EventHandler(this, &MyForm::b3_PosZup_Click);
 			// 
 			// b3_PosYdown
 			// 
@@ -1691,6 +1763,7 @@ namespace Lab1
 			this->b3_PosYdown->TabIndex = 11;
 			this->b3_PosYdown->Text = L"↓";
 			this->b3_PosYdown->UseVisualStyleBackColor = true;
+			this->b3_PosYdown->Click += gcnew System::EventHandler(this, &MyForm::b3_PosYdown_Click);
 			// 
 			// b3_PosXup
 			// 
@@ -1700,6 +1773,7 @@ namespace Lab1
 			this->b3_PosXup->TabIndex = 10;
 			this->b3_PosXup->Text = L"→";
 			this->b3_PosXup->UseVisualStyleBackColor = true;
+			this->b3_PosXup->Click += gcnew System::EventHandler(this, &MyForm::b3_PosXup_Click);
 			// 
 			// b3_PosYup
 			// 
@@ -1709,6 +1783,7 @@ namespace Lab1
 			this->b3_PosYup->TabIndex = 9;
 			this->b3_PosYup->Text = L"↑";
 			this->b3_PosYup->UseVisualStyleBackColor = true;
+			this->b3_PosYup->Click += gcnew System::EventHandler(this, &MyForm::b3_PosYup_Click);
 			// 
 			// label3ZPos
 			// 
@@ -1725,6 +1800,8 @@ namespace Lab1
 			this->tb3_ZPos->Name = L"tb3_ZPos";
 			this->tb3_ZPos->Size = System::Drawing::Size(53, 22);
 			this->tb3_ZPos->TabIndex = 7;
+			this->tb3_ZPos->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb3_ZPos_KeyPress);
+			this->tb3_ZPos->Leave += gcnew System::EventHandler(this, &MyForm::tb3_ZPos_Leave);
 			// 
 			// tb3_YPos
 			// 
@@ -1732,6 +1809,8 @@ namespace Lab1
 			this->tb3_YPos->Name = L"tb3_YPos";
 			this->tb3_YPos->Size = System::Drawing::Size(53, 22);
 			this->tb3_YPos->TabIndex = 6;
+			this->tb3_YPos->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb3_YPos_KeyPress);
+			this->tb3_YPos->Leave += gcnew System::EventHandler(this, &MyForm::tb3_YPos_Leave);
 			// 
 			// label3YPos
 			// 
@@ -1757,6 +1836,8 @@ namespace Lab1
 			this->tb3_XPos->Name = L"tb3_XPos";
 			this->tb3_XPos->Size = System::Drawing::Size(53, 22);
 			this->tb3_XPos->TabIndex = 3;
+			this->tb3_XPos->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb3_XPos_KeyPress);
+			this->tb3_XPos->Leave += gcnew System::EventHandler(this, &MyForm::tb3_XPos_Leave);
 			// 
 			// label3Position
 			// 
@@ -1769,11 +1850,12 @@ namespace Lab1
 			// 
 			// ShapeTypeBox3
 			// 
+			this->ShapeTypeBox3->Enabled = false;
 			this->ShapeTypeBox3->FormattingEnabled = true;
 			this->ShapeTypeBox3->Items->AddRange(gcnew cli::array< System::Object^  >(2) { L"Cube", L"Pyramid" });
 			this->ShapeTypeBox3->Location = System::Drawing::Point(7, 24);
 			this->ShapeTypeBox3->Name = L"ShapeTypeBox3";
-			this->ShapeTypeBox3->Size = System::Drawing::Size(104, 24);
+			this->ShapeTypeBox3->Size = System::Drawing::Size(113, 24);
 			this->ShapeTypeBox3->TabIndex = 1;
 			// 
 			// label3ShapeType
@@ -2007,24 +2089,6 @@ namespace Lab1
 													0, L"Color_A")), (gcnew System::Data::OleDb::OleDbParameter(L"Scene", System::Data::OleDb::OleDbType::Integer, 0, L"Scene"))
 			});
 			// 
-			// b3_cancel
-			// 
-			this->b3_cancel->Location = System::Drawing::Point(7, 84);
-			this->b3_cancel->Name = L"b3_cancel";
-			this->b3_cancel->Size = System::Drawing::Size(61, 23);
-			this->b3_cancel->TabIndex = 33;
-			this->b3_cancel->Text = L"Cancel";
-			this->b3_cancel->UseVisualStyleBackColor = true;
-			// 
-			// b3_ok
-			// 
-			this->b3_ok->Location = System::Drawing::Point(74, 84);
-			this->b3_ok->Name = L"b3_ok";
-			this->b3_ok->Size = System::Drawing::Size(61, 23);
-			this->b3_ok->TabIndex = 34;
-			this->b3_ok->Text = L"OK";
-			this->b3_ok->UseVisualStyleBackColor = true;
-			// 
 			// MyForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(8, 16);
@@ -2048,6 +2112,7 @@ namespace Lab1
 			this->ControlTab->PerformLayout();
 			this->panel3ControlUI->ResumeLayout(false);
 			this->panel3ControlUI->PerformLayout();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->picture3_Color))->EndInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridView))->EndInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataSet1))->EndInit();
 			this->ResumeLayout(false);
@@ -2136,7 +2201,37 @@ namespace Lab1
 		{
 			panel3ControlUI->Enabled = true;
 			label3None->Text = "ID " + Convert::ToString(selected_shape_id);
+			current_shape = engine.GetShape(selected_shape_id);
 
+			if (dynamic_cast<Cube^>(current_shape))
+			{
+				ShapeTypeBox3->SelectedIndex = 0;
+				ShapeTypeBox3->Text = "Cube";
+			}
+			else
+			{
+				ShapeTypeBox3->SelectedIndex = 1;
+				ShapeTypeBox3->Text = "Pyramid";
+			}
+
+			colorDialog3->Color = current_shape->GetColor();
+			Bitmap^ bmp = gcnew Bitmap(picture3_Color->Width, picture3_Color->Height);
+			Graphics^ grf = Graphics::FromImage(bmp);
+			grf->Clear(colorDialog3->Color);
+			picture3_Color->Image = bmp;
+			picture3_Color->Refresh();
+
+			OpenTK::Vector3 pos = current_shape->GetPos();
+			tb3_XPos->Text = Convert::ToString(pos.X);
+			tb3_YPos->Text = Convert::ToString(pos.Y);
+			tb3_ZPos->Text = Convert::ToString(pos.Z);
+
+			OpenTK::Vector3 rot = current_shape->GetDirection();
+			tb3_XRot->Text = Convert::ToString(OpenTK::MathHelper::RadiansToDegrees(rot.X));
+			tb3_YRot->Text = Convert::ToString(OpenTK::MathHelper::RadiansToDegrees(rot.Y));
+			tb3_ZRot->Text = Convert::ToString(OpenTK::MathHelper::RadiansToDegrees(rot.Z));
+
+			tb3_Length->Text = Convert::ToString(current_shape->GetLength());
 		}
 		else
 		{
@@ -2150,7 +2245,27 @@ namespace Lab1
 			tb3_YRot->Text = "";
 			tb3_ZRot->Text = "";
 			tb3_Length->Text = "";
+
+			colorDialog3->Color = Color::White;
+			Bitmap^ bmp = gcnew Bitmap(picture3_Color->Width, picture3_Color->Height);
+			Graphics^ grf = Graphics::FromImage(bmp);
+			grf->Clear(Color::White);
+			picture3_Color->Image = bmp;
+			picture3_Color->Refresh();
 		}
+	}
+	private: void UpdateShape()
+	{
+		ShapeType type = ShapeType::Cube;
+		if (ShapeTypeBox3->SelectedIndex == 1) type = ShapeType::Pyramid;
+		engine.ResetShape(type, colorDialog3->Color, Convert::ToUInt32(tb3_Length->Text), Convert::ToDouble(tb3_XPos->Text), Convert::ToDouble(tb3_YPos->Text),
+			Convert::ToDouble(tb3_ZPos->Text), Convert::ToDouble(tb3_XRot->Text), Convert::ToDouble(tb3_YRot->Text),Convert::ToDouble(tb3_ZRot->Text), current_shape->GetID());
+		current_shape = engine.GetShape(current_shape->GetID());
+		DrawAll();
+
+		dataSet1->Tables[0]->Select("Код = " + Convert::ToString(current_shape->GetID()))[0]->ItemArray[1] = Convert::ToInt32(tb3_XPos->Text);
+		dataSet1->Tables[0]->Select("Код = " + Convert::ToString(current_shape->GetID()))[0]->ItemArray[2] = Convert::ToInt32(tb3_YPos->Text);
+		dataSet1->Tables[0]->Select("Код = " + Convert::ToString(current_shape->GetID()))[0]->ItemArray[3] = Convert::ToInt32(tb3_ZPos->Text);
 	}
 
 	private: void DrawAll()
@@ -2280,6 +2395,13 @@ namespace Lab1
 		grf->Clear(Color::Red);
 		picture2->Image = bmp;
 		picture2->Refresh();
+
+		colorDialog3->Color = Color::White;
+		Bitmap^ bmp1 = gcnew Bitmap(picture3_Color->Width, picture3_Color->Height);
+		Graphics^ grf1 = Graphics::FromImage(bmp1);
+		grf->Clear(Color::White);
+		picture3_Color->Image = bmp1;
+		picture3_Color->Refresh();
 	}
 	private: System::Void GLFrame_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e)
 	{
@@ -2331,7 +2453,7 @@ namespace Lab1
 	}
 	private: System::Void tb1_scal_Leave(System::Object^  sender, System::EventArgs^  e) 
 	{
-		if (tb1_scal->Text->Length == 0 || tb1_scal->Text == "-") tb1_scal->Text = "0";
+		if (tb1_scal->Text->Length == 0 || tb1_scal->Text == "-") tb1_scal->Text = "5";
 		engine.SetScaleStep(Double::Parse(tb1_scal->Text));
 	}
 	private: System::Void tb1_trans_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
@@ -2355,7 +2477,7 @@ namespace Lab1
 	private: System::Void tb1_scal_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
 	{
 		if (e->KeyChar == 13) engine.SetScaleStep(Double::Parse(tb1_scal->Text));
-		else if ((e->KeyChar <= 47 || e->KeyChar >= 59) && e->KeyChar != 8 && e->KeyChar != 44)
+		else if ((e->KeyChar <= 47 || e->KeyChar >= 59) && e->KeyChar != 8)
 		{
 			if (tb1_scal->Text->Length != 0 || e->KeyChar != 45)
 				e->Handled = true;
@@ -2600,6 +2722,192 @@ namespace Lab1
 										Convert::ToUInt32(dataGridView->CurrentRow->Cells[0]->Value));
 		oleDbDataAdapter1->Update(dataSet1);
 		DrawAll();
+	}
+
+	private: System::Void b3_Color_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		colorDialog3->ShowDialog();
+		Bitmap^ bmp = gcnew Bitmap(picture3_Color->Width, picture3_Color->Height);
+		Graphics^ grf = Graphics::FromImage(bmp);
+		grf->Clear(colorDialog3->Color);
+		picture3_Color->Image = bmp;
+		picture3_Color->Refresh();
+		UpdateShape();
+	}
+	private: System::Void b3_PosXdown_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		tb3_XPos->Text = Convert::ToString(Convert::ToDouble(tb3_XPos->Text) - Convert::ToDouble(tb3_Step->Text));
+		UpdateShape();
+	}
+	private: System::Void b3_PosYdown_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		tb3_YPos->Text = Convert::ToString(Convert::ToDouble(tb3_YPos->Text) - Convert::ToDouble(tb3_Step->Text));
+		UpdateShape();
+	}
+	private: System::Void b3_PosZdown_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		tb3_ZPos->Text = Convert::ToString(Convert::ToDouble(tb3_ZPos->Text) - Convert::ToDouble(tb3_Step->Text));
+		UpdateShape();
+	}
+	private: System::Void b3_PosXup_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		tb3_XPos->Text = Convert::ToString(Convert::ToDouble(tb3_XPos->Text) + Convert::ToDouble(tb3_Step->Text));
+		UpdateShape();
+	}
+	private: System::Void b3_PosYup_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		tb3_YPos->Text = Convert::ToString(Convert::ToDouble(tb3_YPos->Text) + Convert::ToDouble(tb3_Step->Text));
+		UpdateShape();
+	}
+	private: System::Void b3_PosZup_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		tb3_ZPos->Text = Convert::ToString(Convert::ToDouble(tb3_ZPos->Text) + Convert::ToDouble(tb3_Step->Text));
+		UpdateShape();
+	}
+	private: System::Void b3_RotXdown_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		tb3_XRot->Text = Convert::ToString(Convert::ToDouble(tb3_XRot->Text) - Convert::ToDouble(tb3_Step->Text));
+		UpdateShape();
+	}
+	private: System::Void b3_RotYdown_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		tb3_YRot->Text = Convert::ToString(Convert::ToDouble(tb3_YRot->Text) - Convert::ToDouble(tb3_Step->Text));
+		UpdateShape();
+	}
+	private: System::Void b3_RotZdown_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		tb3_ZRot->Text = Convert::ToString(Convert::ToDouble(tb3_ZRot->Text) - Convert::ToDouble(tb3_Step->Text));
+		UpdateShape();
+	}
+	private: System::Void b3_RotXup_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		tb3_XRot->Text = Convert::ToString(Convert::ToDouble(tb3_XRot->Text) + Convert::ToDouble(tb3_Step->Text));
+		UpdateShape();
+	}
+	private: System::Void b3_RotYup_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		tb3_YRot->Text = Convert::ToString(Convert::ToDouble(tb3_YRot->Text) + Convert::ToDouble(tb3_Step->Text));
+		UpdateShape();
+	}
+	private: System::Void b3_RotZup_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		tb3_ZRot->Text = Convert::ToString(Convert::ToDouble(tb3_ZRot->Text) + Convert::ToDouble(tb3_Step->Text));
+		UpdateShape();
+	}
+	private: System::Void b3_LengthDown_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		if (Convert::ToUInt32(tb3_Length->Text) < Convert::ToUInt32(tb3_Step->Text)) return;
+		tb3_Length->Text = Convert::ToString(Convert::ToUInt32(tb3_Length->Text) - Convert::ToUInt32(tb3_Step->Text));
+		UpdateShape();
+	}
+	private: System::Void b3_LengthUp_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		tb3_Length->Text = Convert::ToString(Convert::ToDouble(tb3_Length->Text) + Convert::ToDouble(tb3_Step->Text));
+		UpdateShape();
+	}
+
+	private: System::Void tb3_Step_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
+	{
+		if ((e->KeyChar <= 47 || e->KeyChar >= 59) && e->KeyChar != 8)
+			e->Handled = true;
+	}
+	private: System::Void tb3_XPos_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
+	{
+		if (e->KeyChar == 13) UpdateShape();
+		if ((e->KeyChar <= 47 || e->KeyChar >= 59) && e->KeyChar != 8)
+		{
+			if (tb3_XPos->Text->Length != 0 || e->KeyChar != 45)
+				e->Handled = true;
+		}
+	}
+	private: System::Void tb3_YPos_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
+	{
+		if (e->KeyChar == 13) UpdateShape();
+		if ((e->KeyChar <= 47 || e->KeyChar >= 59) && e->KeyChar != 8)
+		{
+			if (tb3_YPos->Text->Length != 0 || e->KeyChar != 45)
+				e->Handled = true;
+		}
+	}
+	private: System::Void tb3_ZPos_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
+	{
+		if (e->KeyChar == 13) UpdateShape();
+		if ((e->KeyChar <= 47 || e->KeyChar >= 59) && e->KeyChar != 8)
+		{
+			if (tb3_ZPos->Text->Length != 0 || e->KeyChar != 45)
+				e->Handled = true;
+		}
+	}
+	private: System::Void tb3_XRot_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
+	{
+		if (e->KeyChar == 13) UpdateShape();
+		if ((e->KeyChar <= 47 || e->KeyChar >= 59) && e->KeyChar != 8)
+		{
+			if (tb3_XRot->Text->Length != 0 || e->KeyChar != 45)
+				e->Handled = true;
+		}
+	}
+	private: System::Void tb3_YRot_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
+	{
+		if (e->KeyChar == 13) UpdateShape();
+		if ((e->KeyChar <= 47 || e->KeyChar >= 59) && e->KeyChar != 8)
+		{
+			if (tb3_YRot->Text->Length != 0 || e->KeyChar != 45)
+				e->Handled = true;
+		}
+	}
+	private: System::Void tb3_ZRot_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
+	{
+		if (e->KeyChar == 13) UpdateShape();
+		if ((e->KeyChar <= 47 || e->KeyChar >= 59) && e->KeyChar != 8)
+		{
+			if (tb3_ZRot->Text->Length != 0 || e->KeyChar != 45)
+				e->Handled = true;
+		}
+	}
+	private: System::Void tb3_Length_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
+	{
+		if ((e->KeyChar <= 47 || e->KeyChar >= 59) && e->KeyChar != 8)
+			e->Handled = true;
+	}
+	private: System::Void tb3_Step_Leave(System::Object^  sender, System::EventArgs^  e) 
+	{
+		if (tb3_Step->Text->Length == 0) tb3_Step->Text = "5";
+	}
+	private: System::Void tb3_XPos_Leave(System::Object^  sender, System::EventArgs^  e) 
+	{
+		if (tb3_XPos->Text->Length == 0) tb3_XPos->Text = "0";
+		UpdateShape();
+	}
+	private: System::Void tb3_YPos_Leave(System::Object^  sender, System::EventArgs^  e) 
+	{
+		if (tb3_YPos->Text->Length == 0) tb3_YPos->Text = "0";
+		UpdateShape();
+	}
+	private: System::Void tb3_ZPos_Leave(System::Object^  sender, System::EventArgs^  e) 
+	{
+		if (tb3_ZPos->Text->Length == 0) tb3_ZPos->Text = "0";
+		UpdateShape();
+	}
+	private: System::Void tb3_XRot_Leave(System::Object^  sender, System::EventArgs^  e) 
+	{
+		if (tb3_XRot->Text->Length == 0) tb3_XRot->Text = "0";
+		UpdateShape();
+	}
+	private: System::Void tb3_YRot_Leave(System::Object^  sender, System::EventArgs^  e) 
+	{
+		if (tb3_YRot->Text->Length == 0) tb3_YRot->Text = "0";
+		UpdateShape();
+	}
+	private: System::Void tb3_ZRot_Leave(System::Object^  sender, System::EventArgs^  e) 
+	{
+		if (tb3_ZRot->Text->Length == 0) tb3_ZRot->Text = "0";
+		UpdateShape();
+	}
+	private: System::Void tb3_Length_Leave(System::Object^  sender, System::EventArgs^  e) 
+	{
+		if (tb3_Length->Text->Length == 0) tb3_Length->Text = "50";
+		UpdateShape();
 	}
 };
 }

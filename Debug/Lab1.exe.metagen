@@ -35,10 +35,14 @@ Class Lab1.MyForm+Shape: AutoLayout, AnsiClass, Class, NestedPublic, Abstract, B
     SetData(Color, UInt32, Double, Double, Double, Double, Double, Double, UInt32): PrivateScope, Public, Virtual, HideBySig, VtableLayoutMask
     Draw(): PrivateScope, Public, Virtual, HideBySig, VtableLayoutMask
     DrawProjections(Boolean(HasFieldMarshal), Boolean(HasFieldMarshal), Boolean(HasFieldMarshal)): PrivateScope, Public, Virtual, HideBySig, VtableLayoutMask
-    GetID(): PrivateScope, Public, HideBySig
     Select(): PrivateScope, Public, HideBySig
     Deselect(): PrivateScope, Public, HideBySig
     Intersect(Vector3, Vector3): PrivateScope, Public, Virtual, HideBySig, VtableLayoutMask
+    GetID(): PrivateScope, Public, HideBySig
+    GetPos(): PrivateScope, Public, HideBySig
+    GetDirection(): PrivateScope, Public, HideBySig
+    GetLength(): PrivateScope, Public, HideBySig
+    GetColor(): PrivateScope, Public, HideBySig
 Class Lab1.MyForm+Cube: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFieldInit
   :Lab1.MyForm+Shape
     Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
@@ -67,14 +71,15 @@ Class Lab1.MyForm+Engine: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFiel
     SetTranslateStep(Double): PrivateScope, Public, HideBySig
     SetScaleStep(Double): PrivateScope, Public, HideBySig
     SetRotareStep(Double): PrivateScope, Public, HideBySig
+    GetLight(): PrivateScope, Public, HideBySig
+    CameraControl(KeyPressEventArgs* IsImplicitlyDereferenced): PrivateScope, Public, HideBySig
     CreateShape(ShapeType, Color, UInt32, Double, Double, Double, Double, Double, Double, UInt32): PrivateScope, Public, HideBySig
     ResetShape(ShapeType, Color, UInt32, Double, Double, Double, Double, Double, Double, UInt32): PrivateScope, Public, HideBySig
     DeleteShape(UInt32): PrivateScope, Public, HideBySig
     RemoveShapes(): PrivateScope, Public, HideBySig
     DrawShapes(): PrivateScope, Public, HideBySig
     DrawProjections(Boolean(HasFieldMarshal), Boolean(HasFieldMarshal), Boolean(HasFieldMarshal)): PrivateScope, Public, HideBySig
-    CameraControl(KeyPressEventArgs* IsImplicitlyDereferenced): PrivateScope, Public, HideBySig
-    GetLight(): PrivateScope, Public, HideBySig
     SelectShape(UInt32): PrivateScope, Public, HideBySig
     DeselectAll(): PrivateScope, Public, HideBySig
     Intersection(Vector3, Vector3): PrivateScope, Public, HideBySig
+    GetShape(UInt32): PrivateScope, Public, HideBySig
