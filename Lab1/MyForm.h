@@ -805,7 +805,8 @@ namespace Lab1
 	private: System::Windows::Forms::ColorDialog^  colorDialog3;
 
 	private: Engine engine;
-	private: Shape^ current_shape;
+private: System::Windows::Forms::Button^  b3_deleteShape;
+	private: Shape ^ current_shape;
 #pragma region Windows Form Designer generated code
 		void InitializeComponent(void)
 		{
@@ -909,6 +910,7 @@ namespace Lab1
 			this->oleDbDataAdapter1 = (gcnew System::Data::OleDb::OleDbDataAdapter());
 			this->oleDbInsertCommand = (gcnew System::Data::OleDb::OleDbCommand());
 			this->colorDialog3 = (gcnew System::Windows::Forms::ColorDialog());
+			this->b3_deleteShape = (gcnew System::Windows::Forms::Button());
 			this->MainTabControl->SuspendLayout();
 			this->CameraTab->SuspendLayout();
 			this->AddShapeTab->SuspendLayout();
@@ -1481,6 +1483,7 @@ namespace Lab1
 			// 
 			// panel3ControlUI
 			// 
+			this->panel3ControlUI->Controls->Add(this->b3_deleteShape);
 			this->panel3ControlUI->Controls->Add(this->picture3_Color);
 			this->panel3ControlUI->Controls->Add(this->b3_Color);
 			this->panel3ControlUI->Controls->Add(this->tb3_Step);
@@ -1899,7 +1902,7 @@ namespace Lab1
 			// 
 			this->oleDbUpdateCommand1->CommandText = resources->GetString(L"oleDbUpdateCommand1.CommandText");
 			this->oleDbUpdateCommand1->Connection = this->oleDbConnection1;
-			this->oleDbUpdateCommand1->Parameters->AddRange(gcnew cli::array< System::Data::OleDb::OleDbParameter^  >(40) {
+			this->oleDbUpdateCommand1->Parameters->AddRange(gcnew cli::array< System::Data::OleDb::OleDbParameter^  >(14) {
 				(gcnew System::Data::OleDb::OleDbParameter(L"x_coor",
 					System::Data::OleDb::OleDbType::Integer, 0, L"x_coor")), (gcnew System::Data::OleDb::OleDbParameter(L"y_coor", System::Data::OleDb::OleDbType::Integer,
 						0, L"y_coor")), (gcnew System::Data::OleDb::OleDbParameter(L"z_coor", System::Data::OleDb::OleDbType::Integer, 0, L"z_coor")),
@@ -1912,121 +1915,17 @@ namespace Lab1
 												0, L"Color_B")), (gcnew System::Data::OleDb::OleDbParameter(L"Color_A", System::Data::OleDb::OleDbType::UnsignedTinyInt,
 													0, L"Color_A")), (gcnew System::Data::OleDb::OleDbParameter(L"Scene", System::Data::OleDb::OleDbType::Integer, 0, L"Scene")),
 													(gcnew System::Data::OleDb::OleDbParameter(L"Original_Код", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-														false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Код", System::Data::DataRowVersion::Original, nullptr)),
-														(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_x_coor", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-															static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"x_coor", System::Data::DataRowVersion::Original, true, nullptr)),
-															(gcnew System::Data::OleDb::OleDbParameter(L"Original_x_coor", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-																false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"x_coor", System::Data::DataRowVersion::Original, nullptr)),
-																(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_y_coor", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-																	static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"y_coor", System::Data::DataRowVersion::Original, true, nullptr)),
-																	(gcnew System::Data::OleDb::OleDbParameter(L"Original_y_coor", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-																		false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"y_coor", System::Data::DataRowVersion::Original, nullptr)),
-																		(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_z_coor", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-																			static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"z_coor", System::Data::DataRowVersion::Original, true, nullptr)),
-																			(gcnew System::Data::OleDb::OleDbParameter(L"Original_z_coor", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-																				false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"z_coor", System::Data::DataRowVersion::Original, nullptr)),
-																				(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_lenght", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-																					static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"lenght", System::Data::DataRowVersion::Original, true, nullptr)),
-																					(gcnew System::Data::OleDb::OleDbParameter(L"Original_lenght", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-																						false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"lenght", System::Data::DataRowVersion::Original, nullptr)),
-																						(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_x_rot", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-																							static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"x_rot", System::Data::DataRowVersion::Original, true, nullptr)),
-																							(gcnew System::Data::OleDb::OleDbParameter(L"Original_x_rot", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-																								false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"x_rot", System::Data::DataRowVersion::Original, nullptr)),
-																								(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_y_rot", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-																									static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"y_rot", System::Data::DataRowVersion::Original, true, nullptr)),
-																									(gcnew System::Data::OleDb::OleDbParameter(L"Original_y_rot", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-																										false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"y_rot", System::Data::DataRowVersion::Original, nullptr)),
-																										(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_z_rot", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-																											static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"z_rot", System::Data::DataRowVersion::Original, true, nullptr)),
-																											(gcnew System::Data::OleDb::OleDbParameter(L"Original_z_rot", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-																												false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"z_rot", System::Data::DataRowVersion::Original, nullptr)),
-																												(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_ShapeType", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-																													static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"ShapeType", System::Data::DataRowVersion::Original, true, nullptr)),
-																													(gcnew System::Data::OleDb::OleDbParameter(L"Original_ShapeType", System::Data::OleDb::OleDbType::VarWChar, 0, System::Data::ParameterDirection::Input,
-																														false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"ShapeType", System::Data::DataRowVersion::Original,
-																														nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Color_R", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-																															static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Color_R", System::Data::DataRowVersion::Original, true, nullptr)),
-																															(gcnew System::Data::OleDb::OleDbParameter(L"Original_Color_R", System::Data::OleDb::OleDbType::UnsignedTinyInt, 0, System::Data::ParameterDirection::Input,
-																																false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Color_R", System::Data::DataRowVersion::Original, nullptr)),
-																																(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Color_G", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-																																	static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Color_G", System::Data::DataRowVersion::Original, true, nullptr)),
-																																	(gcnew System::Data::OleDb::OleDbParameter(L"Original_Color_G", System::Data::OleDb::OleDbType::UnsignedTinyInt, 0, System::Data::ParameterDirection::Input,
-																																		false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Color_G", System::Data::DataRowVersion::Original, nullptr)),
-																																		(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Color_B", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-																																			static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Color_B", System::Data::DataRowVersion::Original, true, nullptr)),
-																																			(gcnew System::Data::OleDb::OleDbParameter(L"Original_Color_B", System::Data::OleDb::OleDbType::UnsignedTinyInt, 0, System::Data::ParameterDirection::Input,
-																																				false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Color_B", System::Data::DataRowVersion::Original, nullptr)),
-																																				(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Color_A", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-																																					static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Color_A", System::Data::DataRowVersion::Original, true, nullptr)),
-																																					(gcnew System::Data::OleDb::OleDbParameter(L"Original_Color_A", System::Data::OleDb::OleDbType::UnsignedTinyInt, 0, System::Data::ParameterDirection::Input,
-																																						false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Color_A", System::Data::DataRowVersion::Original, nullptr)),
-																																						(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Scene", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-																																							static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Scene", System::Data::DataRowVersion::Original, true, nullptr)),
-																																							(gcnew System::Data::OleDb::OleDbParameter(L"Original_Scene", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-																																								false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Scene", System::Data::DataRowVersion::Original, nullptr))
+														false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Код", System::Data::DataRowVersion::Original, nullptr))
 			});
 			// 
 			// oleDbDeleteCommand1
 			// 
-			this->oleDbDeleteCommand1->CommandText = resources->GetString(L"oleDbDeleteCommand1.CommandText");
+			this->oleDbDeleteCommand1->CommandText = L"DELETE FROM `Shapes` WHERE ((`Код` = \?))";
 			this->oleDbDeleteCommand1->Connection = this->oleDbConnection1;
-			this->oleDbDeleteCommand1->Parameters->AddRange(gcnew cli::array< System::Data::OleDb::OleDbParameter^  >(27) {
+			this->oleDbDeleteCommand1->Parameters->AddRange(gcnew cli::array< System::Data::OleDb::OleDbParameter^  >(1) {
 				(gcnew System::Data::OleDb::OleDbParameter(L"Original_Код",
 					System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
-					static_cast<System::Byte>(0), L"Код", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_x_coor",
-						System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
-						L"x_coor", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_x_coor",
-							System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
-							static_cast<System::Byte>(0), L"x_coor", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_y_coor",
-								System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
-								L"y_coor", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_y_coor",
-									System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
-									static_cast<System::Byte>(0), L"y_coor", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_z_coor",
-										System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
-										L"z_coor", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_z_coor",
-											System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
-											static_cast<System::Byte>(0), L"z_coor", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_lenght",
-												System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
-												L"lenght", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_lenght",
-													System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
-													static_cast<System::Byte>(0), L"lenght", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_x_rot",
-														System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
-														L"x_rot", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_x_rot",
-															System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
-															static_cast<System::Byte>(0), L"x_rot", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_y_rot",
-																System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
-																L"y_rot", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_y_rot",
-																	System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
-																	static_cast<System::Byte>(0), L"y_rot", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_z_rot",
-																		System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
-																		L"z_rot", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_z_rot",
-																			System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
-																			static_cast<System::Byte>(0), L"z_rot", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_ShapeType",
-																				System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
-																				L"ShapeType", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_ShapeType",
-																					System::Data::OleDb::OleDbType::VarWChar, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
-																					static_cast<System::Byte>(0), L"ShapeType", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Color_R",
-																						System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
-																						L"Color_R", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_Color_R",
-																							System::Data::OleDb::OleDbType::UnsignedTinyInt, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
-																							static_cast<System::Byte>(0), L"Color_R", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Color_G",
-																								System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
-																								L"Color_G", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_Color_G",
-																									System::Data::OleDb::OleDbType::UnsignedTinyInt, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
-																									static_cast<System::Byte>(0), L"Color_G", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Color_B",
-																										System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
-																										L"Color_B", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_Color_B",
-																											System::Data::OleDb::OleDbType::UnsignedTinyInt, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
-																											static_cast<System::Byte>(0), L"Color_B", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Color_A",
-																												System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
-																												L"Color_A", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_Color_A",
-																													System::Data::OleDb::OleDbType::UnsignedTinyInt, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
-																													static_cast<System::Byte>(0), L"Color_A", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Scene",
-																														System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
-																														L"Scene", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_Scene",
-																															System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
-																															static_cast<System::Byte>(0), L"Scene", System::Data::DataRowVersion::Original, nullptr))
+					static_cast<System::Byte>(0), L"Код", System::Data::DataRowVersion::Original, nullptr))
 			});
 			// 
 			// oleDbDataAdapter1
@@ -2067,6 +1966,16 @@ namespace Lab1
 												0, L"Color_B")), (gcnew System::Data::OleDb::OleDbParameter(L"Color_A", System::Data::OleDb::OleDbType::UnsignedTinyInt,
 													0, L"Color_A")), (gcnew System::Data::OleDb::OleDbParameter(L"Scene", System::Data::OleDb::OleDbType::Integer, 0, L"Scene"))
 			});
+			// 
+			// b3_deleteShape
+			// 
+			this->b3_deleteShape->Location = System::Drawing::Point(666, 14);
+			this->b3_deleteShape->Name = L"b3_deleteShape";
+			this->b3_deleteShape->Size = System::Drawing::Size(123, 86);
+			this->b3_deleteShape->TabIndex = 35;
+			this->b3_deleteShape->Text = L"Delete Shape";
+			this->b3_deleteShape->UseVisualStyleBackColor = true;
+			this->b3_deleteShape->Click += gcnew System::EventHandler(this, &MyForm::b3_deleteShape_Click);
 			// 
 			// MyForm
 			// 
@@ -2237,16 +2146,15 @@ namespace Lab1
 		current_shape = engine.GetShape(current_shape->GetID());
 		DrawAll();
 
+
+		//this->oleDbSelectCommand1->CommandText = L"SELECT * FROM Shapes WHERE Scene = ";
 		DataRow^ row = dataSet1->Tables[0]->Select("Код = " + Convert::ToString(current_shape->GetID()))[0];
-		int ind = dataSet1->Tables[0]->Rows->IndexOf(row);
-		
-		
+		//int ind = dataSet1->Tables[0]->Rows->IndexOf(row);
 		row->BeginEdit();
 		row[1] = Convert::ToInt32(tb3_XPos->Text);
 		row[2] = Convert::ToInt32(tb3_YPos->Text);
 		row[3] = Convert::ToInt32(tb3_ZPos->Text);
 		row->EndEdit();
-		row->AcceptChanges();
 		dataSet1->AcceptChanges();
 		oleDbDataAdapter1->Update(dataSet1);
 	}
@@ -2843,6 +2751,20 @@ namespace Lab1
 	{
 		if (tb3_Length->Text->Length == 0) tb3_Length->Text = "50";
 		UpdateShape();
+	}
+
+	private: System::Void b3_deleteShape_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		engine.DeleteShape(selected_shape_id);
+
+		DataRow^ row = dataSet1->Tables[0]->Select("Код = " + Convert::ToString(current_shape->GetID()))[0];
+		int ind = dataSet1->Tables[0]->Rows->IndexOf(row);
+		dataSet1->Tables[0]->Rows->RemoveAt(ind);
+		int k = oleDbDataAdapter1->Update(dataSet1);
+
+		selected = false;
+		ControlPanel();
+		DrawAll();
 	}
 };
 }
