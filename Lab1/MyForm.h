@@ -76,11 +76,11 @@ namespace Lab1
 			}
 			OpenTK::Vector3 GetPos()
 			{
-				return OpenTK::Vector3(x_coor, y_coor, z_coor);
+				return OpenTK::Vector3((float)x_coor, (float)y_coor, (float)z_coor);
 			}
 			OpenTK::Vector3 GetDirection()
 			{
-				return OpenTK::Vector3(x_rot, y_rot, z_rot);
+				return OpenTK::Vector3((float)x_rot, (float)y_rot, (float)z_rot);
 			}
 			size_t GetLength()
 			{
@@ -499,11 +499,11 @@ namespace Lab1
 			}
 			virtual double Intersect(OpenTK::Vector3 ray, OpenTK::Vector3 camera_pos) override
 			{
-				for (int i = 0; i < cnt; i++)
+				for (size_t i = 0; i < cnt; i++)
 				{
-					if (Shape::distance(ray, camera_pos, OpenTK::Vector3(x[i], y[i], z[i])) > (l*5)/6) return -1;
+					if (Shape::distance(ray, camera_pos, OpenTK::Vector3((float)x[i], (float)y[i], (float)z[i])) > (l*5)/6) return -1;
 				}
-				return Shape::distance(OpenTK::Vector3(x_coor, y_coor, z_coor), camera_pos);
+				return Shape::distance(OpenTK::Vector3((float)x_coor, (float)y_coor, (float)z_coor), camera_pos);
 			}
 		};
 
@@ -545,57 +545,57 @@ namespace Lab1
 				{
 				case 'w':
 				{
-					eyes += up * TranslateStep;
-					target += up * TranslateStep;
+					eyes += up * (float)TranslateStep;
+					target += up * (float)TranslateStep;
 				} break;
 				case 's':
 				{
-					eyes += (-up) * TranslateStep;
-					target += (-up) * TranslateStep;
+					eyes += (-up) * (float)TranslateStep;
+					target += (-up) * (float)TranslateStep;
 				} break;
 				case 'e':
 				{
-					eyes += direction * ScaleStep;
-					target += direction * ScaleStep;
+					eyes += direction * (float)ScaleStep;
+					target += direction * (float)ScaleStep;
 				} break;
 				case 'q':
 				{
-					eyes += (-direction) * ScaleStep;
-					target += (-direction) * ScaleStep;
+					eyes += (-direction) * (float)ScaleStep;
+					target += (-direction) * (float)ScaleStep;
 				} break;
 				case 'a':
 				{
-					OpenTK::Vector3 new_dir(up.Y*direction.Z - up.Z*direction.Y, -(up.Z*direction.Y - up.X*direction.Z), up.X*direction.Y - up.Y*direction.X);
-					eyes += new_dir * TranslateStep;
-					target += new_dir * TranslateStep;
+					OpenTK::Vector3 new_dir((float)(up.Y*direction.Z - up.Z*direction.Y), (float)(-(up.Z*direction.Y - up.X*direction.Z)), (float)(up.X*direction.Y - up.Y*direction.X));
+					eyes += new_dir * (float)TranslateStep;
+					target += new_dir * (float)TranslateStep;
 				} break;
 				case 'd':
 				{
-					OpenTK::Vector3 new_dir(up.Y*direction.Z - up.Z*direction.Y, -(up.Z*direction.Y - up.X*direction.Z), up.X*direction.Y - up.Y*direction.X);
-					eyes += (-new_dir) * TranslateStep;
-					target += (-new_dir) * TranslateStep;
+					OpenTK::Vector3 new_dir((float)(up.Y*direction.Z - up.Z*direction.Y), (float)(-(up.Z*direction.Y - up.X*direction.Z)), (float)(up.X*direction.Y - up.Y*direction.X));
+					eyes += (-new_dir) * (float)TranslateStep;
+					target += (-new_dir) * (float)TranslateStep;
 				} break;
 
 				case 't':
 				{
-					direction += (up / 100.0f) * RotareStep;
+					direction += (up / 100.0f) * (float)RotareStep;
 					direction.Normalize();
 				} break;
 				case 'g':
 				{
-					direction += (-up / 100.0f) * RotareStep;
+					direction += (-up / 100.0f) * (float)RotareStep;
 					direction.Normalize();
 				} break;
 				case 'f':
 				{
-					OpenTK::Vector3 new_dir(up.Y*direction.Z - up.Z*direction.Y, -(up.Z*direction.Y - up.X*direction.Z), up.X*direction.Y - up.Y*direction.X);
-					direction += (new_dir / 100.0f) * RotareStep;
+					OpenTK::Vector3 new_dir((float)(up.Y*direction.Z - up.Z*direction.Y), (float)(-(up.Z*direction.Y - up.X*direction.Z)), (float)(up.X*direction.Y - up.Y*direction.X));
+					direction += (new_dir / 100.0f) * (float)RotareStep;
 					direction.Normalize();
 				} break;
 				case 'h':
 				{
-					OpenTK::Vector3 new_dir(up.Y*direction.Z - up.Z*direction.Y, -(up.Z*direction.Y - up.X*direction.Z), up.X*direction.Y - up.Y*direction.X);
-					direction += (-new_dir / 100.0f) * RotareStep;
+					OpenTK::Vector3 new_dir((float)(up.Y*direction.Z - up.Z*direction.Y), (float)(-(up.Z*direction.Y - up.X*direction.Z)), (float)(up.X*direction.Y - up.Y*direction.X));
+					direction += (-new_dir / 100.0f) * (float)RotareStep;
 					direction.Normalize();
 				} break;
 
@@ -751,7 +751,6 @@ namespace Lab1
 	private: System::Windows::Forms::Label^  label1LightY;
 	private: System::Windows::Forms::Label^  label1LightX;
 	private: System::Windows::Forms::Label^  label1LightPos;
-	private: System::Windows::Forms::DataGridView^  dataGridView;
 	private: System::Data::DataSet^  dataSet1;
 	private: System::Windows::Forms::ColorDialog^  colorDialog;
 	private: System::Windows::Forms::Button^  b2_setColor;
@@ -901,7 +900,6 @@ namespace Lab1
 			this->label3ShapeType = (gcnew System::Windows::Forms::Label());
 			this->label3None = (gcnew System::Windows::Forms::Label());
 			this->label3Selected = (gcnew System::Windows::Forms::Label());
-			this->dataGridView = (gcnew System::Windows::Forms::DataGridView());
 			this->dataSet1 = (gcnew System::Data::DataSet());
 			this->colorDialog = (gcnew System::Windows::Forms::ColorDialog());
 			this->oleDbSelectCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
@@ -918,7 +916,6 @@ namespace Lab1
 			this->ControlTab->SuspendLayout();
 			this->panel3ControlUI->SuspendLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->picture3_Color))->BeginInit();
-			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridView))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataSet1))->BeginInit();
 			this->SuspendLayout();
 			// 
@@ -1475,7 +1472,6 @@ namespace Lab1
 			this->ControlTab->Controls->Add(this->panel3ControlUI);
 			this->ControlTab->Controls->Add(this->label3None);
 			this->ControlTab->Controls->Add(this->label3Selected);
-			this->ControlTab->Controls->Add(this->dataGridView);
 			this->ControlTab->Location = System::Drawing::Point(4, 25);
 			this->ControlTab->Name = L"ControlTab";
 			this->ControlTab->Size = System::Drawing::Size(987, 136);
@@ -1524,7 +1520,7 @@ namespace Lab1
 			this->panel3ControlUI->Enabled = false;
 			this->panel3ControlUI->Location = System::Drawing::Point(3, 24);
 			this->panel3ControlUI->Name = L"panel3ControlUI";
-			this->panel3ControlUI->Size = System::Drawing::Size(648, 109);
+			this->panel3ControlUI->Size = System::Drawing::Size(980, 109);
 			this->panel3ControlUI->TabIndex = 5;
 			// 
 			// picture3_Color
@@ -1885,23 +1881,6 @@ namespace Lab1
 			this->label3Selected->TabIndex = 3;
 			this->label3Selected->Text = L"Selected shape:";
 			// 
-			// dataGridView
-			// 
-			this->dataGridView->AllowUserToAddRows = false;
-			this->dataGridView->AutoGenerateColumns = false;
-			this->dataGridView->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
-			this->dataGridView->DataSource = this->dataSet1;
-			this->dataGridView->Location = System::Drawing::Point(657, 3);
-			this->dataGridView->Name = L"dataGridView";
-			this->dataGridView->RowTemplate->Height = 24;
-			this->dataGridView->Size = System::Drawing::Size(324, 121);
-			this->dataGridView->TabIndex = 2;
-			this->dataGridView->CellValueChanged += gcnew System::Windows::Forms::DataGridViewCellEventHandler(this, &MyForm::dataGridView_CellValueChanged);
-			this->dataGridView->RowLeave += gcnew System::Windows::Forms::DataGridViewCellEventHandler(this, &MyForm::dataGridView_RowLeave);
-			this->dataGridView->SelectionChanged += gcnew System::EventHandler(this, &MyForm::dataGridView_SelectionChanged);
-			this->dataGridView->UserDeletedRow += gcnew System::Windows::Forms::DataGridViewRowEventHandler(this, &MyForm::dataGridView_UserDeletedRow);
-			this->dataGridView->UserDeletingRow += gcnew System::Windows::Forms::DataGridViewRowCancelEventHandler(this, &MyForm::dataGridView_UserDeletingRow);
-			// 
 			// dataSet1
 			// 
 			this->dataSet1->DataSetName = L"NewDataSet";
@@ -2113,7 +2092,6 @@ namespace Lab1
 			this->panel3ControlUI->ResumeLayout(false);
 			this->panel3ControlUI->PerformLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->picture3_Color))->EndInit();
-			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridView))->EndInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataSet1))->EndInit();
 			this->ResumeLayout(false);
 
@@ -2164,35 +2142,31 @@ namespace Lab1
 		dataSet1->Reset();
 		oleDbSelectCommand1->CommandText = (L"SELECT * FROM Shapes WHERE Scene = " + Convert::ToString(current_scene));
 		oleDbDataAdapter1->Fill(dataSet1);
-
-		dataGridView->AutoGenerateColumns = true;
-		dataGridView->DataSource = dataSet1->Tables[0];
-		dataGridView->Update();
 		try 
 		{
 			next_id = Convert::ToUInt32(dataSet1->Tables[0]->Rows[dataSet1->Tables[0]->Rows->Count - 1]->ItemArray[0]) + 1;
 		}
-		catch (Exception^ nothing)
+		catch (Exception^())
 		{
 			next_id = 1;
 		}
-		for (int i = 0; i < dataGridView->RowCount; i++)
+		for (int i = 0; i < dataSet1->Tables[0]->Rows->Count; i++)
 		{
 			ShapeType type = ShapeType::Pyramid;
-			String^ t = dataGridView->Rows[i]->Cells[8]->Value->ToString();
+			String^ t = dataSet1->Tables[0]->Rows[i]->ItemArray[8]->ToString();
 			if (t == "Куб") type = ShapeType::Cube;
-			engine.CreateShape(type, Color::FromArgb(	Convert::ToInt32(dataGridView->Rows[i]->Cells[12]->Value), 
-														Convert::ToInt32(dataGridView->Rows[i]->Cells[9]->Value), 
-														Convert::ToInt32(dataGridView->Rows[i]->Cells[10]->Value), 
-														Convert::ToInt32(dataGridView->Rows[i]->Cells[11]->Value)),
-											Convert::ToUInt32(dataGridView->Rows[i]->Cells[4]->Value),
-											Convert::ToDouble(dataGridView->Rows[i]->Cells[1]->Value), 
-											Convert::ToDouble(dataGridView->Rows[i]->Cells[2]->Value), 
-											Convert::ToDouble(dataGridView->Rows[i]->Cells[3]->Value), 
-											Convert::ToDouble(dataGridView->Rows[i]->Cells[5]->Value),
-											Convert::ToDouble(dataGridView->Rows[i]->Cells[6]->Value), 
-											Convert::ToDouble(dataGridView->Rows[i]->Cells[7]->Value), 
-											Convert::ToUInt32(dataGridView->Rows[i]->Cells[0]->Value));
+			engine.CreateShape(type, Color::FromArgb(	Convert::ToInt32(dataSet1->Tables[0]->Rows[i]->ItemArray[12]),
+														Convert::ToInt32(dataSet1->Tables[0]->Rows[i]->ItemArray[9]),
+														Convert::ToInt32(dataSet1->Tables[0]->Rows[i]->ItemArray[10]),
+														Convert::ToInt32(dataSet1->Tables[0]->Rows[i]->ItemArray[11])),
+											Convert::ToUInt32(dataSet1->Tables[0]->Rows[i]->ItemArray[4]),
+											Convert::ToDouble(dataSet1->Tables[0]->Rows[i]->ItemArray[1]),
+											Convert::ToDouble(dataSet1->Tables[0]->Rows[i]->ItemArray[2]),
+											Convert::ToDouble(dataSet1->Tables[0]->Rows[i]->ItemArray[3]),
+											Convert::ToDouble(dataSet1->Tables[0]->Rows[i]->ItemArray[5]),
+											Convert::ToDouble(dataSet1->Tables[0]->Rows[i]->ItemArray[6]),
+											Convert::ToDouble(dataSet1->Tables[0]->Rows[i]->ItemArray[7]),
+											Convert::ToUInt32(dataSet1->Tables[0]->Rows[i]->ItemArray[0]));
 		}
 	}
 	private: void ControlPanel()
@@ -2263,9 +2237,18 @@ namespace Lab1
 		current_shape = engine.GetShape(current_shape->GetID());
 		DrawAll();
 
-		dataSet1->Tables[0]->Select("Код = " + Convert::ToString(current_shape->GetID()))[0]->ItemArray[1] = Convert::ToInt32(tb3_XPos->Text);
-		dataSet1->Tables[0]->Select("Код = " + Convert::ToString(current_shape->GetID()))[0]->ItemArray[2] = Convert::ToInt32(tb3_YPos->Text);
-		dataSet1->Tables[0]->Select("Код = " + Convert::ToString(current_shape->GetID()))[0]->ItemArray[3] = Convert::ToInt32(tb3_ZPos->Text);
+		DataRow^ row = dataSet1->Tables[0]->Select("Код = " + Convert::ToString(current_shape->GetID()))[0];
+		int ind = dataSet1->Tables[0]->Rows->IndexOf(row);
+		
+		
+		row->BeginEdit();
+		row[1] = Convert::ToInt32(tb3_XPos->Text);
+		row[2] = Convert::ToInt32(tb3_YPos->Text);
+		row[3] = Convert::ToInt32(tb3_ZPos->Text);
+		row->EndEdit();
+		row->AcceptChanges();
+		dataSet1->AcceptChanges();
+		oleDbDataAdapter1->Update(dataSet1);
 	}
 
 	private: void DrawAll()
@@ -2672,55 +2655,7 @@ namespace Lab1
 										Convert::ToInt32(colorDialog->Color.A),
 										current_scene);
 		oleDbDataAdapter1->Update(dataSet1);
-		dataGridView->Update();
 		next_id++;
-		DrawAll();
-	}
-
-	private: System::Void dataGridView_UserDeletingRow(System::Object^  sender, System::Windows::Forms::DataGridViewRowCancelEventArgs^  e) 
-	{
-		int id = Convert::ToInt32(e->Row->Cells[0]->Value);
-		engine.DeleteShape(id);
-		DrawAll();
-	}
-	private: System::Void dataGridView_UserDeletedRow(System::Object^  sender, System::Windows::Forms::DataGridViewRowEventArgs^  e) 
-	{
-		oleDbDataAdapter1->Update(dataSet1);
-	}
-	private: System::Void dataGridView_RowLeave(System::Object^  sender, System::Windows::Forms::DataGridViewCellEventArgs^  e) 
-	{
-		engine.DeselectAll();
-		DrawAll();
-	}
-	private: System::Void dataGridView_SelectionChanged(System::Object^  sender, System::EventArgs^  e) 
-	{
-		try 
-		{
-			int id = Convert::ToInt32(dataGridView->CurrentRow->Cells[0]->Value);
-			engine.SelectShape(id);
-		}
-		catch (Exception^ nothing) {}
-		DrawAll();
-	}
-	private: System::Void dataGridView_CellValueChanged(System::Object^  sender, System::Windows::Forms::DataGridViewCellEventArgs^  e) 
-	{
-		int id = Convert::ToInt32(dataGridView->CurrentRow->Cells[0]->Value);
-		ShapeType type = ShapeType::Pyramid;
-		String^ t = dataGridView->CurrentRow->Cells[8]->Value->ToString();
-		if (t == "Куб") type = ShapeType::Cube;
-		engine.ResetShape(type, Color::FromArgb(Convert::ToInt32(dataGridView->CurrentRow->Cells[12]->Value),
-												Convert::ToInt32(dataGridView->CurrentRow->Cells[9]->Value), 
-												Convert::ToInt32(dataGridView->CurrentRow->Cells[10]->Value), 
-												Convert::ToInt32(dataGridView->CurrentRow->Cells[11]->Value)),
-										Convert::ToUInt32(dataGridView->CurrentRow->Cells[4]->Value),
-										Convert::ToDouble(dataGridView->CurrentRow->Cells[1]->Value),
-										Convert::ToDouble(dataGridView->CurrentRow->Cells[2]->Value),
-										Convert::ToDouble(dataGridView->CurrentRow->Cells[3]->Value),
-										Convert::ToDouble(dataGridView->CurrentRow->Cells[5]->Value),
-										Convert::ToDouble(dataGridView->CurrentRow->Cells[6]->Value),
-										Convert::ToDouble(dataGridView->CurrentRow->Cells[7]->Value),
-										Convert::ToUInt32(dataGridView->CurrentRow->Cells[0]->Value));
-		oleDbDataAdapter1->Update(dataSet1);
 		DrawAll();
 	}
 

@@ -26,10 +26,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="database.accdb">
+    <None Include="database.mdb">
       <Filter>Файлы ресурсов</Filter>
     </None>
-    <None Include="database.mdb">
+    <None Include="Lab1Model.ncp">
       <Filter>Файлы ресурсов</Filter>
     </None>
   </ItemGroup>

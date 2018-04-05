@@ -152,8 +152,8 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="database.accdb" />
     <None Include="database.mdb" />
+    <None Include="Lab1Model.ncp" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

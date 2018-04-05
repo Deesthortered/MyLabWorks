@@ -1,0 +1,130 @@
+<Project>
+  <Name>Lab1Model</Name>
+  <ProjectItem type="NClass.DiagramEditor.ClassDiagram.Diagram" assembly="NClass.DiagramEditor, Version=2.4.1823.0, Culture=neutral, PublicKeyToken=null">
+    <Name>Untitled</Name>
+    <Language>CSharp</Language>
+    <Entities>
+      <Entity type="Class">
+        <Name>Shape</Name>
+        <Access>Public</Access>
+        <Location left="368" top="562" />
+        <Size width="708" height="470" />
+        <Collapsed>False</Collapsed>
+        <Member type="Field">protected size_t id</Member>
+        <Member type="Field">protected bool Selected</Member>
+        <Member type="Field">protected double x_coor</Member>
+        <Member type="Field">protected double y_coor</Member>
+        <Member type="Field">protected double z_coor</Member>
+        <Member type="Field">protected double x_rot</Member>
+        <Member type="Field">protected double y_rot</Member>
+        <Member type="Field">protected double z_rot</Member>
+        <Member type="Field">protected size_t l</Member>
+        <Member type="Field">protected Color color</Member>
+        <Member type="Field">protected size_t cnt</Member>
+        <Member type="Method">public virtual void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id)</Member>
+        <Member type="Method">public virtual void Draw()</Member>
+        <Member type="Method">public virtual void DrawProjection(bool xy, bool xz, bool yz)</Member>
+        <Member type="Method">public void Select()</Member>
+        <Member type="Method">public void Deselect()</Member>
+        <Member type="Method">public virtual double Intersect(Vector3 ray, Vector3 camera_pos)</Member>
+        <Member type="Method">public size_t GetID()</Member>
+        <Member type="Method">public Vector3 GetPos()</Member>
+        <Member type="Method">public Vector3 GetDirection()</Member>
+        <Member type="Method">public Color GetColor()</Member>
+        <Member type="Method">protected double distance(Vector3 vect, Vector3 point, Vector3 f_point)</Member>
+        <Member type="Method">protected double distance(Vector3 p1, Vector3 p2)</Member>
+        <Modifier>Abstract</Modifier>
+      </Entity>
+      <Entity type="Class">
+        <Name>Engine</Name>
+        <Access>Public</Access>
+        <Location left="10" top="109" />
+        <Size width="820" height="434" />
+        <Collapsed>False</Collapsed>
+        <Member type="Field">private List&lt;Shape&gt; shape_list</Member>
+        <Member type="Field">private double TranslationStep</Member>
+        <Member type="Field">private double RotationStep</Member>
+        <Member type="Field">private double ScaleStep</Member>
+        <Member type="Field">private Vector3 light_pos</Member>
+        <Member type="Constructor">public Engine()</Member>
+        <Member type="Method">public void SetTranslationStep(double val)</Member>
+        <Member type="Method">public void SetRotationStep(double val)</Member>
+        <Member type="Method">public void SetScaleStep(double val)</Member>
+        <Member type="Method">public Vector3 GetLight()</Member>
+        <Member type="Method">public void CameraControl(KeyPressEventArgs e)</Member>
+        <Member type="Method">public void CreateShape(ShapeType type, Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id)</Member>
+        <Member type="Method">public void ResetShape(ShapeType type, Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id)</Member>
+        <Member type="Method">public void DeleteShape(size_t id)</Member>
+        <Member type="Method">public void RemoveShapes()</Member>
+        <Member type="Method">public void DrawShapes()</Member>
+        <Member type="Method">public void DrawProjections(bool xy, bool xz, bool yz)</Member>
+        <Member type="Method">public void SelectShape(size_t id)</Member>
+        <Member type="Method">public void DeselectAll()</Member>
+        <Member type="Method">public int Intersection(Vector3 ray, Vector3 pos)</Member>
+        <Member type="Method">public Shape GetShape(size_t id)</Member>
+        <Modifier>None</Modifier>
+      </Entity>
+      <Entity type="Enum">
+        <Name>ShapeType</Name>
+        <Access>Public</Access>
+        <Location left="10" top="10" />
+        <Size width="820" height="95" />
+        <Collapsed>False</Collapsed>
+        <Value>Cube</Value>
+        <Value>Pyramid</Value>
+      </Entity>
+      <Entity type="Class">
+        <Name>Cube</Name>
+        <Access>Public</Access>
+        <Location left="12" top="1101" />
+        <Size width="708" height="230" />
+        <Collapsed>False</Collapsed>
+        <Member type="Field">private double x</Member>
+        <Member type="Field">private double y</Member>
+        <Member type="Field">private double z</Member>
+        <Member type="Constructor">public Cube()</Member>
+        <Member type="Destructor">~Cube()</Member>
+        <Member type="Method">public override void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id)</Member>
+        <Member type="Method">public override void Draw()</Member>
+        <Member type="Method">public override void DrawProjections(bool xy, bool xz, bool yz)</Member>
+        <Member type="Method">public override double Intersect(Vector3 ray, Vector3 camera_pos)</Member>
+        <Modifier>None</Modifier>
+      </Entity>
+      <Entity type="Class">
+        <Name>Pyramid</Name>
+        <Access>Public</Access>
+        <Location left="724" top="1101" />
+        <Size width="708" height="230" />
+        <Collapsed>False</Collapsed>
+        <Member type="Field">private double x</Member>
+        <Member type="Field">private double y</Member>
+        <Member type="Field">private double z</Member>
+        <Member type="Constructor">public Pyramid()</Member>
+        <Member type="Destructor">~Pyramid()</Member>
+        <Member type="Method">public override void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id)</Member>
+        <Member type="Method">public override void Draw()</Member>
+        <Member type="Method">public override void DrawProjections(bool xy, bool xz, bool yz)</Member>
+        <Member type="Method">public override double Intersect(Vector3 ray, Vector3 camera_pos)</Member>
+        <Modifier>None</Modifier>
+      </Entity>
+    </Entities>
+    <Relationships>
+      <Relationship type="Association" first="0" second="3">
+        <Label>
+        </Label>
+        <StartOrientation>Vertical</StartOrientation>
+        <EndOrientation>Vertical</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="0" second="4">
+        <Label>
+        </Label>
+        <StartOrientation>Vertical</StartOrientation>
+        <EndOrientation>Vertical</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+    </Relationships>
+  </ProjectItem>
+</Project>
