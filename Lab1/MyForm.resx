@@ -118,60 +118,51 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <metadata name="dataSet1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>4, -3</value>
+    <value>297, 32</value>
   </metadata>
   <metadata name="colorDialog.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>230, 31</value>
+    <value>10, 26</value>
+  </metadata>
+  <metadata name="colorDialog3.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>138, 31</value>
   </metadata>
   <metadata name="oleDbSelectCommand1.DesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>False</value>
-  </metadata>
-  <metadata name="oleDbSelectCommand1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>0, 0</value>
   </metadata>
   <metadata name="oleDbSelectCommand1.CommandDesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>False</value>
   </metadata>
   <metadata name="oleDbConnection1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>9, 52</value>
+    <value>413, 32</value>
   </metadata>
-  <metadata name="oleDbUpdateCommand1.DesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+  <metadata name="oleDbInsertCommand1.DesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>False</value>
   </metadata>
-  <metadata name="oleDbUpdateCommand1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>0, 0</value>
+  <metadata name="oleDbInsertCommand1.CommandDesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <data name="oleDbInsertCommand1.CommandText" xml:space="preserve">
+    <value>INSERT INTO `Shapes` (`x_coor`, `y_coor`, `z_coor`, `lenght`, `x_rot`, `y_rot`, `z_rot`, `ShapeType`, `Color_R`, `Color_G`, `Color_B`, `Color_A`, `Scene`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)</value>
+  </data>
+  <metadata name="oleDbUpdateCommand1.DesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
   </metadata>
   <metadata name="oleDbUpdateCommand1.CommandDesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>False</value>
   </metadata>
   <data name="oleDbUpdateCommand1.CommandText" xml:space="preserve">
-    <value>UPDATE `Shapes` SET `x_coor` = ?, `y_coor` = ?, `z_coor` = ?, `lenght` = ?, `x_rot` = ?, `y_rot` = ?, `z_rot` = ?, `ShapeType` = ?, `Color_R` = ?, `Color_G` = ?, `Color_B` = ?, `Color_A` = ?, `Scene` = ? WHERE ((`Код` = ?))</value>
+    <value>UPDATE `Shapes` SET `x_coor` = ?, `y_coor` = ?, `z_coor` = ?, `lenght` = ?, `x_rot` = ?, `y_rot` = ?, `z_rot` = ?, `ShapeType` = ?, `Color_R` = ?, `Color_G` = ?, `Color_B` = ?, `Color_A` = ?, `Scene` = ? WHERE ((`ID` = ?) AND ((? = 1 AND `x_coor` IS NULL) OR (`x_coor` = ?)) AND ((? = 1 AND `y_coor` IS NULL) OR (`y_coor` = ?)) AND ((? = 1 AND `z_coor` IS NULL) OR (`z_coor` = ?)) AND ((? = 1 AND `lenght` IS NULL) OR (`lenght` = ?)) AND ((? = 1 AND `x_rot` IS NULL) OR (`x_rot` = ?)) AND ((? = 1 AND `y_rot` IS NULL) OR (`y_rot` = ?)) AND ((? = 1 AND `z_rot` IS NULL) OR (`z_rot` = ?)) AND ((? = 1 AND `ShapeType` IS NULL) OR (`ShapeType` = ?)) AND ((? = 1 AND `Color_R` IS NULL) OR (`Color_R` = ?)) AND ((? = 1 AND `Color_G` IS NULL) OR (`Color_G` = ?)) AND ((? = 1 AND `Color_B` IS NULL) OR (`Color_B` = ?)) AND ((? = 1 AND `Color_A` IS NULL) OR (`Color_A` = ?)) AND ((? = 1 AND `Scene` IS NULL) OR (`Scene` = ?)))</value>
   </data>
   <metadata name="oleDbDeleteCommand1.DesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>False</value>
   </metadata>
-  <metadata name="oleDbDeleteCommand1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>0, 0</value>
-  </metadata>
   <metadata name="oleDbDeleteCommand1.CommandDesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>False</value>
   </metadata>
-  <metadata name="oleDbDataAdapter1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>5, 25</value>
-  </metadata>
-  <metadata name="oleDbInsertCommand.DesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="oleDbInsertCommand.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>0, 0</value>
-  </metadata>
-  <metadata name="oleDbInsertCommand.CommandDesignTimeVisible" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <data name="oleDbInsertCommand.CommandText" xml:space="preserve">
-    <value>INSERT INTO `Shapes` (`x_coor`, `y_coor`, `z_coor`, `lenght`, `x_rot`, `y_rot`, `z_rot`, `ShapeType`, `Color_R`, `Color_G`, `Color_B`, `Color_A`, `Scene`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)</value>
+  <data name="oleDbDeleteCommand1.CommandText" xml:space="preserve">
+    <value>DELETE FROM `Shapes` WHERE ((`ID` = ?) AND ((? = 1 AND `x_coor` IS NULL) OR (`x_coor` = ?)) AND ((? = 1 AND `y_coor` IS NULL) OR (`y_coor` = ?)) AND ((? = 1 AND `z_coor` IS NULL) OR (`z_coor` = ?)) AND ((? = 1 AND `lenght` IS NULL) OR (`lenght` = ?)) AND ((? = 1 AND `x_rot` IS NULL) OR (`x_rot` = ?)) AND ((? = 1 AND `y_rot` IS NULL) OR (`y_rot` = ?)) AND ((? = 1 AND `z_rot` IS NULL) OR (`z_rot` = ?)) AND ((? = 1 AND `ShapeType` IS NULL) OR (`ShapeType` = ?)) AND ((? = 1 AND `Color_R` IS NULL) OR (`Color_R` = ?)) AND ((? = 1 AND `Color_G` IS NULL) OR (`Color_G` = ?)) AND ((? = 1 AND `Color_B` IS NULL) OR (`Color_B` = ?)) AND ((? = 1 AND `Color_A` IS NULL) OR (`Color_A` = ?)) AND ((? = 1 AND `Scene` IS NULL) OR (`Scene` = ?)))</value>
   </data>
-  <metadata name="colorDialog3.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>380, 35</value>
+  <metadata name="oleDbDataAdapter1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>411, 8</value>
   </metadata>
 </root>
