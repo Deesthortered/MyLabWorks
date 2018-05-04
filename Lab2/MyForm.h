@@ -14,6 +14,9 @@ namespace Lab2
 	using namespace System::Windows::Forms;
 	using namespace System::Data;
 	using namespace System::Drawing;
+	using namespace System::Threading;
+
+	const int max_client_count = 10;
 
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
@@ -43,9 +46,7 @@ namespace Lab2
 			}
 			~WinSocket()
 			{
-				for (size_t i = 0; i < this->sockets->size(); i++)
-					closesocket(sockets->at(i));
-				this->sockets->clear();
+				CloseSocket();
 				delete this->sockets;
 				this->adrresses->clear();
 				delete this->adrresses;
@@ -77,6 +78,13 @@ namespace Lab2
 			}
 			void CloseSocket()
 			{
+				for (size_t i = 0; i < this->sockets->size(); i++)
+				{
+					shutdown(this->sockets->at(i), 0);
+					closesocket(this->sockets->at(i));
+				}
+				this->sockets->clear();
+				shutdown(this->main_socket, 0);
 				closesocket(this->main_socket);
 			}
 
@@ -160,7 +168,7 @@ namespace Lab2
 				if (FAILED(listen(this->main_socket, this->max_client_count))) return false;
 				return true;
 			}
-			bool Accept()
+			SOCKET Accept()
 			{
 				int len = sizeof(sockaddr_in);
 				this->adrresses->push_back(sockaddr_in());
@@ -170,23 +178,25 @@ namespace Lab2
 				{
 					this->sockets->pop_back();
 					this->adrresses->pop_back();
-					return false;
+					return SOCKET_ERROR;
 				}
-				return true;
+				return this->sockets->back();
 			}
-			bool GetData(char *data, size_t data_size, int number)
+			bool GetData(char *data, size_t data_size, SOCKET s)
 			{
-				int len = recv((number == -1 ? this->main_socket : this->sockets->at(number)), data, data_size, 0);
+				int len = recv(s, data, data_size, 0);
 				if ((len == SOCKET_ERROR) || (len == 0)) return false;
 				return true;
 			}
-			bool SendData(char *data, size_t data_size, int number)
+			bool SendData(char *data, size_t data_size, SOCKET s)
 			{
-				if (SOCKET_ERROR == send((number == -1 ? this->main_socket : this->sockets->at(number)), data, data_size, 0)) return false;
+				if (SOCKET_ERROR == send(s, data, data_size, 0)) return false;
 				return true;
 			}
 		};
-		WinSocket SuckIt;
+		WinSocket Socket;
+		bool is_server;
+		
 
 	public:	MyForm(void)
 		{
@@ -489,6 +499,8 @@ namespace Lab2
 		panel_info->Enabled = true;
 		b_connect->Text = "Disconnect";
 		b_connect->Visible = true;
+		is_server = true;
+		StartServer();
 	}
 	private: System::Void b_connet_room_Click(System::Object^  sender, System::EventArgs^  e) 
 	{
@@ -498,13 +510,37 @@ namespace Lab2
 		b_connect->Visible = true;
 		tb_ip->ReadOnly = false;
 		tb_port->ReadOnly = false;
+		is_server = false;
 	}
 	
 	private: System::Void tb_ip_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
 	{
+		if ((e->KeyChar <= 47 || e->KeyChar >= 59) && e->KeyChar != 8 && e->KeyChar != 46)
+			e->Handled = true;
 	}
 	private: System::Void tb_port_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
 	{
+		if (((e->KeyChar <= 47 || e->KeyChar >= 59) && e->KeyChar != 8) || (tb_port->Text->Length == 5 && e->KeyChar != 8))
+			e->Handled = true;
+	}
+
+	void StartServer()
+	{
+		Socket.InitializeSocket();
+		Socket.SetClientCount(max_client_count);
+		Socket.Set_IPAuto();
+		Socket.Set_PortAuto();
+		Socket.Bind();
+		Socket.Listen();
+		for (size_t i = 0; i < max_client_count; i++)
+		{
+			SOCKET s = Socket.Accept();
+			Thread^ t = gcnew Thread(ClientFunction);
+		}
+	}
+	void ClientFunction(SOCKET s)
+	{
+
 	}
 };
 
