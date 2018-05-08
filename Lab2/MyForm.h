@@ -24,10 +24,9 @@ namespace Lab2
 		{
 			static WSADATA *ws;
 			SOCKET main_socket;
-			sockaddr_in *addr;
+			sockaddr_in *adr;
 			std::vector<SOCKET> *sockets;
 			std::vector<sockaddr_in> *adrresses;
-			hostent* hn;
 			char* ip;
 			u_short port;
 			size_t max_client_count;
@@ -37,9 +36,8 @@ namespace Lab2
 			{
 				this->sockets = new std::vector<SOCKET>();
 				this->adrresses = new std::vector<sockaddr_in>();
-				this->addr = new sockaddr_in;
-				ZeroMemory(this->addr, sizeof(sockaddr_in));
-				this->hn = nullptr;
+				this->adr = new sockaddr_in;
+				ZeroMemory(this->adr, sizeof(this->adr));
 				this->ip = nullptr;
 				this->max_client_count = SOMAXCONN;
 				this->client_count = 0;
@@ -50,7 +48,7 @@ namespace Lab2
 				delete this->sockets;
 				this->adrresses->clear();
 				delete this->adrresses;
-				delete this->addr;
+				delete this->adr;
 				if (this->ip) delete[] this->ip;
 			}
 
@@ -68,7 +66,7 @@ namespace Lab2
 			}
 			bool InitializeSocket()
 			{
-				if (INVALID_SOCKET == (main_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)))
+				if (INVALID_SOCKET == (main_socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)))
 				{
 					closesocket(this->main_socket);
 					return false;
@@ -91,7 +89,7 @@ namespace Lab2
 			{
 				if (this->ip) delete[] this->ip;
 				this->ip = new char[16];
-				strcpy(this->ip, this->hn->h_addr_list[0]);
+				strcpy(this->ip, inet_ntoa((in_addr)adr->sin_addr));
 				String ^res;
 				size_t i = 0;
 				while (ip[i] != '\0')
@@ -118,26 +116,28 @@ namespace Lab2
 				this->ip[l] = '\0';
 				for (size_t i = 0; i < l; i++) this->ip[i] = (char)ip[i];
 
-				ZeroMemory(this->addr, sizeof(sockaddr_in));
-				addr->sin_family = AF_INET;
-				addr->sin_addr.S_un.S_addr = inet_addr(this->ip);
-				hn = gethostbyname(this->ip);
+				ZeroMemory(this->adr, sizeof(this->adr));
+				adr->sin_family = AF_INET;
+				adr->sin_addr.S_un.S_addr = inet_addr(this->ip);
 			}
 			void Set_Port(u_short port)
 			{
 				this->port = port;
-				addr->sin_port = htons(port);
+				adr->sin_port = htons(port);
 			}
 			void Set_IPAuto()
 			{
-				ZeroMemory(this->addr, sizeof(this->addr));
-				this->hn = gethostbyname(INADDR_ANY);
-				this->addr->sin_addr.S_un.S_addr = *(DWORD*)this->hn->h_addr_list[0];
-				addr->sin_family = AF_INET;
+				hostent* hn;
+				hn = gethostbyname(INADDR_ANY);
+
+				ZeroMemory(this->adr, sizeof(this->adr));
+				adr->sin_family = AF_INET;
+				this->adr->sin_addr.S_un.S_addr = *(DWORD*)hn->h_addr_list[0];
+				memset(this->adr->sin_zero, 0, 8);
 			}
 			void Set_PortAuto()
 			{
-				this->addr->sin_port = htons(0);
+				this->adr->sin_port = htons(0);
 			}
 			size_t GetClientCount()
 			{
@@ -150,13 +150,17 @@ namespace Lab2
 			}
 			bool Bind()
 			{
-				if (bind(this->main_socket, (sockaddr*)this->addr, sizeof(this->addr)) == SOCKET_ERROR) 
+				if ((bind(this->main_socket, (sockaddr*)this->adr, sizeof(this->adr))) == SOCKET_ERROR)
+				{
+					int k = WSAGetLastError();
 					return false;
+				}
 				return true;
 			}
 			bool Connect()
 			{
-				if (SOCKET_ERROR == (connect(main_socket, (sockaddr *)addr, sizeof(addr)))) return false;
+				if (SOCKET_ERROR == (connect(main_socket, (sockaddr *)adr, sizeof(adr)))) 
+					return false;
 				return true;
 			}
 			bool Disconnect()
