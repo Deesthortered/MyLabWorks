@@ -11,15 +11,15 @@ namespace Lab2
 	using namespace System;
 	using namespace System::ComponentModel;
 	using namespace System::Collections;
+	using namespace System::Collections::Generic;
 	using namespace System::Windows::Forms;
 	using namespace System::Data;
 	using namespace System::Drawing;
 	using namespace System::Threading;
 
-	const int max_client_count = 10;
-
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
+		// Common
 		ref class WinSocket
 		{
 			static WSADATA *ws;
@@ -41,7 +41,7 @@ namespace Lab2
 				ZeroMemory(this->addr, sizeof(sockaddr_in));
 				this->hn = nullptr;
 				this->ip = nullptr;
-				this->max_client_count = 1;
+				this->max_client_count = SOMAXCONN;
 				this->client_count = 0;
 			}
 			~WinSocket()
@@ -52,7 +52,6 @@ namespace Lab2
 				delete this->adrresses;
 				delete this->addr;
 				if (this->ip) delete[] this->ip;
-				if (this->hn) delete this->hn;
 			}
 
 			static bool InitializeLibrary()
@@ -90,6 +89,9 @@ namespace Lab2
 
 			String^ GetIP()
 			{
+				if (this->ip) delete[] this->ip;
+				this->ip = new char[16];
+				strcpy(this->ip, this->hn->h_addr_list[0]);
 				String ^res;
 				size_t i = 0;
 				while (ip[i] != '\0')
@@ -101,6 +103,11 @@ namespace Lab2
 			}
 			size_t GetPort()
 			{
+				sockaddr_in name;
+				int n_l = sizeof(name);
+				ZeroMemory(&name, sizeof(name));
+				getsockname(this->main_socket, (sockaddr*)&name, &n_l);
+				this->port = ntohs(name.sin_port);
 				return this->port;
 			}
 			void Set_IP(String ^ip)
@@ -123,21 +130,14 @@ namespace Lab2
 			}
 			void Set_IPAuto()
 			{
-				ZeroMemory(this->addr, sizeof(sockaddr_in));
+				ZeroMemory(this->addr, sizeof(this->addr));
 				this->hn = gethostbyname(INADDR_ANY);
-				addr->sin_family = AF_INET;
 				this->addr->sin_addr.S_un.S_addr = *(DWORD*)this->hn->h_addr_list[0];
-				strcpy(this->ip, this->hn->h_addr_list[0]);
+				addr->sin_family = AF_INET;
 			}
-			bool Set_PortAuto()
+			void Set_PortAuto()
 			{
 				this->addr->sin_port = htons(0);
-				sockaddr_in name;
-				int n_l = sizeof(name);
-				ZeroMemory(&name, sizeof(name));
-				if (getsockname(this->main_socket, (sockaddr*)&name, &n_l) == SOCKET_ERROR) return false;
-				this->port = ntohs(name.sin_port);
-				return true;
 			}
 			size_t GetClientCount()
 			{
@@ -150,7 +150,8 @@ namespace Lab2
 			}
 			bool Bind()
 			{
-				if (bind(this->main_socket, (sockaddr*)this->addr, sizeof(this->addr)) == SOCKET_ERROR) return false;
+				if (bind(this->main_socket, (sockaddr*)this->addr, sizeof(this->addr)) == SOCKET_ERROR) 
+					return false;
 				return true;
 			}
 			bool Connect()
@@ -165,7 +166,8 @@ namespace Lab2
 			}
 			bool Listen()
 			{
-				if (FAILED(listen(this->main_socket, this->max_client_count))) return false;
+				if (FAILED(listen(this->main_socket, this->max_client_count))) 
+					return false;
 				return true;
 			}
 			SOCKET Accept()
@@ -194,9 +196,87 @@ namespace Lab2
 				return true;
 			}
 		};
-		WinSocket Socket;
+		WinSocket ^Socket;
+		bool is_active;
 		bool is_server;
-		
+
+		// Server
+		Thread^ listen_thr;
+		List<Thread^> client_threads;
+
+		bool StartServer()
+		{
+			Socket = gcnew WinSocket();
+			label_info->Text = "Инициализация серверного сокета...";
+			if (!Socket->InitializeSocket())
+			{
+				MessageBox::Show("Не удалось проинициализировать сокет сервера.", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error);
+				TerminateServer();
+				return false;
+			}
+			Socket->Set_IPAuto();
+			Socket->Set_PortAuto();
+			label_info->Text = "Биндим сокет на автоматический адресс...";
+			if (!Socket->Bind())
+			{
+				MessageBox::Show("Не удалось забиндить сокет сервера", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error);
+				TerminateServer();
+				return false;
+			}
+			tb_ip->Text = Socket->GetIP();
+			tb_port->Text = Socket->GetPort().ToString();
+			label_info->Text = "Ставим серверный сокет в слушающий режим...";
+			if (!Socket->Listen())
+			{
+				MessageBox::Show("Не удалось поставить сокет сервера на слушающий режим", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error);
+				TerminateServer();
+				return false;
+			}
+			label_info->Text = "Запускаем поток обработки клиентских соединений.";
+			listen_thr = gcnew Thread(gcnew ThreadStart(this, &MyForm::Listening));
+			listen_thr->Start();
+			label_info->Text = "Готово!";
+			return true;
+		}
+		void TerminateServer()
+		{
+			if (listen_thr != nullptr && listen_thr->ThreadState == ThreadState::Running)
+				listen_thr->Abort();
+			Socket->~WinSocket();
+			is_active = false;
+			label_info->Text = "Строка состояния";
+		}
+		void Listening()
+		{
+			while (true)
+			{
+				SOCKET s = Socket->Accept();
+				if (s == SOCKET_ERROR) continue;
+				client_threads.Add(gcnew Thread(gcnew ParameterizedThreadStart(this, &MyForm::ClientProcessing)));
+				client_threads[(client_threads.Count - 1)]->Start(s);
+			}
+		}
+		void ClientProcessing(Object^ obj)
+		{
+			SOCKET sock = (SOCKET)obj;
+		}
+
+		// Client
+		bool StartClient()
+		{
+			Socket = gcnew WinSocket();
+			
+			return true;
+		}
+		void TerminateClient()
+		{
+			Socket->~WinSocket();
+			is_active = false;
+			label_info->Text = "Строка состояния";
+		}
+
+
+
 
 	public:	MyForm(void)
 		{
@@ -260,18 +340,15 @@ namespace Lab2
 			// 
 			this->panel_top->Controls->Add(this->b_create_room);
 			this->panel_top->Controls->Add(this->b_connet_room);
-			this->panel_top->Controls->Add(this->b_ok_name);
-			this->panel_top->Controls->Add(this->tb_name);
-			this->panel_top->Controls->Add(this->label_name);
-			this->panel_top->Location = System::Drawing::Point(0, -2);
+			this->panel_top->Location = System::Drawing::Point(0, 38);
 			this->panel_top->Name = L"panel_top";
-			this->panel_top->Size = System::Drawing::Size(354, 116);
+			this->panel_top->Size = System::Drawing::Size(354, 76);
 			this->panel_top->TabIndex = 0;
 			// 
 			// b_create_room
 			// 
 			this->b_create_room->Enabled = false;
-			this->b_create_room->Location = System::Drawing::Point(12, 38);
+			this->b_create_room->Location = System::Drawing::Point(12, 3);
 			this->b_create_room->Name = L"b_create_room";
 			this->b_create_room->Size = System::Drawing::Size(168, 61);
 			this->b_create_room->TabIndex = 4;
@@ -282,7 +359,7 @@ namespace Lab2
 			// b_connet_room
 			// 
 			this->b_connet_room->Enabled = false;
-			this->b_connet_room->Location = System::Drawing::Point(186, 38);
+			this->b_connet_room->Location = System::Drawing::Point(186, 3);
 			this->b_connet_room->Name = L"b_connet_room";
 			this->b_connet_room->Size = System::Drawing::Size(163, 61);
 			this->b_connet_room->TabIndex = 3;
@@ -292,7 +369,7 @@ namespace Lab2
 			// 
 			// b_ok_name
 			// 
-			this->b_ok_name->Location = System::Drawing::Point(293, 10);
+			this->b_ok_name->Location = System::Drawing::Point(298, 9);
 			this->b_ok_name->Name = L"b_ok_name";
 			this->b_ok_name->Size = System::Drawing::Size(56, 23);
 			this->b_ok_name->TabIndex = 2;
@@ -302,7 +379,7 @@ namespace Lab2
 			// 
 			// tb_name
 			// 
-			this->tb_name->Location = System::Drawing::Point(105, 10);
+			this->tb_name->Location = System::Drawing::Point(110, 9);
 			this->tb_name->Name = L"tb_name";
 			this->tb_name->Size = System::Drawing::Size(182, 22);
 			this->tb_name->TabIndex = 1;
@@ -311,7 +388,7 @@ namespace Lab2
 			// label_name
 			// 
 			this->label_name->AutoSize = true;
-			this->label_name->Location = System::Drawing::Point(3, 10);
+			this->label_name->Location = System::Drawing::Point(8, 9);
 			this->label_name->Name = L"label_name";
 			this->label_name->Size = System::Drawing::Size(96, 17);
 			this->label_name->TabIndex = 0;
@@ -320,19 +397,18 @@ namespace Lab2
 			// panel_main
 			// 
 			this->panel_main->Controls->Add(this->rtb_all_msg);
-			this->panel_main->Controls->Add(this->label_info);
 			this->panel_main->Controls->Add(this->b_send);
 			this->panel_main->Controls->Add(this->b_att);
 			this->panel_main->Controls->Add(this->rbt_my_msg);
 			this->panel_main->Enabled = false;
 			this->panel_main->Location = System::Drawing::Point(0, 110);
 			this->panel_main->Name = L"panel_main";
-			this->panel_main->Size = System::Drawing::Size(885, 535);
+			this->panel_main->Size = System::Drawing::Size(885, 512);
 			this->panel_main->TabIndex = 1;
 			// 
 			// rtb_all_msg
 			// 
-			this->rtb_all_msg->Location = System::Drawing::Point(12, 3);
+			this->rtb_all_msg->Location = System::Drawing::Point(11, 3);
 			this->rtb_all_msg->Name = L"rtb_all_msg";
 			this->rtb_all_msg->ReadOnly = true;
 			this->rtb_all_msg->Size = System::Drawing::Size(860, 449);
@@ -342,7 +418,7 @@ namespace Lab2
 			// label_info
 			// 
 			this->label_info->AutoSize = true;
-			this->label_info->Location = System::Drawing::Point(12, 514);
+			this->label_info->Location = System::Drawing::Point(12, 625);
 			this->label_info->Name = L"label_info";
 			this->label_info->Size = System::Drawing::Size(128, 17);
 			this->label_info->TabIndex = 3;
@@ -397,6 +473,7 @@ namespace Lab2
 			this->b_connect->Text = L"Connect";
 			this->b_connect->UseVisualStyleBackColor = true;
 			this->b_connect->Visible = false;
+			this->b_connect->Click += gcnew System::EventHandler(this, &MyForm::b_connect_Click);
 			// 
 			// tb_ip
 			// 
@@ -449,8 +526,12 @@ namespace Lab2
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->ClientSize = System::Drawing::Size(884, 646);
 			this->Controls->Add(this->panel_info);
+			this->Controls->Add(this->label_info);
+			this->Controls->Add(this->b_ok_name);
+			this->Controls->Add(this->tb_name);
 			this->Controls->Add(this->panel_main);
 			this->Controls->Add(this->panel_top);
+			this->Controls->Add(this->label_name);
 			this->FormBorderStyle = System::Windows::Forms::FormBorderStyle::FixedSingle;
 			this->MaximizeBox = false;
 			this->Name = L"MyForm";
@@ -459,23 +540,36 @@ namespace Lab2
 			this->FormClosed += gcnew System::Windows::Forms::FormClosedEventHandler(this, &MyForm::MyForm_FormClosed);
 			this->Shown += gcnew System::EventHandler(this, &MyForm::MyForm_Shown);
 			this->panel_top->ResumeLayout(false);
-			this->panel_top->PerformLayout();
 			this->panel_main->ResumeLayout(false);
-			this->panel_main->PerformLayout();
 			this->panel_info->ResumeLayout(false);
 			this->panel_info->PerformLayout();
 			this->ResumeLayout(false);
+			this->PerformLayout();
 
 		}
 #pragma endregion
 
 	private: System::Void MyForm_Shown(System::Object^  sender, System::EventArgs^  e) 
 	{
-		WinSocket::InitializeLibrary();
+		if (!WinSocket::InitializeLibrary())
+		{
+			MessageBox::Show("Не удалось проинициализировать библиотеку WinSock. Функция WSAStartup выполнена некорректно.", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error);
+			Application::Exit();
+		}
+		is_active = false;
 	}
 	private: System::Void MyForm_FormClosed(System::Object^  sender, System::Windows::Forms::FormClosedEventArgs^  e) 
 	{
-		WinSocket::CloseLibrary();
+		if (!WinSocket::CloseLibrary())
+		{
+			MessageBox::Show("Не удалось выгрузить библиотеку WinSock. Функция WSACleanup выполнена некорректно.", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error);
+			Application::Exit();
+		}
+		if (is_active)
+		{
+			if (is_server) TerminateServer();
+			else TerminateClient();
+		}
 	}
 	private: System::Void tb_name_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
 	{
@@ -494,22 +588,24 @@ namespace Lab2
 	}
 	private: System::Void b_create_room_Click(System::Object^  sender, System::EventArgs^  e) 
 	{
-		b_create_room->Enabled = false;
-		b_connet_room->Enabled = false;
+		is_active = true;
+		is_server = true;
+		if (!StartServer()) return;
+
 		panel_info->Enabled = true;
+		panel_top->Enabled = false;
+		panel_main->Enabled = true;
 		b_connect->Text = "Disconnect";
 		b_connect->Visible = true;
-		is_server = true;
-		StartServer();
 	}
 	private: System::Void b_connet_room_Click(System::Object^  sender, System::EventArgs^  e) 
 	{
-		b_create_room->Enabled = false;
-		b_connet_room->Enabled = false;
+		panel_top->Enabled = false;
 		panel_info->Enabled = true;
 		b_connect->Visible = true;
 		tb_ip->ReadOnly = false;
 		tb_port->ReadOnly = false;
+
 		is_server = false;
 	}
 	
@@ -523,25 +619,27 @@ namespace Lab2
 		if (((e->KeyChar <= 47 || e->KeyChar >= 59) && e->KeyChar != 8) || (tb_port->Text->Length == 5 && e->KeyChar != 8))
 			e->Handled = true;
 	}
-
-	void StartServer()
+	private: System::Void b_connect_Click(System::Object^  sender, System::EventArgs^  e) 
 	{
-		Socket.InitializeSocket();
-		Socket.SetClientCount(max_client_count);
-		Socket.Set_IPAuto();
-		Socket.Set_PortAuto();
-		Socket.Bind();
-		Socket.Listen();
-		for (size_t i = 0; i < max_client_count; i++)
+		if (b_connect->Text == "Connect")
 		{
-			SOCKET s = Socket.Accept();
-			Thread^ t = gcnew Thread(ClientFunction);
+			if (!StartClient()) return;
+			b_connect->Text = "Disconnect";
+			panel_top->Enabled = false;
+			panel_main->Enabled = true;
+			is_active = true;
+		}
+		else
+		{
+			if (is_server) TerminateServer();
+			else TerminateClient();
+			b_connect->Text = "Connect";
+			tb_ip->Text = "";
+			tb_port->Text = "";
+			panel_top->Enabled = true;
+			panel_main->Enabled = false;
+			panel_info->Enabled = false;
 		}
 	}
-	void ClientFunction(SOCKET s)
-	{
-
-	}
 };
-
 }
