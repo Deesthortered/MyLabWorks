@@ -87,25 +87,10 @@ namespace Lab2
 
 			String^ GetIP()
 			{
-				if (this->ip) delete[] this->ip;
-				this->ip = new char[16];
-				strcpy(this->ip, inet_ntoa((in_addr)adr->sin_addr));
-				String ^res;
-				size_t i = 0;
-				while (ip[i] != '\0')
-				{
-					res += ip[i];
-					i++;
-				}
-				return res;
+				return gcnew String(this->ip);
 			}
 			size_t GetPort()
 			{
-				sockaddr_in name;
-				int n_l = sizeof(name);
-				ZeroMemory(&name, sizeof(name));
-				getsockname(this->main_socket, (sockaddr*)&name, &n_l);
-				this->port = ntohs(name.sin_port);
 				return this->port;
 			}
 			void Set_IP(String ^ip)
@@ -133,7 +118,7 @@ namespace Lab2
 				ZeroMemory(this->adr, sizeof(this->adr));
 				adr->sin_family = AF_INET;
 				this->adr->sin_addr.S_un.S_addr = *(DWORD*)hn->h_addr_list[0];
-				memset(this->adr->sin_zero, 0, 8);
+				//memset(this->adr->sin_zero, 0, 8);
 			}
 			void Set_PortAuto()
 			{
@@ -150,16 +135,15 @@ namespace Lab2
 			}
 			bool Bind()
 			{
-				if ((bind(this->main_socket, (sockaddr*)this->adr, sizeof(this->adr))) == SOCKET_ERROR)
-				{
-					int k = WSAGetLastError();
-					return false;
-				}
+				sockaddr_in a = *this->adr;
+				if (bind(this->main_socket, (sockaddr*)&a, sizeof(a)) == SOCKET_ERROR) return false;
+				this->updateIpPort();
 				return true;
 			}
 			bool Connect()
 			{
-				if (SOCKET_ERROR == (connect(main_socket, (sockaddr *)adr, sizeof(adr)))) 
+				sockaddr_in a = *this->adr;
+				if (SOCKET_ERROR == (connect(main_socket, (sockaddr *)&a, sizeof(a)))) 
 					return false;
 				return true;
 			}
@@ -198,6 +182,19 @@ namespace Lab2
 			{
 				if (SOCKET_ERROR == send(s, data, data_size, 0)) return false;
 				return true;
+			}
+		private:
+			void updateIpPort()
+			{
+				sockaddr_in name;
+				int n_l = sizeof(name);
+				ZeroMemory(&name, sizeof(name));
+				getsockname(this->main_socket, (sockaddr*)&name, &n_l);
+				if (this->ip) delete[] this->ip;
+				this->ip = new char[16];
+				ip[15] = '\0';
+				strcpy(this->ip, inet_ntoa((in_addr)name.sin_addr));
+				this->port = ntohs(name.sin_port);
 			}
 		};
 		WinSocket ^Socket;
@@ -262,6 +259,8 @@ namespace Lab2
 		}
 		void ClientProcessing(Object^ obj)
 		{
+			String^ s = obj->ToString();
+			MessageBox::Show("Есть подключение по сокету " + s, "Connetion", MessageBoxButtons::OK, MessageBoxIcon::Error);
 			SOCKET sock = (SOCKET)obj;
 		}
 
@@ -324,10 +323,10 @@ namespace Lab2
 			this->label_name = (gcnew System::Windows::Forms::Label());
 			this->panel_main = (gcnew System::Windows::Forms::Panel());
 			this->rtb_all_msg = (gcnew System::Windows::Forms::RichTextBox());
-			this->label_info = (gcnew System::Windows::Forms::Label());
 			this->b_send = (gcnew System::Windows::Forms::Button());
 			this->b_att = (gcnew System::Windows::Forms::Button());
 			this->rbt_my_msg = (gcnew System::Windows::Forms::RichTextBox());
+			this->label_info = (gcnew System::Windows::Forms::Label());
 			this->panel_info = (gcnew System::Windows::Forms::Panel());
 			this->b_connect = (gcnew System::Windows::Forms::Button());
 			this->tb_ip = (gcnew System::Windows::Forms::TextBox());
@@ -419,15 +418,6 @@ namespace Lab2
 			this->rtb_all_msg->TabIndex = 4;
 			this->rtb_all_msg->Text = L"";
 			// 
-			// label_info
-			// 
-			this->label_info->AutoSize = true;
-			this->label_info->Location = System::Drawing::Point(12, 625);
-			this->label_info->Name = L"label_info";
-			this->label_info->Size = System::Drawing::Size(128, 17);
-			this->label_info->TabIndex = 3;
-			this->label_info->Text = L"Строка состояния";
-			// 
 			// b_send
 			// 
 			this->b_send->Location = System::Drawing::Point(776, 458);
@@ -453,6 +443,15 @@ namespace Lab2
 			this->rbt_my_msg->Size = System::Drawing::Size(651, 53);
 			this->rbt_my_msg->TabIndex = 0;
 			this->rbt_my_msg->Text = L"";
+			// 
+			// label_info
+			// 
+			this->label_info->AutoSize = true;
+			this->label_info->Location = System::Drawing::Point(12, 625);
+			this->label_info->Name = L"label_info";
+			this->label_info->Size = System::Drawing::Size(128, 17);
+			this->label_info->TabIndex = 3;
+			this->label_info->Text = L"Строка состояния";
 			// 
 			// panel_info
 			// 
@@ -484,7 +483,7 @@ namespace Lab2
 			this->tb_ip->Location = System::Drawing::Point(64, 29);
 			this->tb_ip->Name = L"tb_ip";
 			this->tb_ip->ReadOnly = true;
-			this->tb_ip->Size = System::Drawing::Size(100, 22);
+			this->tb_ip->Size = System::Drawing::Size(116, 22);
 			this->tb_ip->TabIndex = 4;
 			this->tb_ip->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb_ip_KeyPress);
 			// 
@@ -493,7 +492,7 @@ namespace Lab2
 			this->tb_port->Location = System::Drawing::Point(64, 57);
 			this->tb_port->Name = L"tb_port";
 			this->tb_port->ReadOnly = true;
-			this->tb_port->Size = System::Drawing::Size(100, 22);
+			this->tb_port->Size = System::Drawing::Size(116, 22);
 			this->tb_port->TabIndex = 3;
 			this->tb_port->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb_port_KeyPress);
 			// 
