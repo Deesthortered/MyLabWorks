@@ -16,6 +16,7 @@ namespace Lab2
 	using namespace System::Data;
 	using namespace System::Drawing;
 	using namespace System::Threading;
+	using namespace System::Runtime::InteropServices;
 
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
@@ -26,7 +27,7 @@ namespace Lab2
 			SOCKET main_socket;
 			sockaddr_in *adr;
 			std::vector<SOCKET> *sockets;
-			std::vector<sockaddr_in> *adrresses;
+
 			char* ip;
 			u_short port;
 			size_t max_client_count;
@@ -35,7 +36,6 @@ namespace Lab2
 			WinSocket()
 			{
 				this->sockets = new std::vector<SOCKET>();
-				this->adrresses = new std::vector<sockaddr_in>();
 				this->adr = new sockaddr_in;
 				ZeroMemory(this->adr, sizeof(this->adr));
 				this->ip = nullptr;
@@ -46,8 +46,6 @@ namespace Lab2
 			{
 				CloseSocket();
 				delete this->sockets;
-				this->adrresses->clear();
-				delete this->adrresses;
 				delete this->adr;
 				if (this->ip) delete[] this->ip;
 			}
@@ -96,10 +94,10 @@ namespace Lab2
 			void Set_IP(String ^ip)
 			{
 				if (this->ip) delete[] this->ip;
-				size_t l = ip->Length;
-				this->ip = new char[l + 1];
-				this->ip[l] = '\0';
-				for (size_t i = 0; i < l; i++) this->ip[i] = (char)ip[i];
+				this->ip = new char[16];
+				char *k = (char*)(void*)Marshal::StringToHGlobalAnsi(ip);
+				strcpy(this->ip, k);
+				this->ip[15] = '\0';
 
 				ZeroMemory(this->adr, sizeof(this->adr));
 				adr->sin_family = AF_INET;
@@ -112,13 +110,11 @@ namespace Lab2
 			}
 			void Set_IPAuto()
 			{
-				hostent* hn;
-				hn = gethostbyname(INADDR_ANY);
-
 				ZeroMemory(this->adr, sizeof(this->adr));
 				adr->sin_family = AF_INET;
+				hostent* hn;
+				hn = gethostbyname(INADDR_ANY);
 				this->adr->sin_addr.S_un.S_addr = *(DWORD*)hn->h_addr_list[0];
-				//memset(this->adr->sin_zero, 0, 8);
 			}
 			void Set_PortAuto()
 			{
@@ -150,7 +146,20 @@ namespace Lab2
 			bool Disconnect()
 			{
 				if (SOCKET_ERROR == (shutdown(main_socket, 0))) return false;
+				closesocket(this->main_socket);
 				return true;
+			}
+			bool DisconnectClient(SOCKET sock)
+			{
+				if (SOCKET_ERROR == (shutdown(sock, 0))) return false;
+				closesocket(sock);
+				for (size_t i = 0; i < this->sockets->size(); i++)
+					if (this->sockets->at(i) == sock)
+					{
+						this->sockets->erase(this->sockets->begin() + i);
+						return true;
+					}
+				return false;
 			}
 			bool Listen()
 			{
@@ -160,17 +169,24 @@ namespace Lab2
 			}
 			SOCKET Accept()
 			{
-				int len = sizeof(sockaddr_in);
-				this->adrresses->push_back(sockaddr_in());
-				ZeroMemory(&this->adrresses[this->client_count], len);
-				this->sockets->push_back(accept(this->main_socket, (sockaddr*)&this->adrresses[this->client_count], &len));
+				this->sockets->push_back(accept(this->main_socket, 0, 0));
 				if (FAILED(this->sockets->back()))
 				{
 					this->sockets->pop_back();
-					this->adrresses->pop_back();
 					return SOCKET_ERROR;
 				}
 				return this->sockets->back();
+			}
+			bool GetData(char *data, size_t data_size)
+			{
+				int len = recv(this->main_socket, data, data_size, 0);
+				if ((len == SOCKET_ERROR) || (len == 0)) return false;
+				return true;
+			}
+			bool SendData(char *data, size_t data_size)
+			{
+				if (SOCKET_ERROR == send(this->main_socket, data, data_size, 0)) return false;
+				return true;
 			}
 			bool GetData(char *data, size_t data_size, SOCKET s)
 			{
@@ -198,8 +214,31 @@ namespace Lab2
 			}
 		};
 		WinSocket ^Socket;
-		bool is_active;
+		bool is_active = false;
 		bool is_server;
+		char *buff = nullptr;
+		size_t buff_len = 1024;
+
+		char* r_hello1 = "Hey!\0";
+		char* r_hello2 = "You!\0";
+
+		void ErrorMessage(int k)
+		{
+			switch (k)
+			{
+			case 0: { MessageBox::Show("Не удалось проинициализировать библиотеку WinSock. Функция WSAStartup выполнена некорректно.", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
+			case 1: { MessageBox::Show("Не удалось выгрузить библиотеку WinSock. Функция WSACleanup выполнена некорректно.", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
+			case 2: { MessageBox::Show("Не удалось проинициализировать серверный сокет.", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
+			case 3: { MessageBox::Show("Не удалось забиндить сокет сервера", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
+			case 4: { MessageBox::Show("Не удалось поставить сокет сервера на слушающий режим", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
+			case 5: { MessageBox::Show("Не удалось проинициализировать клиентский сокет.", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
+			case 6: { MessageBox::Show("Не удалось подключится к указаному адресу.", "Ошибка подключения!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
+			case 7: { MessageBox::Show("Подключение произошло, но не было подтверждено.", "Ошибка подключения!", MessageBoxButtons::OK, MessageBoxIcon::Warning); } break;
+			case 8: {} break;
+			case 9: {} break;
+			default: MessageBox::Show("Неизвестная фатально-летальная ошибка №" + Convert::ToString(k), "ERRORЩИНА!!!", MessageBoxButtons::OK, MessageBoxIcon::Error);
+			}
+		}
 
 		// Server
 		Thread^ listen_thr;
@@ -208,10 +247,12 @@ namespace Lab2
 		bool StartServer()
 		{
 			Socket = gcnew WinSocket();
+			buff = new char[buff_len];
+			memset(buff, 0, buff_len);
 			label_info->Text = "Инициализация серверного сокета...";
 			if (!Socket->InitializeSocket())
 			{
-				MessageBox::Show("Не удалось проинициализировать сокет сервера.", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error);
+				ErrorMessage(2);
 				TerminateServer();
 				return false;
 			}
@@ -220,7 +261,7 @@ namespace Lab2
 			label_info->Text = "Биндим сокет на автоматический адресс...";
 			if (!Socket->Bind())
 			{
-				MessageBox::Show("Не удалось забиндить сокет сервера", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error);
+				ErrorMessage(3);
 				TerminateServer();
 				return false;
 			}
@@ -229,7 +270,7 @@ namespace Lab2
 			label_info->Text = "Ставим серверный сокет в слушающий режим...";
 			if (!Socket->Listen())
 			{
-				MessageBox::Show("Не удалось поставить сокет сервера на слушающий режим", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error);
+				ErrorMessage(4);		
 				TerminateServer();
 				return false;
 			}
@@ -244,6 +285,7 @@ namespace Lab2
 			if (listen_thr != nullptr && listen_thr->ThreadState == ThreadState::Running)
 				listen_thr->Abort();
 			Socket->~WinSocket();
+			delete[] buff;
 			is_active = false;
 			label_info->Text = "Строка состояния";
 		}
@@ -259,25 +301,68 @@ namespace Lab2
 		}
 		void ClientProcessing(Object^ obj)
 		{
-			String^ s = obj->ToString();
-			MessageBox::Show("Есть подключение по сокету " + s, "Connetion", MessageBoxButtons::OK, MessageBoxIcon::Error);
 			SOCKET sock = (SOCKET)obj;
+			Socket->SendData(r_hello1, sizeof(r_hello1), sock);
+			Socket->GetData(buff, buff_len, sock);
+			if (strcmp(r_hello2, buff))
+			{
+				Socket->DisconnectClient(sock);
+				return;
+			}
+
 		}
 
 		// Client
+		Thread^ connect_thr;
+
 		bool StartClient()
 		{
 			Socket = gcnew WinSocket();
-			
+			buff = new char[buff_len];
+			memset(buff, 0, buff_len);
+			label_info->Text = "Инициализация клиентского сокета...";
+			if (!Socket->InitializeSocket())
+			{
+				ErrorMessage(5);
+				TerminateClient();
+				return false;
+			}
+			Socket->Set_IP(tb_ip->Text);
+			Socket->Set_Port(Convert::ToUInt16(tb_port->Text));
+			label_info->Text = "Подключаемся по указаному адресу...";
+			if (!Socket->Connect())
+			{
+				ErrorMessage(6);
+				TerminateClient();
+				return false;
+			}
+			Socket->GetData(buff, buff_len);
+			if (strcmp(r_hello1, buff))
+			{
+				ErrorMessage(7);
+				TerminateClient();
+				return false;
+			}
+			Socket->SendData(r_hello2, sizeof(r_hello1));
+			label_info->Text = "Соединение установлено. Создаем поток для приема/передачи данных...";
+			connect_thr = gcnew Thread(gcnew ThreadStart(this, &MyForm::ConnectionWithServer));
+			connect_thr->Start();
+			label_info->Text = "Готово!";
 			return true;
 		}
 		void TerminateClient()
 		{
+			if (connect_thr != nullptr && connect_thr->ThreadState == ThreadState::Running)
+				connect_thr->Abort();
 			Socket->~WinSocket();
+			delete[] buff;
 			is_active = false;
 			label_info->Text = "Строка состояния";
 		}
+		void ConnectionWithServer()
+		{
 
+		}
 
 
 
@@ -556,16 +641,15 @@ namespace Lab2
 	{
 		if (!WinSocket::InitializeLibrary())
 		{
-			MessageBox::Show("Не удалось проинициализировать библиотеку WinSock. Функция WSAStartup выполнена некорректно.", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error);
+			ErrorMessage(0);
 			Application::Exit();
 		}
-		is_active = false;
 	}
 	private: System::Void MyForm_FormClosed(System::Object^  sender, System::Windows::Forms::FormClosedEventArgs^  e) 
 	{
 		if (!WinSocket::CloseLibrary())
 		{
-			MessageBox::Show("Не удалось выгрузить библиотеку WinSock. Функция WSACleanup выполнена некорректно.", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error);
+			ErrorMessage(1);
 			Application::Exit();
 		}
 		if (is_active)
@@ -630,6 +714,8 @@ namespace Lab2
 			b_connect->Text = "Disconnect";
 			panel_top->Enabled = false;
 			panel_main->Enabled = true;
+			tb_ip->ReadOnly = true;
+			tb_port->ReadOnly = true;
 			is_active = true;
 		}
 		else
