@@ -213,15 +213,21 @@ namespace Lab2
 				this->port = ntohs(name.sin_port);
 			}
 		};
+		
 		WinSocket ^Socket;
 		bool is_active = false;
 		bool is_server;
 		char *buff = nullptr;
 		size_t buff_len = 1024;
+		size_t delay_ms = 100;
 
 		char* r_hello1 = "Hey!\0";
 		char* r_hello2 = "You!\0";
 
+		void ClearBuffer()
+		{
+			memset(buff, 0, buff_len);
+		}
 		void ErrorMessage(int k)
 		{
 			switch (k)
@@ -234,8 +240,11 @@ namespace Lab2
 			case 5: { MessageBox::Show("Не удалось проинициализировать клиентский сокет.", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
 			case 6: { MessageBox::Show("Не удалось подключится к указаному адресу.", "Ошибка подключения!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
 			case 7: { MessageBox::Show("Подключение произошло, но не было подтверждено.", "Ошибка подключения!", MessageBoxButtons::OK, MessageBoxIcon::Warning); } break;
-			case 8: {} break;
-			case 9: {} break;
+			case 8: { MessageBox::Show("Поле IP и порта не может быть пустым. Введите данные.", "Внимание!", MessageBoxButtons::OK, MessageBoxIcon::Warning); } break;
+			case 10: {} break;
+			case 11: {} break;
+			case 12: {} break;
+			case 13: {} break;
 			default: MessageBox::Show("Неизвестная фатально-летальная ошибка №" + Convert::ToString(k), "ERRORЩИНА!!!", MessageBoxButtons::OK, MessageBoxIcon::Error);
 			}
 		}
@@ -243,12 +252,14 @@ namespace Lab2
 		// Server
 		Thread^ listen_thr;
 		List<Thread^> client_threads;
+		List<SOCKET> client_sockets;
+		List<String^> client_names;
 
 		bool StartServer()
 		{
 			Socket = gcnew WinSocket();
 			buff = new char[buff_len];
-			memset(buff, 0, buff_len);
+			ClearBuffer();
 			label_info->Text = "Инициализация серверного сокета...";
 			if (!Socket->InitializeSocket())
 			{
@@ -284,16 +295,19 @@ namespace Lab2
 		{
 			if (listen_thr != nullptr && listen_thr->ThreadState == ThreadState::Running)
 				listen_thr->Abort();
+
+			client_sockets.Clear();
 			Socket->~WinSocket();
 			delete[] buff;
 			is_active = false;
-			label_info->Text = "Строка состояния";
+			label_info->Text = "Выберите режим работы программы.";
 		}
 		void Listening()
 		{
 			while (true)
 			{
 				SOCKET s = Socket->Accept();
+				client_sockets.Add(s);
 				if (s == SOCKET_ERROR) continue;
 				client_threads.Add(gcnew Thread(gcnew ParameterizedThreadStart(this, &MyForm::ClientProcessing)));
 				client_threads[(client_threads.Count - 1)]->Start(s);
@@ -309,6 +323,11 @@ namespace Lab2
 				Socket->DisconnectClient(sock);
 				return;
 			}
+			// Поключение с клиентом полностью установлено
+			// Теперь отправляем данные о сервере
+			ClearBuffer();
+			Socket->GetData(buff, buff_len);
+			client_names.Add(gcnew String(buff));
 
 		}
 
@@ -319,7 +338,7 @@ namespace Lab2
 		{
 			Socket = gcnew WinSocket();
 			buff = new char[buff_len];
-			memset(buff, 0, buff_len);
+			ClearBuffer();
 			label_info->Text = "Инициализация клиентского сокета...";
 			if (!Socket->InitializeSocket())
 			{
@@ -357,11 +376,25 @@ namespace Lab2
 			Socket->~WinSocket();
 			delete[] buff;
 			is_active = false;
-			label_info->Text = "Строка состояния";
+			label_info->Text = "Введите IP и порт сервера для подключения.";
 		}
 		void ConnectionWithServer()
 		{
+			while (true)
+			{
+				Sleep(delay_ms);
+				memset(buff, 0, buff_len);
+				
+			}
+			// Подключение с сервером полностью установлено
+			// Теперь получаем данные о сервере
+			ClearBuffer();
+			char *name = (char*)(void*)Marshal::StringToHGlobalAnsi(tb_name->Text);
+			Socket->SendData(name, tb_name->Text->Length);
+			while (strcmp(buff, "END"))
+			{
 
+			}
 		}
 
 
@@ -377,6 +410,8 @@ namespace Lab2
 				delete components;
 			}
 		}
+	private: System::Windows::Forms::ListBox^  lb_members;
+	private: System::Windows::Forms::Label^  label_members;
 	private: System::Windows::Forms::Panel^  panel_top;
 	private: System::Windows::Forms::TextBox^  tb_name;
 	private: System::Windows::Forms::Label^  label_name;
@@ -407,6 +442,8 @@ namespace Lab2
 			this->tb_name = (gcnew System::Windows::Forms::TextBox());
 			this->label_name = (gcnew System::Windows::Forms::Label());
 			this->panel_main = (gcnew System::Windows::Forms::Panel());
+			this->lb_members = (gcnew System::Windows::Forms::ListBox());
+			this->label_members = (gcnew System::Windows::Forms::Label());
 			this->rtb_all_msg = (gcnew System::Windows::Forms::RichTextBox());
 			this->b_send = (gcnew System::Windows::Forms::Button());
 			this->b_att = (gcnew System::Windows::Forms::Button());
@@ -484,6 +521,8 @@ namespace Lab2
 			// 
 			// panel_main
 			// 
+			this->panel_main->Controls->Add(this->lb_members);
+			this->panel_main->Controls->Add(this->label_members);
 			this->panel_main->Controls->Add(this->rtb_all_msg);
 			this->panel_main->Controls->Add(this->b_send);
 			this->panel_main->Controls->Add(this->b_att);
@@ -494,12 +533,30 @@ namespace Lab2
 			this->panel_main->Size = System::Drawing::Size(885, 512);
 			this->panel_main->TabIndex = 1;
 			// 
+			// lb_members
+			// 
+			this->lb_members->FormattingEnabled = true;
+			this->lb_members->ItemHeight = 16;
+			this->lb_members->Location = System::Drawing::Point(673, 31);
+			this->lb_members->Name = L"lb_members";
+			this->lb_members->Size = System::Drawing::Size(199, 420);
+			this->lb_members->TabIndex = 6;
+			// 
+			// label_members
+			// 
+			this->label_members->AutoSize = true;
+			this->label_members->Location = System::Drawing::Point(670, 11);
+			this->label_members->Name = L"label_members";
+			this->label_members->Size = System::Drawing::Size(82, 17);
+			this->label_members->TabIndex = 5;
+			this->label_members->Text = L"Участники:";
+			// 
 			// rtb_all_msg
 			// 
 			this->rtb_all_msg->Location = System::Drawing::Point(11, 3);
 			this->rtb_all_msg->Name = L"rtb_all_msg";
 			this->rtb_all_msg->ReadOnly = true;
-			this->rtb_all_msg->Size = System::Drawing::Size(860, 449);
+			this->rtb_all_msg->Size = System::Drawing::Size(652, 449);
 			this->rtb_all_msg->TabIndex = 4;
 			this->rtb_all_msg->Text = L"";
 			// 
@@ -534,9 +591,9 @@ namespace Lab2
 			this->label_info->AutoSize = true;
 			this->label_info->Location = System::Drawing::Point(12, 625);
 			this->label_info->Name = L"label_info";
-			this->label_info->Size = System::Drawing::Size(128, 17);
+			this->label_info->Size = System::Drawing::Size(222, 17);
 			this->label_info->TabIndex = 3;
-			this->label_info->Text = L"Строка состояния";
+			this->label_info->Text = L"Введите ваше имя или никнейм.";
 			// 
 			// panel_info
 			// 
@@ -629,6 +686,7 @@ namespace Lab2
 			this->Shown += gcnew System::EventHandler(this, &MyForm::MyForm_Shown);
 			this->panel_top->ResumeLayout(false);
 			this->panel_main->ResumeLayout(false);
+			this->panel_main->PerformLayout();
 			this->panel_info->ResumeLayout(false);
 			this->panel_info->PerformLayout();
 			this->ResumeLayout(false);
@@ -663,15 +721,14 @@ namespace Lab2
 		if (!((e->KeyChar > 47 && e->KeyChar < 59) || (e->KeyChar >= 65 && e->KeyChar <= 122) || e->KeyChar == 8) || e->KeyChar == 92)
 			e->Handled = true;
 	}
-	private: System::Void b_ok_name_Click(System::Object^  sender, System::EventArgs^  e) 
+	private: System::Void b_ok_name_Click(System::Object^  sender, System::EventArgs^  e)
 	{
-		if (b_ok_name->Text->Length > 0)
-		{
-			b_ok_name->Enabled = false;
-			tb_name->ReadOnly = true;
-			b_create_room->Enabled = true;
-			b_connet_room->Enabled = true;
-		}
+		if (tb_name->Text->Length == 0) return;
+		b_ok_name->Enabled = false;
+		tb_name->ReadOnly = true;
+		b_create_room->Enabled = true;
+		b_connet_room->Enabled = true;
+		label_info->Text = "Выберите режим работы программы.";
 	}
 	private: System::Void b_create_room_Click(System::Object^  sender, System::EventArgs^  e) 
 	{
@@ -692,6 +749,7 @@ namespace Lab2
 		b_connect->Visible = true;
 		tb_ip->ReadOnly = false;
 		tb_port->ReadOnly = false;
+		label_info->Text = "Введите IP и порт сервера для подключения.";
 
 		is_server = false;
 	}
@@ -710,6 +768,11 @@ namespace Lab2
 	{
 		if (b_connect->Text == "Connect")
 		{
+			if (tb_ip->Text->Length == 0 || tb_port->Text->Length == 0)
+			{
+				ErrorMessage(8);
+				return;
+			}
 			if (!StartClient()) return;
 			b_connect->Text = "Disconnect";
 			panel_top->Enabled = false;
@@ -728,6 +791,7 @@ namespace Lab2
 			panel_top->Enabled = true;
 			panel_main->Enabled = false;
 			panel_info->Enabled = false;
+			label_info->Text = "Выберите режим работы программы.";
 		}
 	}
 };
