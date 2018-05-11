@@ -3,6 +3,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <string>
 #include <vector>
+#include <queue>
+#include <string>
 #include <WinSock2.h>
 #pragma comment(lib, "WS2_32.lib")
 
@@ -230,6 +232,35 @@ namespace Lab2
 			{
 				infoline->Text = s;
 			}
+			void AddMemberName(String ^s)
+			{
+				this->members->Items->Add(s + "\n");
+			}
+			void DeleteMemberName(String ^s)
+			{
+				this->members->Items->Remove(s);
+			}
+			void ClearMemberBox()
+			{
+				this->members->Items->Clear();
+			}
+
+			void Message(String ^s)
+			{
+				this->allMessages->Text += (s + "\n");
+			}
+			void NewMemberConnected(String ^who)
+			{
+				this->allMessages->Text += (who + " подключился к чату.\n");
+			}
+			void NewUserMessage(String ^who, String ^what)
+			{
+				this->allMessages->Text += (who + ": \t" + what + "\n");
+			}
+			void ClearMessages()
+			{
+				this->allMessages->Text = "";
+			}
 		};
 		ref class Engine
 		{
@@ -245,8 +276,13 @@ namespace Lab2
 
 			const size_t buff_len = 1024;
 			char *buff = nullptr;
-			char* r_hello1 = "Hey!\0";
-			char* r_hello2 = "You!\0";
+			char* r_hello1 =		"Hey!\0";
+			char* r_hello2 =		"You!\0";
+			char* r_ok =			"OK\0";
+			char* r_end_names =		"ENDNAMES\0";
+			char* r_update =		"UPDATE\0";
+			char* r_end_update =	"ENDUPDATE\0";
+			char* r_disconnect =	"DISCONNECT\0";
 
 		public:
 			Engine()
@@ -301,7 +337,8 @@ namespace Lab2
 			}
 
 			bool virtual Start() { return false; }
-			void virtual Terminate() { }
+			void virtual Terminate() {}
+			void virtual SendMessage() {}
 		protected:
 			void ClearBuffer()
 			{
@@ -313,7 +350,8 @@ namespace Lab2
 			Thread^ listen_thr;
 			List<Thread^> client_threads;
 			List<SOCKET> client_sockets;
-			List<String^> client_names;
+			List<String^> names;
+			std::vector<std::queue<std::string>> *client_data;
 
 		public:
 			Server(String ^name, String ^ip, String ^port)
@@ -322,6 +360,11 @@ namespace Lab2
 				this->ip = ip;
 				this->port = port;
 				this->is_server = true;
+				this->client_data = new std::vector<std::queue<std::string>>();
+			}
+			~Server()
+			{
+				delete this->client_data;
 			}
 
 			virtual bool Start() override
@@ -359,18 +402,22 @@ namespace Lab2
 				listen_thr = gcnew Thread(gcnew ThreadStart(this, &Server::Listening));
 				listen_thr->Start();
 				face->InfoLine("Готово!");
+				face->Message("Сервер создан. Имя сервера: " + name);
+				face->AddMemberName(name);
+				this->names.Add(name);
 				return true;
 			}
 			virtual void Terminate() override
 			{
-				if (listen_thr != nullptr && listen_thr->ThreadState == ThreadState::Running)
+				if (listen_thr != nullptr)
 					listen_thr->Abort();
-
 				client_sockets.Clear();
 				Socket->~WinSocket();
 				delete[] buff;
 				is_active = false;
 				face->InfoLine("Выберите режим работы программы.");
+				face->ClearMemberBox();
+				face->ClearMessages();
 			}
 			void Listening()
 			{
@@ -380,13 +427,15 @@ namespace Lab2
 					client_sockets.Add(s);
 					if (s == SOCKET_ERROR) continue;
 					client_threads.Add(gcnew Thread(gcnew ParameterizedThreadStart(this, &Server::ConnectionFunc)));
-					client_threads[(client_threads.Count - 1)]->Start(s);
+					int ind = client_threads.Count - 1;
+					this->client_data->push_back(std::queue<std::string>());
+					client_threads[ind]->Start(ind);
 				}
 			}
-			void ConnectionFunc(Object^ obj)
+			void ConnectionFunc(Object^ index)
 			{
-				SOCKET sock = (SOCKET)obj;
-				Socket->SendData(r_hello1, sizeof(r_hello1), sock);
+				SOCKET sock = client_sockets[(int)index];
+				Socket->SendData(r_hello1, strlen(r_hello1), sock);
 				Socket->GetData(buff, buff_len, sock);
 				if (strcmp(r_hello2, buff))
 				{
@@ -394,16 +443,79 @@ namespace Lab2
 					return;
 				}
 				// Поключение с клиентом полностью установлено
-				// Теперь отправляем данные о сервере
+				// Получаем имя клиента
 				ClearBuffer();
+				Socket->GetData(buff, buff_len, sock);
+				String ^client_name = gcnew String(buff);
+				this->names.Add(client_name);
+				face->AddMemberName(client_name);
+				face->NewMemberConnected(client_name);
 
-				//Socket->GetData(buff, buff_len);
-				//client_names.Add(gcnew String(buff));
+				// Отсылаем ему список всех участников
+				for (int i = 0; i < names.Count; i++)
+				{
+					char *k = (char*)(void*)Marshal::StringToHGlobalAnsi(this->names[i]);
+					Socket->SendData(k, this->names[i]->Length, sock);
+					ClearBuffer();
+					Socket->GetData(buff, buff_len, sock);
+					if (strcmp(buff, r_ok)) throw 1;
+				}
+				Socket->SendData(r_end_names, strlen(r_end_names), sock);
+				ClearBuffer();
+				
+				while (true)
+				{
+					ClearBuffer();
+					Socket->GetData(buff, buff_len, sock);
+					if (!strcmp(buff, r_update)) RequestUpdate((int)index);
+					else if (!strcmp(buff, r_disconnect))
+					{
+						RequestDisconect((int)index);
+						return;
+					}		
+				}
+			}
 
+			void RequestUpdate(int ind)
+			{
+				while (!this->client_data->at(ind).empty())
+				{
+					int l = this->client_data->at(ind).front().length();
+					char *k = new char[l+1];
+					strcpy(k, this->client_data->at(ind).front().c_str());
+					this->client_data->at(ind).pop();
+					Socket->SendData(k, l, this->client_sockets[ind]);
+					delete[] k;
+					ClearBuffer();
+					Socket->GetData(buff, buff_len);
+					if (!strcmp(buff, r_ok)) throw 1;
+				}
+				Socket->SendData(r_end_update, strlen(r_end_update), this->client_sockets[ind]);
+			}
+			void RequestDisconect(int ind)
+			{
+				Socket->SendData(r_ok, strlen(r_ok), this->client_sockets[ind]);
+				face->Message(this->names[ind] + " покинул чат.\n");
+				face->DeleteMemberName(this->names[ind]);
+				Socket->DisconnectClient(this->client_sockets[ind]);
+				this->client_sockets.RemoveAt(ind);
+				this->names.RemoveAt(ind);
+				this->client_data->erase(this->client_data->begin() + ind);
+			}
+
+			virtual void SendMessage() override
+			{
+				for (size_t i = 0; i < this->client_data->size(); i++)
+					this->client_data->at(i).push("kokoko");
 			}
 		};
 		ref class Client : public Engine
 		{
+			enum class ClientStates
+			{
+				Update, Disconect
+			};
+			ClientStates state;
 			const size_t delay_ms = 100;
 			Thread^ connect_thr;
 
@@ -414,6 +526,7 @@ namespace Lab2
 				this->ip = ip;
 				this->port = port;
 				this->is_server = false;
+				this->state = ClientStates::Update;
 			}
 
 			virtual bool Start() override
@@ -445,7 +558,7 @@ namespace Lab2
 					Terminate();
 					return false;
 				}
-				Socket->SendData(r_hello2, sizeof(r_hello1));
+				Socket->SendData(r_hello2, strlen(r_hello2));
 				face->InfoLine("Соединение установлено. Создаем поток для приема/передачи данных...");
 				connect_thr = gcnew Thread(gcnew ThreadStart(this, &Client::ConnectionFunc));
 				connect_thr->Start();
@@ -454,31 +567,82 @@ namespace Lab2
 			}
 			virtual void Terminate() override
 			{
-				if (connect_thr != nullptr && connect_thr->ThreadState == ThreadState::Running)
+				if (connect_thr != nullptr)
 					connect_thr->Abort();
 				Socket->~WinSocket();
 				delete[] buff;
 				is_active = false;
 				face->InfoLine("Введите IP и порт сервера для подключения.");
+				face->ClearMemberBox();
+				face->ClearMessages();
 			}
 			void ConnectionFunc()
 			{
-				while (true)
-				{
-					Sleep(delay_ms);
-					memset(buff, 0, buff_len);
-
-				}
 				// Подключение с сервером полностью установлено
-				// Теперь получаем данные о сервере
-				ClearBuffer();
-				/*
+				// Отправляем ему свое имя
 				char *name = (char*)(void*)Marshal::StringToHGlobalAnsi(this->name);
 				Socket->SendData(name, this->name->Length);
-				while (strcmp(buff, "END"))
-				{
+				ClearBuffer();
 
-				}*/
+				// Принимаем имена всех учасников
+				Socket->GetData(buff, buff_len);
+				Socket->SendData(r_ok, strlen(r_ok));
+				String ^serv; bool b = true;
+				while (strcmp(buff, r_end_names))
+				{
+					face->AddMemberName(gcnew String(buff));
+					if (b) { serv = gcnew String(buff); b = false; }
+					ClearBuffer();
+					Socket->GetData(buff, buff_len);
+					Socket->SendData(r_ok, strlen(r_ok));
+				}
+				ClearBuffer();
+				face->Message("Вы поключились к серверу " + serv + ".\n");
+				// Запускаем конечный автомат связи с сервером.
+				while (true)
+				{
+					Sleep(this->delay_ms);
+					switch (this->state)
+					{
+					case ClientStates::Update: { RequestUpdate(); } break;
+					case ClientStates::Disconect: { RequestDisconect(); return; } break;
+					}
+				}
+			}
+
+			void RequestUpdate()
+			{
+				ClearBuffer();
+				Socket->SendData(r_update, strlen(r_update));
+				Socket->GetData(buff, buff_len);
+				while (strcmp(buff, r_end_update))
+				{
+					// action
+					face->NewUserMessage(this->name, gcnew String(buff));
+					
+					ClearBuffer();
+					Socket->SendData(r_ok, strlen(r_ok));
+					Socket->GetData(buff, buff_len);
+				}
+				ClearBuffer();
+			}
+			void RequestDisconect()
+			{
+				Socket->SendData(r_disconnect, strlen(r_disconnect));
+				ClearBuffer();
+				Socket->GetData(buff, buff_len);
+				if (strcmp(buff, r_ok)) throw 1;
+				Socket->~WinSocket();
+				delete[] buff;
+				is_active = false;
+				face->InfoLine("Введите IP и порт сервера для подключения.");
+				face->ClearMemberBox();
+				face->ClearMessages();
+			}
+
+			virtual void SendMessage() override
+			{
+
 			}
 		};
 
@@ -664,6 +828,7 @@ namespace Lab2
 			this->b_send->TabIndex = 2;
 			this->b_send->Text = L"Отправить";
 			this->b_send->UseVisualStyleBackColor = true;
+			this->b_send->Click += gcnew System::EventHandler(this, &MyForm::b_send_Click);
 			// 
 			// b_att
 			// 
@@ -723,6 +888,7 @@ namespace Lab2
 			this->tb_ip->ReadOnly = true;
 			this->tb_ip->Size = System::Drawing::Size(116, 22);
 			this->tb_ip->TabIndex = 4;
+			this->tb_ip->Text = L"192.168.1.165";
 			this->tb_ip->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb_ip_KeyPress);
 			// 
 			// tb_port
@@ -886,6 +1052,11 @@ namespace Lab2
 			panel_info->Enabled = false;
 			label_info->Text = "Выберите режим работы программы.";
 		}
+	}
+
+	private: System::Void b_send_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		engine->SendMessage();
 	}
 };
 }
