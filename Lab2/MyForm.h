@@ -20,7 +20,6 @@ namespace Lab2
 
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
-		// Common
 		ref class WinSocket
 		{
 			static WSADATA *ws;
@@ -213,191 +212,264 @@ namespace Lab2
 				this->port = ntohs(name.sin_port);
 			}
 		};
-		
-		WinSocket ^Socket;
-		bool is_active = false;
-		bool is_server;
-		char *buff = nullptr;
-		size_t buff_len = 1024;
-		size_t delay_ms = 100;
+		ref class Engine
+		{
+		protected:
+			String ^name;
+			String ^ip;
+			String ^port;
 
-		char* r_hello1 = "Hey!\0";
-		char* r_hello2 = "You!\0";
+			WinSocket ^Socket;
+			bool is_active;
+			bool is_server;
 
-		void ClearBuffer()
-		{
-			memset(buff, 0, buff_len);
-		}
-		void ErrorMessage(int k)
-		{
-			switch (k)
-			{
-			case 0: { MessageBox::Show("Не удалось проинициализировать библиотеку WinSock. Функция WSAStartup выполнена некорректно.", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
-			case 1: { MessageBox::Show("Не удалось выгрузить библиотеку WinSock. Функция WSACleanup выполнена некорректно.", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
-			case 2: { MessageBox::Show("Не удалось проинициализировать серверный сокет.", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
-			case 3: { MessageBox::Show("Не удалось забиндить сокет сервера", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
-			case 4: { MessageBox::Show("Не удалось поставить сокет сервера на слушающий режим", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
-			case 5: { MessageBox::Show("Не удалось проинициализировать клиентский сокет.", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
-			case 6: { MessageBox::Show("Не удалось подключится к указаному адресу.", "Ошибка подключения!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
-			case 7: { MessageBox::Show("Подключение произошло, но не было подтверждено.", "Ошибка подключения!", MessageBoxButtons::OK, MessageBoxIcon::Warning); } break;
-			case 8: { MessageBox::Show("Поле IP и порта не может быть пустым. Введите данные.", "Внимание!", MessageBoxButtons::OK, MessageBoxIcon::Warning); } break;
-			case 10: {} break;
-			case 11: {} break;
-			case 12: {} break;
-			case 13: {} break;
-			default: MessageBox::Show("Неизвестная фатально-летальная ошибка №" + Convert::ToString(k), "ERRORЩИНА!!!", MessageBoxButtons::OK, MessageBoxIcon::Error);
-			}
-		}
+			const size_t buff_len = 1024;
+			char *buff = nullptr;
+			char* r_hello1 = "Hey!\0";
+			char* r_hello2 = "You!\0";
 
-		// Server
-		Thread^ listen_thr;
-		List<Thread^> client_threads;
-		List<SOCKET> client_sockets;
-		List<String^> client_names;
+		public:
+			Engine()
+			{
+				this->is_active = false;
+				this->buff = nullptr;
+			}
+			~Engine()
+			{
+				if (buff) delete[] buff;
+			}
 
-		bool StartServer()
-		{
-			Socket = gcnew WinSocket();
-			buff = new char[buff_len];
-			ClearBuffer();
-			label_info->Text = "Инициализация серверного сокета...";
-			if (!Socket->InitializeSocket())
+			String^ GetIP()
 			{
-				ErrorMessage(2);
-				TerminateServer();
-				return false;
+				return this->ip;
 			}
-			Socket->Set_IPAuto();
-			Socket->Set_PortAuto();
-			label_info->Text = "Биндим сокет на автоматический адресс...";
-			if (!Socket->Bind())
+			String^ GetPort()
 			{
-				ErrorMessage(3);
-				TerminateServer();
-				return false;
+				return this->port;
 			}
-			tb_ip->Text = Socket->GetIP();
-			tb_port->Text = Socket->GetPort().ToString();
-			label_info->Text = "Ставим серверный сокет в слушающий режим...";
-			if (!Socket->Listen())
+			bool IsActive()
 			{
-				ErrorMessage(4);		
-				TerminateServer();
-				return false;
+				return this->is_active;
 			}
-			label_info->Text = "Запускаем поток обработки клиентских соединений.";
-			listen_thr = gcnew Thread(gcnew ThreadStart(this, &MyForm::Listening));
-			listen_thr->Start();
-			label_info->Text = "Готово!";
-			return true;
-		}
-		void TerminateServer()
-		{
-			if (listen_thr != nullptr && listen_thr->ThreadState == ThreadState::Running)
-				listen_thr->Abort();
+			bool IsServer()
+			{
+				return this->is_server;
+			}
+			static void ErrorMessage(int k)
+			{
+				switch (k)
+				{
+				case 0: { MessageBox::Show("Не удалось проинициализировать библиотеку WinSock. Функция WSAStartup выполнена некорректно.", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
+				case 1: { MessageBox::Show("Не удалось выгрузить библиотеку WinSock. Функция WSACleanup выполнена некорректно.", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
+				case 2: { MessageBox::Show("Не удалось проинициализировать серверный сокет.", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
+				case 3: { MessageBox::Show("Не удалось забиндить сокет сервера", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
+				case 4: { MessageBox::Show("Не удалось поставить сокет сервера на слушающий режим", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
+				case 5: { MessageBox::Show("Не удалось проинициализировать клиентский сокет.", "Ошибка WinSock!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
+				case 6: { MessageBox::Show("Не удалось подключится к указаному адресу.", "Ошибка подключения!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
+				case 7: { MessageBox::Show("Подключение произошло, но не было подтверждено.", "Ошибка подключения!", MessageBoxButtons::OK, MessageBoxIcon::Warning); } break;
+				case 8: { MessageBox::Show("Поле IP и порта не может быть пустым. Введите данные.", "Внимание!", MessageBoxButtons::OK, MessageBoxIcon::Warning); } break;
+				case 10: {} break;
+				case 11: {} break;
+				case 12: {} break;
+				case 13: {} break;
+				default: MessageBox::Show("Неизвестная фатально-летальная ошибка №" + Convert::ToString(k), "ERRORЩИНА!!!", MessageBoxButtons::OK, MessageBoxIcon::Error);
+				}
+			}
 
-			client_sockets.Clear();
-			Socket->~WinSocket();
-			delete[] buff;
-			is_active = false;
-			label_info->Text = "Выберите режим работы программы.";
-		}
-		void Listening()
-		{
-			while (true)
+			bool virtual Start() { return false; }
+			void virtual Terminate() { }
+		protected:
+			void ClearBuffer()
 			{
-				SOCKET s = Socket->Accept();
-				client_sockets.Add(s);
-				if (s == SOCKET_ERROR) continue;
-				client_threads.Add(gcnew Thread(gcnew ParameterizedThreadStart(this, &MyForm::ClientProcessing)));
-				client_threads[(client_threads.Count - 1)]->Start(s);
-			}
-		}
-		void ClientProcessing(Object^ obj)
-		{
-			SOCKET sock = (SOCKET)obj;
-			Socket->SendData(r_hello1, sizeof(r_hello1), sock);
-			Socket->GetData(buff, buff_len, sock);
-			if (strcmp(r_hello2, buff))
-			{
-				Socket->DisconnectClient(sock);
-				return;
-			}
-			// Поключение с клиентом полностью установлено
-			// Теперь отправляем данные о сервере
-			ClearBuffer();
-			Socket->GetData(buff, buff_len);
-			client_names.Add(gcnew String(buff));
-
-		}
-
-		// Client
-		Thread^ connect_thr;
-
-		bool StartClient()
-		{
-			Socket = gcnew WinSocket();
-			buff = new char[buff_len];
-			ClearBuffer();
-			label_info->Text = "Инициализация клиентского сокета...";
-			if (!Socket->InitializeSocket())
-			{
-				ErrorMessage(5);
-				TerminateClient();
-				return false;
-			}
-			Socket->Set_IP(tb_ip->Text);
-			Socket->Set_Port(Convert::ToUInt16(tb_port->Text));
-			label_info->Text = "Подключаемся по указаному адресу...";
-			if (!Socket->Connect())
-			{
-				ErrorMessage(6);
-				TerminateClient();
-				return false;
-			}
-			Socket->GetData(buff, buff_len);
-			if (strcmp(r_hello1, buff))
-			{
-				ErrorMessage(7);
-				TerminateClient();
-				return false;
-			}
-			Socket->SendData(r_hello2, sizeof(r_hello1));
-			label_info->Text = "Соединение установлено. Создаем поток для приема/передачи данных...";
-			connect_thr = gcnew Thread(gcnew ThreadStart(this, &MyForm::ConnectionWithServer));
-			connect_thr->Start();
-			label_info->Text = "Готово!";
-			return true;
-		}
-		void TerminateClient()
-		{
-			if (connect_thr != nullptr && connect_thr->ThreadState == ThreadState::Running)
-				connect_thr->Abort();
-			Socket->~WinSocket();
-			delete[] buff;
-			is_active = false;
-			label_info->Text = "Введите IP и порт сервера для подключения.";
-		}
-		void ConnectionWithServer()
-		{
-			while (true)
-			{
-				Sleep(delay_ms);
 				memset(buff, 0, buff_len);
-				
 			}
-			// Подключение с сервером полностью установлено
-			// Теперь получаем данные о сервере
-			ClearBuffer();
-			char *name = (char*)(void*)Marshal::StringToHGlobalAnsi(tb_name->Text);
-			Socket->SendData(name, tb_name->Text->Length);
-			while (strcmp(buff, "END"))
+			void InfoLine(String ^s)
 			{
+			}
+		};
+		ref class Server : public Engine
+		{
+			Thread^ listen_thr;
+			List<Thread^> client_threads;
+			List<SOCKET> client_sockets;
+			List<String^> client_names;
+
+		public:
+			Server(String ^name, String ^ip, String ^port)
+			{
+				this->name = name;
+				this->ip = ip;
+				this->port = port;
+				this->is_server = true;
+			}
+
+			virtual bool Start() override
+			{
+				this->is_active = true;
+				Socket = gcnew WinSocket();
+				buff = new char[buff_len];
+				ClearBuffer();
+				InfoLine("Инициализация серверного сокета...");
+				if (!Socket->InitializeSocket())
+				{
+					ErrorMessage(2);
+					Terminate();
+					return false;
+				}
+				Socket->Set_IPAuto();
+				Socket->Set_PortAuto();
+				InfoLine("Биндим сокет на автоматический адресс...");
+				if (!Socket->Bind())
+				{
+					ErrorMessage(3);
+					Terminate();
+					return false;
+				}
+				this->ip = Socket->GetIP();
+				this->port = Socket->GetPort().ToString();
+				InfoLine("Ставим серверный сокет в слушающий режим...");
+				if (!Socket->Listen())
+				{
+					ErrorMessage(4);
+					Terminate();
+					return false;
+				}
+				InfoLine("Запускаем поток обработки клиентских соединений.");
+				listen_thr = gcnew Thread(gcnew ThreadStart(this, &Server::Listening));
+				listen_thr->Start();
+				InfoLine("Готово!");
+				return true;
+			}
+			virtual void Terminate() override
+			{
+				if (listen_thr != nullptr && listen_thr->ThreadState == ThreadState::Running)
+					listen_thr->Abort();
+
+				client_sockets.Clear();
+				Socket->~WinSocket();
+				delete[] buff;
+				is_active = false;
+				InfoLine("Выберите режим работы программы.");
+			}
+			void Listening()
+			{
+				while (true)
+				{
+					SOCKET s = Socket->Accept();
+					client_sockets.Add(s);
+					if (s == SOCKET_ERROR) continue;
+					client_threads.Add(gcnew Thread(gcnew ParameterizedThreadStart(this, &Server::ConnectionFunc)));
+					client_threads[(client_threads.Count - 1)]->Start(s);
+				}
+			}
+			void ConnectionFunc(Object^ obj)
+			{
+				SOCKET sock = (SOCKET)obj;
+				Socket->SendData(r_hello1, sizeof(r_hello1), sock);
+				Socket->GetData(buff, buff_len, sock);
+				if (strcmp(r_hello2, buff))
+				{
+					Socket->DisconnectClient(sock);
+					return;
+				}
+				// Поключение с клиентом полностью установлено
+				// Теперь отправляем данные о сервере
+				ClearBuffer();
+
+				//Socket->GetData(buff, buff_len);
+				//client_names.Add(gcnew String(buff));
 
 			}
+		};
+		ref class Client : public Engine
+		{
+			const size_t delay_ms = 100;
+			Thread^ connect_thr;
+
+		public:
+			Client(String ^name, String ^ip, String ^port)
+			{
+				this->name = name;
+				this->ip = ip;
+				this->port = port;
+				this->is_server = false;
+			}
+
+			virtual bool Start() override
+			{
+				this->is_active = true;
+				Socket = gcnew WinSocket();
+				buff = new char[buff_len];
+				ClearBuffer();
+				InfoLine("Инициализация клиентского сокета...");
+				if (!Socket->InitializeSocket())
+				{
+					ErrorMessage(5);
+					Terminate();
+					return false;
+				}
+				Socket->Set_IP(this->ip);
+				Socket->Set_Port(Convert::ToUInt16(this->port));
+				InfoLine("Подключаемся по указаному адресу...");
+				if (!Socket->Connect())
+				{
+					ErrorMessage(6);
+					Terminate();
+					return false;
+				}
+				Socket->GetData(buff, buff_len);
+				if (strcmp(r_hello1, buff))
+				{
+					ErrorMessage(7);
+					Terminate();
+					return false;
+				}
+				Socket->SendData(r_hello2, sizeof(r_hello1));
+				InfoLine("Соединение установлено. Создаем поток для приема/передачи данных...");
+				connect_thr = gcnew Thread(gcnew ThreadStart(this, &Client::ConnectionFunc));
+				connect_thr->Start();
+				InfoLine("Готово!");
+				return true;
+			}
+			virtual void Terminate() override
+			{
+				if (connect_thr != nullptr && connect_thr->ThreadState == ThreadState::Running)
+					connect_thr->Abort();
+				Socket->~WinSocket();
+				delete[] buff;
+				is_active = false;
+				InfoLine("Введите IP и порт сервера для подключения.");
+			}
+			void ConnectionFunc()
+			{
+				while (true)
+				{
+					Sleep(delay_ms);
+					memset(buff, 0, buff_len);
+
+				}
+				// Подключение с сервером полностью установлено
+				// Теперь получаем данные о сервере
+				ClearBuffer();
+				/*
+				char *name = (char*)(void*)Marshal::StringToHGlobalAnsi(this->name);
+				Socket->SendData(name, this->name->Length);
+				while (strcmp(buff, "END"))
+				{
+
+				}*/
+			}
+		};
+
+		Engine ^engine;
+		void StartServer()
+		{
+			engine = gcnew Server(tb_name->Text, tb_ip->Text, tb_port->Text);
 		}
-
-
+		void StartClient()
+		{
+			engine = gcnew Client(tb_name->Text, tb_ip->Text, tb_port->Text);
+		}
 
 	public:	MyForm(void)
 		{
@@ -699,21 +771,18 @@ namespace Lab2
 	{
 		if (!WinSocket::InitializeLibrary())
 		{
-			ErrorMessage(0);
+			Engine::ErrorMessage(0);
 			Application::Exit();
 		}
+		engine = gcnew Engine;
 	}
 	private: System::Void MyForm_FormClosed(System::Object^  sender, System::Windows::Forms::FormClosedEventArgs^  e) 
 	{
+		if (engine->IsActive()) engine->Terminate();
 		if (!WinSocket::CloseLibrary())
 		{
-			ErrorMessage(1);
+			Engine::ErrorMessage(1);
 			Application::Exit();
-		}
-		if (is_active)
-		{
-			if (is_server) TerminateServer();
-			else TerminateClient();
 		}
 	}
 	private: System::Void tb_name_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
@@ -732,10 +801,11 @@ namespace Lab2
 	}
 	private: System::Void b_create_room_Click(System::Object^  sender, System::EventArgs^  e) 
 	{
-		is_active = true;
-		is_server = true;
-		if (!StartServer()) return;
+		StartServer();
+		if (!engine->Start()) return;
 
+		tb_ip->Text = engine->GetIP();
+		tb_port->Text = engine->GetPort();
 		panel_info->Enabled = true;
 		panel_top->Enabled = false;
 		panel_main->Enabled = true;
@@ -750,8 +820,6 @@ namespace Lab2
 		tb_ip->ReadOnly = false;
 		tb_port->ReadOnly = false;
 		label_info->Text = "Введите IP и порт сервера для подключения.";
-
-		is_server = false;
 	}
 	
 	private: System::Void tb_ip_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
@@ -770,21 +838,20 @@ namespace Lab2
 		{
 			if (tb_ip->Text->Length == 0 || tb_port->Text->Length == 0)
 			{
-				ErrorMessage(8);
+				Engine::ErrorMessage(8);
 				return;
 			}
-			if (!StartClient()) return;
+			StartClient();
+			if (!engine->Start()) return;
 			b_connect->Text = "Disconnect";
 			panel_top->Enabled = false;
 			panel_main->Enabled = true;
 			tb_ip->ReadOnly = true;
 			tb_port->ReadOnly = true;
-			is_active = true;
 		}
 		else
 		{
-			if (is_server) TerminateServer();
-			else TerminateClient();
+			engine->Terminate();
 			b_connect->Text = "Connect";
 			tb_ip->Text = "";
 			tb_port->Text = "";
