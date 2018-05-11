@@ -212,9 +212,29 @@ namespace Lab2
 				this->port = ntohs(name.sin_port);
 			}
 		};
+		ref class Interface
+		{
+			Label ^infoline;
+			ListBox ^members;
+			RichTextBox ^allMessages;
+			RichTextBox ^currMessage;
+		public:
+			Interface(Label ^%infoline, ListBox ^%members, RichTextBox ^%allMessages, RichTextBox ^%currMessage)
+			{
+				this->infoline = infoline;
+				this->members = members;
+				this->allMessages = allMessages;
+				this->currMessage = currMessage;
+			}
+			void InfoLine(String ^s)
+			{
+				infoline->Text = s;
+			}
+		};
 		ref class Engine
 		{
 		protected:
+			Interface ^face;
 			String ^name;
 			String ^ip;
 			String ^port;
@@ -237,6 +257,10 @@ namespace Lab2
 			~Engine()
 			{
 				if (buff) delete[] buff;
+			}
+			void SetInterface(Interface ^f)
+			{
+				this->face = f;
 			}
 
 			String^ GetIP()
@@ -283,9 +307,6 @@ namespace Lab2
 			{
 				memset(buff, 0, buff_len);
 			}
-			void InfoLine(String ^s)
-			{
-			}
 		};
 		ref class Server : public Engine
 		{
@@ -309,7 +330,7 @@ namespace Lab2
 				Socket = gcnew WinSocket();
 				buff = new char[buff_len];
 				ClearBuffer();
-				InfoLine("Инициализация серверного сокета...");
+				face->InfoLine("Инициализация серверного сокета...");
 				if (!Socket->InitializeSocket())
 				{
 					ErrorMessage(2);
@@ -318,7 +339,7 @@ namespace Lab2
 				}
 				Socket->Set_IPAuto();
 				Socket->Set_PortAuto();
-				InfoLine("Биндим сокет на автоматический адресс...");
+				face->InfoLine("Биндим сокет на автоматический адресс...");
 				if (!Socket->Bind())
 				{
 					ErrorMessage(3);
@@ -327,17 +348,17 @@ namespace Lab2
 				}
 				this->ip = Socket->GetIP();
 				this->port = Socket->GetPort().ToString();
-				InfoLine("Ставим серверный сокет в слушающий режим...");
+				face->InfoLine("Ставим серверный сокет в слушающий режим...");
 				if (!Socket->Listen())
 				{
 					ErrorMessage(4);
 					Terminate();
 					return false;
 				}
-				InfoLine("Запускаем поток обработки клиентских соединений.");
+				face->InfoLine("Запускаем поток обработки клиентских соединений.");
 				listen_thr = gcnew Thread(gcnew ThreadStart(this, &Server::Listening));
 				listen_thr->Start();
-				InfoLine("Готово!");
+				face->InfoLine("Готово!");
 				return true;
 			}
 			virtual void Terminate() override
@@ -349,7 +370,7 @@ namespace Lab2
 				Socket->~WinSocket();
 				delete[] buff;
 				is_active = false;
-				InfoLine("Выберите режим работы программы.");
+				face->InfoLine("Выберите режим работы программы.");
 			}
 			void Listening()
 			{
@@ -401,7 +422,7 @@ namespace Lab2
 				Socket = gcnew WinSocket();
 				buff = new char[buff_len];
 				ClearBuffer();
-				InfoLine("Инициализация клиентского сокета...");
+				face->InfoLine("Инициализация клиентского сокета...");
 				if (!Socket->InitializeSocket())
 				{
 					ErrorMessage(5);
@@ -410,7 +431,7 @@ namespace Lab2
 				}
 				Socket->Set_IP(this->ip);
 				Socket->Set_Port(Convert::ToUInt16(this->port));
-				InfoLine("Подключаемся по указаному адресу...");
+				face->InfoLine("Подключаемся по указаному адресу...");
 				if (!Socket->Connect())
 				{
 					ErrorMessage(6);
@@ -425,10 +446,10 @@ namespace Lab2
 					return false;
 				}
 				Socket->SendData(r_hello2, sizeof(r_hello1));
-				InfoLine("Соединение установлено. Создаем поток для приема/передачи данных...");
+				face->InfoLine("Соединение установлено. Создаем поток для приема/передачи данных...");
 				connect_thr = gcnew Thread(gcnew ThreadStart(this, &Client::ConnectionFunc));
 				connect_thr->Start();
-				InfoLine("Готово!");
+				face->InfoLine("Готово!");
 				return true;
 			}
 			virtual void Terminate() override
@@ -438,7 +459,7 @@ namespace Lab2
 				Socket->~WinSocket();
 				delete[] buff;
 				is_active = false;
-				InfoLine("Введите IP и порт сервера для подключения.");
+				face->InfoLine("Введите IP и порт сервера для подключения.");
 			}
 			void ConnectionFunc()
 			{
@@ -462,13 +483,16 @@ namespace Lab2
 		};
 
 		Engine ^engine;
+		Interface ^face;
 		void StartServer()
 		{
 			engine = gcnew Server(tb_name->Text, tb_ip->Text, tb_port->Text);
+			engine->SetInterface(face);
 		}
 		void StartClient()
 		{
 			engine = gcnew Client(tb_name->Text, tb_ip->Text, tb_port->Text);
+			engine->SetInterface(face);
 		}
 
 	public:	MyForm(void)
@@ -775,6 +799,8 @@ namespace Lab2
 			Application::Exit();
 		}
 		engine = gcnew Engine;
+		face = gcnew Interface(label_info, lb_members, rtb_all_msg, rbt_my_msg);
+		engine->SetInterface(face);
 	}
 	private: System::Void MyForm_FormClosed(System::Object^  sender, System::Windows::Forms::FormClosedEventArgs^  e) 
 	{
