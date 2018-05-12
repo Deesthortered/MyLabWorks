@@ -217,16 +217,25 @@ namespace Lab2
 		ref class Interface
 		{
 			Label ^infoline;
+			Label ^indicator;
 			ListBox ^members;
 			RichTextBox ^allMessages;
 			RichTextBox ^currMessage;
+			bool indic_b;
 		public:
-			Interface(Label ^%infoline, ListBox ^%members, RichTextBox ^%allMessages, RichTextBox ^%currMessage)
+			Interface(Label ^%infoline, Label ^%indicator, ListBox ^%members, RichTextBox ^%allMessages, RichTextBox ^%currMessage)
 			{
 				this->infoline = infoline;
+				this->indicator = indicator;
 				this->members = members;
 				this->allMessages = allMessages;
 				this->currMessage = currMessage;
+			}
+			void Indicate()
+			{
+				this->indic_b = !this->indic_b;
+				if (this->indic_b) indicator->Text = "+++";
+				else indicator->Text = "---";
 			}
 			void InfoLine(String ^s)
 			{
@@ -249,11 +258,15 @@ namespace Lab2
 			{
 				this->allMessages->Text += (s + "\n");
 			}
-			void NewMemberConnected(String ^who)
+			void MessageError(String ^who, String ^what)
+			{
+				this->allMessages->Text += ("Ошибка!!! (" + who + "): \t" + what + "\n");
+			}
+			void MessageNewMember(String ^who)
 			{
 				this->allMessages->Text += (who + " подключился к чату.\n");
 			}
-			void NewUserMessage(String ^who, String ^what)
+			void MessageUser(String ^who, String ^what)
 			{
 				this->allMessages->Text += (who + ": \t" + what + "\n");
 			}
@@ -339,6 +352,7 @@ namespace Lab2
 
 			bool virtual Start() { return false; }
 			void virtual Terminate() {}
+			void virtual Disconnect() {}
 			void virtual SendMessage() {}
 		protected:
 			void ClearBuffer()
@@ -412,21 +426,23 @@ namespace Lab2
 			{
 				if (listen_thr != nullptr)
 					listen_thr->Abort();
-				client_sockets.Clear();
 				Socket->~WinSocket();
+				client_sockets.Clear();
+				names.Clear();
+				client_data->clear();
 				delete[] buff;
 				is_active = false;
 				face->InfoLine("Выберите режим работы программы.");
 				face->ClearMemberBox();
-				face->ClearMessages();
 			}
 			virtual void SendMessage() override
 			{
 				for (size_t i = 0; i < this->client_data->size(); i++)
 					this->client_data->at(i).push("kokoko");
-				face->NewUserMessage(this->name, "kokoko");
+				face->MessageUser(this->name, "kokoko");
 			}
 
+		private:
 			void Listening()
 			{
 				while (true)
@@ -458,16 +474,11 @@ namespace Lab2
 				// Получаем имя клиента
 				ClearBuffer();
 				r = Socket->GetData(buff, buff_len, sock);
-				if (!r) 
-				{ 
-					face->Message("Произведена неудачная попытка подключится к серверу. Идентификационый пакет данных не был получен.");
-					Socket->DisconnectClient(sock); 
-					return; 
-				}
+				if (!r) { Socket->DisconnectClient(sock); return; }
 				String ^client_name = gcnew String(buff);
 				this->names.Add(client_name);
 				face->AddMemberName(client_name);
-				face->NewMemberConnected(client_name);
+				face->MessageNewMember(client_name);
 
 				// Отсылаем ему список всех участников
 				for (int i = 0; i < names.Count; i++)
@@ -488,7 +499,7 @@ namespace Lab2
 				if (!r) { ConnectionError((int)index); return; }
 
 				// Цикл приема и обработки запросов.
-				while (true)
+				while (this->is_active)
 				{
 					ClearBuffer();
 					r = Socket->GetData(buff, buff_len, sock);
@@ -520,26 +531,25 @@ namespace Lab2
 					char *k = new char[l+1];
 					strcpy(k, this->client_data->at(ind).front().c_str());
 					this->client_data->at(ind).pop();
-					if (!Socket->SendData(k, l, this->client_sockets[ind])) { face->Message("не получилось отправить данные клиенту"); ConnectionError((int)ind); return; };
+					if (!Socket->SendData(k, l, this->client_sockets[ind])) { ConnectionError((int)ind); return; };
 					delete[] k;
 					ClearBuffer();
-					if (!Socket->GetData(buff, buff_len, this->client_sockets[ind])) { face->Message("клиент не кинул ответ"); ConnectionError((int)ind); return; };
-					if (strcmp(buff, r_ok)) { face->Message("клиент кинул хреновй ответ"); ConnectionError((int)ind); return; };
+					if (!Socket->GetData(buff, buff_len, this->client_sockets[ind])) { ConnectionError((int)ind); return; };
+					if (strcmp(buff, r_ok)) { ConnectionError((int)ind); return; };
 				}
 				if (!Socket->SendData(r_end_update, strlen(r_end_update), this->client_sockets[ind]))
-					{ face->Message("не удалось закончить обновление"); ConnectionError((int)ind); return; };
+					{ ConnectionError((int)ind); return; };
 			}
 			void RequestDisconect(int ind)
 			{
 				if (!Socket->SendData(r_ok, strlen(r_ok), this->client_sockets[ind])) { ConnectionError((int)ind); return; };
-				face->Message(this->names[ind] + " покинул чат.\n");
+				face->Message(this->names[ind+1] + " покинул чат.");
 				face->DeleteMemberName(ind+1);
 				Socket->DisconnectClient(this->client_sockets[ind]);
 				this->client_sockets.RemoveAt(ind);
-				this->names.RemoveAt(ind);
+				this->names.RemoveAt(ind+1);
 				this->client_data->erase(this->client_data->begin() + ind);
 			}
-
 		};
 		ref class Client : public Engine
 		{
@@ -550,7 +560,8 @@ namespace Lab2
 			ClientStates state;
 			const size_t delay_ms = 100;
 			Thread^ connect_thr;
-
+			String ^server_name;
+			
 		public:
 			Client(String ^name, String ^ip, String ^port)
 			{
@@ -607,20 +618,15 @@ namespace Lab2
 			}
 			virtual void Terminate() override
 			{
-				if (connect_thr != nullptr)
-					connect_thr->Abort();
-				Socket->~WinSocket();
-				delete[] buff;
-				is_active = false;
-				face->InfoLine("Введите IP и порт сервера для подключения.");
-				face->ClearMemberBox();
-				face->ClearMessages();
+				if (this->connect_thr != nullptr) this->state = ClientStates::Disconect;
+				else term();
 			}
 			virtual void SendMessage() override
 			{
 
 			}
 
+		private:
 			void ConnectionFunc()
 			{
 				// Подключение с сервером полностью установлено
@@ -636,11 +642,11 @@ namespace Lab2
 				if (!r) { ConnectionError(); return; }
 				r = Socket->SendData(r_ok, strlen(r_ok));
 				if (!r) { ConnectionError(); return; }
-				String ^serv; bool b = true;
+				bool b = true;
 				while (strcmp(buff, r_end_names))
 				{
 					face->AddMemberName(gcnew String(buff));
-					if (b) { serv = gcnew String(buff); b = false; }
+					if (b) { server_name = gcnew String(buff); b = false; }
 					ClearBuffer();
 					r = Socket->GetData(buff, buff_len);
 					if (!r) { ConnectionError(); return; }
@@ -650,9 +656,9 @@ namespace Lab2
 				ClearBuffer();
 				r = Socket->GetData(buff, buff_len);
 				if (!r || strcmp(buff, r_ok)) { ConnectionError(); return; }
-				face->Message("Вы поключились к серверу " + serv + ".");
+				face->Message("Вы поключились к серверу " + server_name + ".");
 				// Запускаем конечный автомат связи с сервером.
-				while (true)
+				while (this->is_active)
 				{
 					Sleep(this->delay_ms);
 					switch (this->state)
@@ -662,30 +668,21 @@ namespace Lab2
 					}
 				}
 			}
-			void ConnectionError()
-			{
-				Socket->~WinSocket();
-				delete[] buff;
-				is_active = false;
-				face->InfoLine("Введите IP и порт сервера для подключения.");
-				face->ClearMemberBox();
-				face->Message("Соединение с сервером разозвано.\n");
-			}
 
 			void RequestUpdate()
 			{
+				face->Indicate();
 				ClearBuffer();
-				// и вот тут хуйня
-				if (!Socket->SendData(r_update, strlen(r_update))) { face->Message("не удалось попросить обновление"); ConnectionError(); return; };
-				if (!Socket->GetData(buff, buff_len)) { face->Message("не удалось поймать первый пакет обновлений"); ConnectionError(); return; };
+				if (!Socket->SendData(r_update, strlen(r_update))) { ConnectionError(); return; };
+				if (!Socket->GetData(buff, buff_len)) { ConnectionError(); return; };
 				while (strcmp(buff, r_end_update))
 				{
 					// action
-					face->NewUserMessage(this->name, gcnew String(buff));
+					face->MessageUser(this->name, gcnew String(buff));
 					
 					ClearBuffer();
-					if (!Socket->SendData(r_ok, strlen(r_ok))) { face->Message("не удалось сказать ОК"); ConnectionError(); return; };
-					if (!Socket->GetData(buff, buff_len)) { face->Message("не удалось принять очередной пакет с обновлениями"); ConnectionError(); return; };
+					if (!Socket->SendData(r_ok, strlen(r_ok))) { ConnectionError(); return; };
+					if (!Socket->GetData(buff, buff_len)) { ConnectionError(); return; };
 				}
 				ClearBuffer();
 			}
@@ -695,12 +692,26 @@ namespace Lab2
 				ClearBuffer();
 				if (!Socket->GetData(buff, buff_len)) { ConnectionError(); return; };
 				if (strcmp(buff, r_ok)) { ConnectionError(); return; };
-				face->Message("Пора прощатся");
+				term();
+			}
+
+			void ConnectionError()
+			{
 				Socket->~WinSocket();
 				delete[] buff;
 				is_active = false;
-				face->InfoLine("Введите IP и порт сервера для подключения.");
 				face->ClearMemberBox();
+				face->Message("Соединение с сервером разорвано.\n");
+				face->InfoLine("Введите IP и порт сервера для подключения.");
+			}
+			void term()
+			{
+				Socket->~WinSocket();
+				delete[] buff;
+				is_active = false;
+				face->ClearMemberBox();
+				face->Message("Вы отключились от сервера.\n");
+				face->InfoLine("Введите IP и порт сервера для подключения.");
 			}
 		};
 
@@ -728,6 +739,7 @@ namespace Lab2
 				delete components;
 			}
 		}
+	private: System::Windows::Forms::Label^  label_indicator;
 	private: System::Windows::Forms::ListBox^  lb_members;
 	private: System::Windows::Forms::Label^  label_members;
 	private: System::Windows::Forms::Panel^  panel_top;
@@ -774,6 +786,7 @@ namespace Lab2
 			this->label_port = (gcnew System::Windows::Forms::Label());
 			this->label_ip = (gcnew System::Windows::Forms::Label());
 			this->label_server_info = (gcnew System::Windows::Forms::Label());
+			this->label_indicator = (gcnew System::Windows::Forms::Label());
 			this->panel_top->SuspendLayout();
 			this->panel_main->SuspendLayout();
 			this->panel_info->SuspendLayout();
@@ -985,11 +998,21 @@ namespace Lab2
 			this->label_server_info->TabIndex = 0;
 			this->label_server_info->Text = L"Информация о соединении.";
 			// 
+			// label_indicator
+			// 
+			this->label_indicator->AutoSize = true;
+			this->label_indicator->Location = System::Drawing::Point(810, 625);
+			this->label_indicator->Name = L"label_indicator";
+			this->label_indicator->Size = System::Drawing::Size(62, 17);
+			this->label_indicator->TabIndex = 4;
+			this->label_indicator->Text = L"Indicator";
+			// 
 			// MyForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(8, 16);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->ClientSize = System::Drawing::Size(884, 646);
+			this->Controls->Add(this->label_indicator);
 			this->Controls->Add(this->panel_info);
 			this->Controls->Add(this->label_info);
 			this->Controls->Add(this->b_ok_name);
@@ -1023,7 +1046,7 @@ namespace Lab2
 			Application::Exit();
 		}
 		engine = gcnew Engine;
-		face = gcnew Interface(label_info, lb_members, rtb_all_msg, rbt_my_msg);
+		face = gcnew Interface(label_info, label_indicator, lb_members, rtb_all_msg, rbt_my_msg);
 		engine->SetInterface(face);
 	}
 	private: System::Void MyForm_FormClosed(System::Object^  sender, System::Windows::Forms::FormClosedEventArgs^  e) 
@@ -1088,6 +1111,7 @@ namespace Lab2
 	{
 		if (b_connect->Text == "Connect")
 		{
+			rtb_all_msg->Text = "";
 			if (tb_ip->Text->Length == 0 || tb_port->Text->Length == 0)
 			{
 				Engine::ErrorMessage(8);
@@ -1103,6 +1127,7 @@ namespace Lab2
 		}
 		else
 		{
+			label_indicator->Text = "Indicator";
 			engine->Terminate();
 			b_connect->Text = "Connect";
 			tb_ip->Text = "";
