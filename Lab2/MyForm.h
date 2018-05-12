@@ -236,9 +236,9 @@ namespace Lab2
 			{
 				this->members->Items->Add(s + "\n");
 			}
-			void DeleteMemberName(String ^s)
+			void DeleteMemberName(int ind)
 			{
-				this->members->Items->Remove(s);
+				this->members->Items->RemoveAt(ind);
 			}
 			void ClearMemberBox()
 			{
@@ -276,6 +276,7 @@ namespace Lab2
 
 			const size_t buff_len = 1024;
 			char *buff = nullptr;
+			char* r_error =			"ERROR";
 			char* r_hello1 =		"Hey!\0";
 			char* r_hello2 =		"You!\0";
 			char* r_ok =			"OK\0";
@@ -419,6 +420,13 @@ namespace Lab2
 				face->ClearMemberBox();
 				face->ClearMessages();
 			}
+			virtual void SendMessage() override
+			{
+				for (size_t i = 0; i < this->client_data->size(); i++)
+					this->client_data->at(i).push("kokoko");
+				face->NewUserMessage(this->name, "kokoko");
+			}
+
 			void Listening()
 			{
 				while (true)
@@ -435,17 +443,27 @@ namespace Lab2
 			void ConnectionFunc(Object^ index)
 			{
 				SOCKET sock = client_sockets[(int)index];
-				Socket->SendData(r_hello1, strlen(r_hello1), sock);
-				Socket->GetData(buff, buff_len, sock);
-				if (strcmp(r_hello2, buff))
+				bool r = true;
+				r = Socket->SendData(r_hello1, strlen(r_hello1), sock);
+				r = Socket->GetData(buff, buff_len, sock);
+				if (strcmp(r_hello2, buff) || !r)
 				{
+					Socket->SendData(r_error, strlen(r_error), sock);
 					Socket->DisconnectClient(sock);
 					return;
 				}
+				r = Socket->SendData(r_ok, strlen(r_ok), sock);
+
 				// Поключение с клиентом полностью установлено
 				// Получаем имя клиента
 				ClearBuffer();
-				Socket->GetData(buff, buff_len, sock);
+				r = Socket->GetData(buff, buff_len, sock);
+				if (!r) 
+				{ 
+					face->Message("Произведена неудачная попытка подключится к серверу. Идентификационый пакет данных не был получен.");
+					Socket->DisconnectClient(sock); 
+					return; 
+				}
 				String ^client_name = gcnew String(buff);
 				this->names.Add(client_name);
 				face->AddMemberName(client_name);
@@ -455,18 +473,27 @@ namespace Lab2
 				for (int i = 0; i < names.Count; i++)
 				{
 					char *k = (char*)(void*)Marshal::StringToHGlobalAnsi(this->names[i]);
-					Socket->SendData(k, this->names[i]->Length, sock);
+					r = Socket->SendData(k, this->names[i]->Length, sock);
+					if (!r) { ConnectionError((int)index); return; }
 					ClearBuffer();
-					Socket->GetData(buff, buff_len, sock);
-					if (strcmp(buff, r_ok)) throw 1;
+					r = Socket->GetData(buff, buff_len, sock);
+					if (!r || strcmp(buff, r_ok)) { ConnectionError((int)index); return; }
 				}
-				Socket->SendData(r_end_names, strlen(r_end_names), sock);
+				r = Socket->SendData(r_end_names, strlen(r_end_names), sock);
+				if (!r) { ConnectionError((int)index); return; }
 				ClearBuffer();
-				
+				r = Socket->GetData(buff, buff_len, sock);
+				if (strcmp(buff, r_ok)) { ConnectionError((int)index); return; }
+				r = Socket->SendData(r_ok, strlen(r_ok), sock);
+				if (!r) { ConnectionError((int)index); return; }
+
+				// Цикл приема и обработки запросов.
 				while (true)
 				{
 					ClearBuffer();
-					Socket->GetData(buff, buff_len, sock);
+					r = Socket->GetData(buff, buff_len, sock);
+					if (!r) { ConnectionError((int)index); return; }
+
 					if (!strcmp(buff, r_update)) RequestUpdate((int)index);
 					else if (!strcmp(buff, r_disconnect))
 					{
@@ -474,6 +501,15 @@ namespace Lab2
 						return;
 					}		
 				}
+			}
+			void ConnectionError(int ind)
+			{
+				Socket->DisconnectClient(this->client_sockets[ind]);
+				face->DeleteMemberName(ind+1);
+				this->client_sockets.RemoveAt(ind);
+				this->names.RemoveAt(ind);
+				this->client_data->erase(this->client_data->begin() + ind);
+				this->face->Message("Проблемы с подключением с " + this->names[ind] + ", потому он отключен от чата.\n");
 			}
 
 			void RequestUpdate(int ind)
@@ -484,30 +520,26 @@ namespace Lab2
 					char *k = new char[l+1];
 					strcpy(k, this->client_data->at(ind).front().c_str());
 					this->client_data->at(ind).pop();
-					Socket->SendData(k, l, this->client_sockets[ind]);
+					if (!Socket->SendData(k, l, this->client_sockets[ind])) { face->Message("не получилось отправить данные клиенту"); ConnectionError((int)ind); return; };
 					delete[] k;
 					ClearBuffer();
-					Socket->GetData(buff, buff_len);
-					if (!strcmp(buff, r_ok)) throw 1;
+					if (!Socket->GetData(buff, buff_len, this->client_sockets[ind])) { face->Message("клиент не кинул ответ"); ConnectionError((int)ind); return; };
+					if (strcmp(buff, r_ok)) { face->Message("клиент кинул хреновй ответ"); ConnectionError((int)ind); return; };
 				}
-				Socket->SendData(r_end_update, strlen(r_end_update), this->client_sockets[ind]);
+				if (!Socket->SendData(r_end_update, strlen(r_end_update), this->client_sockets[ind]))
+					{ face->Message("не удалось закончить обновление"); ConnectionError((int)ind); return; };
 			}
 			void RequestDisconect(int ind)
 			{
-				Socket->SendData(r_ok, strlen(r_ok), this->client_sockets[ind]);
+				if (!Socket->SendData(r_ok, strlen(r_ok), this->client_sockets[ind])) { ConnectionError((int)ind); return; };
 				face->Message(this->names[ind] + " покинул чат.\n");
-				face->DeleteMemberName(this->names[ind]);
+				face->DeleteMemberName(ind+1);
 				Socket->DisconnectClient(this->client_sockets[ind]);
 				this->client_sockets.RemoveAt(ind);
 				this->names.RemoveAt(ind);
 				this->client_data->erase(this->client_data->begin() + ind);
 			}
 
-			virtual void SendMessage() override
-			{
-				for (size_t i = 0; i < this->client_data->size(); i++)
-					this->client_data->at(i).push("kokoko");
-			}
 		};
 		ref class Client : public Engine
 		{
@@ -559,6 +591,14 @@ namespace Lab2
 					return false;
 				}
 				Socket->SendData(r_hello2, strlen(r_hello2));
+				ClearBuffer();
+				Socket->GetData(buff, buff_len);
+				if (strcmp(r_ok, buff))
+				{
+					ErrorMessage(7);
+					Terminate();
+					return false;
+				}
 				face->InfoLine("Соединение установлено. Создаем поток для приема/передачи данных...");
 				connect_thr = gcnew Thread(gcnew ThreadStart(this, &Client::ConnectionFunc));
 				connect_thr->Start();
@@ -576,28 +616,41 @@ namespace Lab2
 				face->ClearMemberBox();
 				face->ClearMessages();
 			}
+			virtual void SendMessage() override
+			{
+
+			}
+
 			void ConnectionFunc()
 			{
 				// Подключение с сервером полностью установлено
 				// Отправляем ему свое имя
+				bool r = true;
 				char *name = (char*)(void*)Marshal::StringToHGlobalAnsi(this->name);
-				Socket->SendData(name, this->name->Length);
+				r = Socket->SendData(name, this->name->Length);
+				if (!r) { ConnectionError(); return; }
 				ClearBuffer();
 
 				// Принимаем имена всех учасников
-				Socket->GetData(buff, buff_len);
-				Socket->SendData(r_ok, strlen(r_ok));
+				r = Socket->GetData(buff, buff_len);
+				if (!r) { ConnectionError(); return; }
+				r = Socket->SendData(r_ok, strlen(r_ok));
+				if (!r) { ConnectionError(); return; }
 				String ^serv; bool b = true;
 				while (strcmp(buff, r_end_names))
 				{
 					face->AddMemberName(gcnew String(buff));
 					if (b) { serv = gcnew String(buff); b = false; }
 					ClearBuffer();
-					Socket->GetData(buff, buff_len);
-					Socket->SendData(r_ok, strlen(r_ok));
+					r = Socket->GetData(buff, buff_len);
+					if (!r) { ConnectionError(); return; }
+					r = Socket->SendData(r_ok, strlen(r_ok));
+					if (!r) { ConnectionError(); return; }
 				}
 				ClearBuffer();
-				face->Message("Вы поключились к серверу " + serv + ".\n");
+				r = Socket->GetData(buff, buff_len);
+				if (!r || strcmp(buff, r_ok)) { ConnectionError(); return; }
+				face->Message("Вы поключились к серверу " + serv + ".");
 				// Запускаем конечный автомат связи с сервером.
 				while (true)
 				{
@@ -609,40 +662,45 @@ namespace Lab2
 					}
 				}
 			}
+			void ConnectionError()
+			{
+				Socket->~WinSocket();
+				delete[] buff;
+				is_active = false;
+				face->InfoLine("Введите IP и порт сервера для подключения.");
+				face->ClearMemberBox();
+				face->Message("Соединение с сервером разозвано.\n");
+			}
 
 			void RequestUpdate()
 			{
 				ClearBuffer();
-				Socket->SendData(r_update, strlen(r_update));
-				Socket->GetData(buff, buff_len);
+				// и вот тут хуйня
+				if (!Socket->SendData(r_update, strlen(r_update))) { face->Message("не удалось попросить обновление"); ConnectionError(); return; };
+				if (!Socket->GetData(buff, buff_len)) { face->Message("не удалось поймать первый пакет обновлений"); ConnectionError(); return; };
 				while (strcmp(buff, r_end_update))
 				{
 					// action
 					face->NewUserMessage(this->name, gcnew String(buff));
 					
 					ClearBuffer();
-					Socket->SendData(r_ok, strlen(r_ok));
-					Socket->GetData(buff, buff_len);
+					if (!Socket->SendData(r_ok, strlen(r_ok))) { face->Message("не удалось сказать ОК"); ConnectionError(); return; };
+					if (!Socket->GetData(buff, buff_len)) { face->Message("не удалось принять очередной пакет с обновлениями"); ConnectionError(); return; };
 				}
 				ClearBuffer();
 			}
 			void RequestDisconect()
 			{
-				Socket->SendData(r_disconnect, strlen(r_disconnect));
+				if (!Socket->SendData(r_disconnect, strlen(r_disconnect))) { ConnectionError(); return; };
 				ClearBuffer();
-				Socket->GetData(buff, buff_len);
-				if (strcmp(buff, r_ok)) throw 1;
+				if (!Socket->GetData(buff, buff_len)) { ConnectionError(); return; };
+				if (strcmp(buff, r_ok)) { ConnectionError(); return; };
+				face->Message("Пора прощатся");
 				Socket->~WinSocket();
 				delete[] buff;
 				is_active = false;
 				face->InfoLine("Введите IP и порт сервера для подключения.");
 				face->ClearMemberBox();
-				face->ClearMessages();
-			}
-
-			virtual void SendMessage() override
-			{
-
 			}
 		};
 
@@ -1003,6 +1061,7 @@ namespace Lab2
 		panel_main->Enabled = true;
 		b_connect->Text = "Disconnect";
 		b_connect->Visible = true;
+		rtb_all_msg->Text = "";
 	}
 	private: System::Void b_connet_room_Click(System::Object^  sender, System::EventArgs^  e) 
 	{
@@ -1012,6 +1071,7 @@ namespace Lab2
 		tb_ip->ReadOnly = false;
 		tb_port->ReadOnly = false;
 		label_info->Text = "Введите IP и порт сервера для подключения.";
+		rtb_all_msg->Text = "";
 	}
 	
 	private: System::Void tb_ip_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
