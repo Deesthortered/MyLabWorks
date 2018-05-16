@@ -5,6 +5,7 @@
 #include <vector>
 #include <queue>
 #include <string>
+#include <map>
 #include <WinSock2.h>
 #pragma comment(lib, "WS2_32.lib")
 
@@ -14,6 +15,7 @@ namespace Lab2
 	using namespace System::ComponentModel;
 	using namespace System::Collections;
 	using namespace System::Collections::Generic;
+	using namespace System::Collections::Concurrent;
 	using namespace System::Windows::Forms;
 	using namespace System::Data;
 	using namespace System::Drawing;
@@ -245,9 +247,9 @@ namespace Lab2
 			{
 				this->members->Items->Add(s + "\n");
 			}
-			void DeleteMemberName(int ind)
+			void DeleteMemberName(String ^name)
 			{
-				this->members->Items->RemoveAt(ind);
+				this->members->Items->Remove(name);
 			}
 			void ClearMemberBox()
 			{
@@ -303,6 +305,12 @@ namespace Lab2
 			{
 				this->is_active = false;
 				this->buff = nullptr;
+			}
+			Engine(Interface ^face)
+			{
+				this->is_active = false;
+				this->buff = nullptr;
+				this->face = face;
 			}
 			~Engine()
 			{
@@ -362,31 +370,23 @@ namespace Lab2
 		};
 		ref class Server : public Engine
 		{
-			const size_t capacity = 10;
 			Thread^ listen_thr;
-
-			List<Thread^> client_threads;
-			List<SOCKET> client_sockets;
-			List<String^> names;
-			std::vector<std::queue<std::string>> *client_data;
+			ConcurrentBag<SOCKET> client_sockets;
+			ConcurrentDictionary<SOCKET, Thread^> client_threads;
+			ConcurrentDictionary<SOCKET, String^> names;
+			ConcurrentDictionary<SOCKET, ConcurrentQueue<String^>^> client_data;
 
 		public:
-			Server(String ^name, String ^ip, String ^port)
+			Server(String ^name, String ^ip, String ^port, Interface ^face)
 			{
 				this->name = name;
 				this->ip = ip;
 				this->port = port;
 				this->is_server = true;
-				this->client_data = new std::vector<std::queue<std::string>>();
-
-				this->client_data->reserve(capacity);
-				this->client_threads.Capacity = capacity;
-				this->client_sockets.Capacity = capacity;
-				this->names.Capacity = capacity;
+				this->face = face;
 			}
 			~Server()
 			{
-				delete this->client_data;
 			}
 
 			virtual bool Start() override
@@ -426,7 +426,6 @@ namespace Lab2
 				face->InfoLine("Готово!");
 				face->Message("Сервер создан. Имя сервера: " + name);
 				face->AddMemberName(name);
-				this->names.Add(name);
 				return true;
 			}
 			virtual void Terminate() override
@@ -434,134 +433,144 @@ namespace Lab2
 				is_active = false;
 				if (listen_thr != nullptr)
 					listen_thr->Abort();
-				for (int i = 0; i < this->client_threads.Count; i++)
-					if (this->client_threads[i] != nullptr)
-						this->client_threads[i]->Abort();
+				List<SOCKET> ^sock_arr = gcnew List<SOCKET>(this->client_sockets.ToArray());
+				for (int i = 0; i < sock_arr->Count; i++)
+					if (this->client_threads[sock_arr[i]] != nullptr)
+						this->client_threads[sock_arr[i]]->Abort();
 				Socket->~WinSocket();
-				client_sockets.Clear();
-				names.Clear();
-				client_data->clear();
 				delete[] buff;
+
+				while (!client_sockets.IsEmpty)
+				{
+					SOCKET s;
+					this->client_sockets.TryTake(s);
+				}
+				this->client_threads.Clear();
+				this->names.Clear();
+				this->client_data.Clear();
 				face->InfoLine("Выберите режим работы программы.");
 				face->ClearMemberBox();
 			}
 			virtual void SendMessage() override
 			{
-				for (size_t i = 0; i < this->client_data->size(); i++)
-					this->client_data->at(i).push("kokoko");
+				List<SOCKET> ^sock_arr = gcnew List<SOCKET>(this->client_sockets.ToArray());
+				for (int i = 0; i < sock_arr->Count; i++)
+					this->client_data[sock_arr[i]]->Enqueue("kokoko");
 				face->MessageUser(this->name, "kokoko");
 			}
 
 		private:
 			void Listening()
 			{
-				while (is_active)
+				while (this->is_active)
 				{
 					SOCKET s = Socket->Accept();
 					if (s == SOCKET_ERROR) continue;
 					client_sockets.Add(s);
-					int ind = client_threads.Count;
-					client_threads.Add(gcnew Thread(gcnew ParameterizedThreadStart(this, &Server::ConnectionFunc)));
-					this->client_data->push_back(std::queue<std::string>());
-					client_threads[ind]->Start(ind);
+					this->client_threads[s] = gcnew Thread(gcnew ParameterizedThreadStart(this, &Server::ConnectionFunc));
+					this->client_data[s] = gcnew ConcurrentQueue<String^>();
+					client_threads[s]->Start(s);
 				}
 			}
-			void ConnectionFunc(Object^ index)
+			void ConnectionFunc(Object^ obj)
 			{
-				face->Message("еее бич!!!");
-				SOCKET sock = client_sockets[(int)index];
+				face->Message("начинаем подтверждение");
+				SOCKET sock = (SOCKET)obj;
 				bool r = true;
 				r = Socket->SendData(r_hello1, strlen(r_hello1), sock);
 				r = Socket->GetData(buff, buff_len, sock);
+				face->Message("получен ответ");
 				if (strcmp(r_hello2, buff) || !r)
 				{
+					face->Message("ответ говно");
 					Socket->SendData(r_error, strlen(r_error), sock);
 					Socket->DisconnectClient(sock);
 					return;
 				}
 				r = Socket->SendData(r_ok, strlen(r_ok), sock);
-
+				face->Message("подключение подтверждено");
 				// Поключение с клиентом полностью установлено
 				// Получаем имя клиента
 				ClearBuffer();
 				r = Socket->GetData(buff, buff_len, sock);
 				if (!r) { Socket->DisconnectClient(sock); return; }
 				String ^client_name = gcnew String(buff);
-				this->names.Add(client_name);
+				this->names[sock] = client_name;
 				face->AddMemberName(client_name);
 				face->MessageNewMember(client_name);
 
+				face->Message("Имя получено");
 				// Отсылаем ему список всех участников
-				for (int i = 0; i < names.Count; i++)
+				List<SOCKET> ^sock_arr = gcnew List<SOCKET>(this->client_sockets.ToArray());
+				for (int i = 0; i < sock_arr->Count; i++)
 				{
-					char *k = (char*)(void*)Marshal::StringToHGlobalAnsi(this->names[i]);
-					r = Socket->SendData(k, this->names[i]->Length, sock);
-					if (!r) { ConnectionError((int)index); return; }
+					char *k = (char*)(void*)Marshal::StringToHGlobalAnsi(this->names[sock_arr[i]]);
+					r = Socket->SendData(k, this->names[sock_arr[i]]->Length, sock);
+					if (!r) { ConnectionError(sock); return; }
 					ClearBuffer();
 					r = Socket->GetData(buff, buff_len, sock);
-					if (!r || strcmp(buff, r_ok)) { ConnectionError((int)index); return; }
+					if (!r || strcmp(buff, r_ok)) { ConnectionError(sock); return; }
 				}
 				r = Socket->SendData(r_end_names, strlen(r_end_names), sock);
-				if (!r) { ConnectionError((int)index); return; }
+				if (!r) { ConnectionError(sock); return; }
 				ClearBuffer();
 				r = Socket->GetData(buff, buff_len, sock);
-				if (strcmp(buff, r_ok)) { ConnectionError((int)index); return; }
+				if (strcmp(buff, r_ok)) { ConnectionError(sock); return; }
 				r = Socket->SendData(r_ok, strlen(r_ok), sock);
-				if (!r) { ConnectionError((int)index); return; }
+				if (!r) { ConnectionError(sock); return; }
 
 				// Цикл приема и обработки запросов.
 				while (this->is_active)
 				{
 					ClearBuffer();
 					r = Socket->GetData(buff, buff_len, sock);
-					if (!r) { ConnectionError((int)index); return; }
+					if (!r) { ConnectionError(sock); return; }
 
-					if (!strcmp(buff, r_update)) RequestUpdate((int)index);
+					if (!strcmp(buff, r_update)) RequestUpdate(sock);
 					else if (!strcmp(buff, r_disconnect))
 					{
-						RequestDisconect((int)index);
+						RequestDisconect(sock);
 						return;
 					}		
 				}
 			}
 
-			void RequestUpdate(int ind)
+			void RequestUpdate(SOCKET sock)
 			{
-				while (!this->client_data->at(ind).empty())
+				while (!this->client_data[sock]->IsEmpty)
 				{
-					int l = this->client_data->at(ind).front().length();
-					char *k = new char[l+1];
-					strcpy(k, this->client_data->at(ind).front().c_str());
-					this->client_data->at(ind).pop();
-					if (!Socket->SendData(k, l, this->client_sockets[ind])) { ConnectionError((int)ind); return; };
+					String ^s; this->client_data[sock]->TryDequeue(s);
+					char *k = (char*)(void*)Marshal::StringToHGlobalAnsi(s);
+					if (!Socket->SendData(k, s->Length, sock)) { ConnectionError(sock); return; };
 					delete[] k;
 					ClearBuffer();
-					if (!Socket->GetData(buff, buff_len, this->client_sockets[ind])) { ConnectionError((int)ind); return; };
-					if (strcmp(buff, r_ok)) { ConnectionError((int)ind); return; };
+					if (!Socket->GetData(buff, buff_len, sock)) { ConnectionError(sock); return; };
+					if (strcmp(buff, r_ok)) { ConnectionError(sock); return; };
 				}
-				if (!Socket->SendData(r_end_update, strlen(r_end_update), this->client_sockets[ind]))
-					{ ConnectionError((int)ind); return; };
+				if (!Socket->SendData(r_end_update, strlen(r_end_update), sock))
+					{ ConnectionError(sock); return; };
 			}
-			void RequestDisconect(int ind)
+			void RequestDisconect(SOCKET sock)
 			{
-				if (!Socket->SendData(r_ok, strlen(r_ok), this->client_sockets[ind])) { ConnectionError((int)ind); return; };
-				if (!Socket->DisconnectClient(this->client_sockets[ind]))
+				if (!Socket->SendData(r_ok, strlen(r_ok), sock)) { ConnectionError(sock); return; };
+				if (!Socket->DisconnectClient(sock))
 					face->Message("Не удалось отключить сокет клиента.");
-				face->Message(this->names[ind + 1] + " покинул чат.");
-				this->client_sockets.RemoveAt(ind);
-				this->names.RemoveAt(ind + 1);
-				this->client_data->erase(this->client_data->begin() + ind);
-				face->DeleteMemberName(ind + 1);
+				face->Message(this->names[sock] + " покинул чат.");
+				face->DeleteMemberName(this->names[sock]);
+
+				String ^s;  this->names.TryRemove(sock, s);
+				ConcurrentQueue<String^> ^q;  this->client_data.TryRemove(sock, q);
+
 			}
 
-			void ConnectionError(int ind)
+			void ConnectionError(SOCKET sock)
 			{
-				this->face->Message("Проблемы с подключением с " + this->names[ind] + ", потому он отключен от чата.\n");
-				Socket->DisconnectClient(this->client_sockets[ind]);
-				face->DeleteMemberName(ind + 1);
-				this->client_sockets.RemoveAt(ind);
-				this->names.RemoveAt(ind + 1);
-				this->client_data->erase(this->client_data->begin() + ind);
+				this->face->Message("Проблемы с подключением с " + this->names[sock] + ", потому он отключен от чата.\n");
+				Socket->DisconnectClient(sock);
+				face->DeleteMemberName(this->names[sock]);
+
+				String ^s;  this->names.TryRemove(sock, s);
+				ConcurrentQueue<String^> ^q;  this->client_data.TryRemove(sock, q);
 			}
 		};
 		ref class Client : public Engine
@@ -576,13 +585,14 @@ namespace Lab2
 			String ^server_name;
 			
 		public:
-			Client(String ^name, String ^ip, String ^port)
+			Client(String ^name, String ^ip, String ^port, Interface ^face)
 			{
 				this->name = name;
 				this->ip = ip;
 				this->port = port;
 				this->is_server = false;
 				this->state = ClientStates::Update;
+				this->face = face;
 			}
 
 			virtual bool Start() override
@@ -734,13 +744,11 @@ namespace Lab2
 		Interface ^face;
 		void StartServer()
 		{
-			engine = gcnew Server(tb_name->Text, tb_ip->Text, tb_port->Text);
-			engine->SetInterface(face);
+			engine = gcnew Server(tb_name->Text, tb_ip->Text, tb_port->Text, face);
 		}
 		void StartClient()
 		{
-			engine = gcnew Client(tb_name->Text, tb_ip->Text, tb_port->Text);
-			engine->SetInterface(face);
+			engine = gcnew Client(tb_name->Text, tb_ip->Text, tb_port->Text, face);
 		}
 
 	public:	MyForm(void)
