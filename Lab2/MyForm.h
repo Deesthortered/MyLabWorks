@@ -39,6 +39,7 @@ namespace Lab2
 			WinSocket()
 			{
 				this->sockets = new std::vector<SOCKET>();
+				this->sockets->reserve(100);
 				this->adr = new sockaddr_in;
 				ZeroMemory(this->adr, sizeof(this->adr));
 				this->ip = nullptr;
@@ -299,6 +300,7 @@ namespace Lab2
 			char* r_update =		"UPDATE\0";
 			char* r_end_update =	"ENDUPDATE\0";
 			char* r_disconnect =	"DISCONNECT\0";
+			char* r_repeat =		"REPEAT\0";
 
 		public:
 			Engine()
@@ -375,6 +377,7 @@ namespace Lab2
 			ConcurrentDictionary<SOCKET, Thread^> client_threads;
 			ConcurrentDictionary<SOCKET, String^> names;
 			ConcurrentDictionary<SOCKET, ConcurrentQueue<String^>^> client_data;
+			bool lockedBag;
 
 		public:
 			Server(String ^name, String ^ip, String ^port, Interface ^face)
@@ -384,6 +387,7 @@ namespace Lab2
 				this->port = port;
 				this->is_server = true;
 				this->face = face;
+				this->lockedBag = false;
 			}
 			~Server()
 			{
@@ -433,6 +437,7 @@ namespace Lab2
 				is_active = false;
 				if (listen_thr != nullptr)
 					listen_thr->Abort();
+				while (this->lockedBag) {};
 				List<SOCKET> ^sock_arr = gcnew List<SOCKET>(this->client_sockets.ToArray());
 				for (int i = 0; i < sock_arr->Count; i++)
 					if (this->client_threads[sock_arr[i]] != nullptr)
@@ -440,6 +445,7 @@ namespace Lab2
 				Socket->~WinSocket();
 				delete[] buff;
 
+				while (this->lockedBag) {};
 				while (!client_sockets.IsEmpty)
 				{
 					SOCKET s;
@@ -453,6 +459,7 @@ namespace Lab2
 			}
 			virtual void SendMessage() override
 			{
+				while (this->lockedBag) {};
 				List<SOCKET> ^sock_arr = gcnew List<SOCKET>(this->client_sockets.ToArray());
 				for (int i = 0; i < sock_arr->Count; i++)
 					this->client_data[sock_arr[i]]->Enqueue("kokoko");
@@ -466,6 +473,7 @@ namespace Lab2
 				{
 					SOCKET s = Socket->Accept();
 					if (s == SOCKET_ERROR) continue;
+					while (this->lockedBag) {};
 					client_sockets.Add(s);
 					this->client_threads[s] = gcnew Thread(gcnew ParameterizedThreadStart(this, &Server::ConnectionFunc));
 					this->client_data[s] = gcnew ConcurrentQueue<String^>();
@@ -474,21 +482,17 @@ namespace Lab2
 			}
 			void ConnectionFunc(Object^ obj)
 			{
-				face->Message("начинаем подтверждение");
 				SOCKET sock = (SOCKET)obj;
 				bool r = true;
 				r = Socket->SendData(r_hello1, strlen(r_hello1), sock);
 				r = Socket->GetData(buff, buff_len, sock);
-				face->Message("получен ответ");
 				if (strcmp(r_hello2, buff) || !r)
 				{
-					face->Message("ответ говно");
 					Socket->SendData(r_error, strlen(r_error), sock);
 					Socket->DisconnectClient(sock);
 					return;
 				}
 				r = Socket->SendData(r_ok, strlen(r_ok), sock);
-				face->Message("подключение подтверждено");
 				// Поключение с клиентом полностью установлено
 				// Получаем имя клиента
 				ClearBuffer();
@@ -499,8 +503,8 @@ namespace Lab2
 				face->AddMemberName(client_name);
 				face->MessageNewMember(client_name);
 
-				face->Message("Имя получено");
 				// Отсылаем ему список всех участников
+				while (this->lockedBag) {};
 				List<SOCKET> ^sock_arr = gcnew List<SOCKET>(this->client_sockets.ToArray());
 				for (int i = 0; i < sock_arr->Count; i++)
 				{
@@ -531,7 +535,9 @@ namespace Lab2
 					{
 						RequestDisconect(sock);
 						return;
-					}		
+					}
+					else if (!Socket->SendData(r_repeat, strlen(r_repeat), sock)) 
+						{ ConnectionError(sock); return; }
 				}
 			}
 
@@ -542,7 +548,6 @@ namespace Lab2
 					String ^s; this->client_data[sock]->TryDequeue(s);
 					char *k = (char*)(void*)Marshal::StringToHGlobalAnsi(s);
 					if (!Socket->SendData(k, s->Length, sock)) { ConnectionError(sock); return; };
-					delete[] k;
 					ClearBuffer();
 					if (!Socket->GetData(buff, buff_len, sock)) { ConnectionError(sock); return; };
 					if (strcmp(buff, r_ok)) { ConnectionError(sock); return; };
@@ -560,7 +565,18 @@ namespace Lab2
 
 				String ^s;  this->names.TryRemove(sock, s);
 				ConcurrentQueue<String^> ^q;  this->client_data.TryRemove(sock, q);
-
+				this->lockedBag = true;
+				List<SOCKET> ss;
+				while (!client_sockets.IsEmpty)
+				{
+					SOCKET s;
+					this->client_sockets.TryTake(s);
+					if (s == sock) break;
+					else ss.Add(s);
+				}
+				for (int i = 0; i < ss.Count; i++)
+					this->client_sockets.Add(ss[i]);
+				this->lockedBag = false;
 			}
 
 			void ConnectionError(SOCKET sock)
@@ -571,6 +587,18 @@ namespace Lab2
 
 				String ^s;  this->names.TryRemove(sock, s);
 				ConcurrentQueue<String^> ^q;  this->client_data.TryRemove(sock, q);
+				this->lockedBag = true;
+				List<SOCKET> ss;
+				while (!client_sockets.IsEmpty)
+				{
+					SOCKET s;
+					this->client_sockets.TryTake(s);
+					if (s == sock) break;
+					else ss.Add(s);
+				}
+				for (int i = 0; i < ss.Count; i++)
+					this->client_sockets.Add(ss[i]);
+				this->lockedBag = false;
 			}
 		};
 		ref class Client : public Engine
@@ -580,7 +608,7 @@ namespace Lab2
 				Update, Disconect
 			};
 			ClientStates state;
-			const size_t delay_ms = 100;
+			const size_t delay_ms = 200;
 			Thread^ connect_thr;
 			String ^server_name;
 			
@@ -697,16 +725,19 @@ namespace Lab2
 			void RequestUpdate()
 			{
 				face->Indicate();
-				ClearBuffer();
-				if (!Socket->SendData(r_update, strlen(r_update))) { ConnectionError(); return; };
-				if (!Socket->GetData(buff, buff_len)) { ConnectionError(); return; };
+				do
+				{
+					if (!Socket->SendData(r_update, strlen(r_update))) { ConnectionError(); return; };
+					ClearBuffer();
+					if (!Socket->GetData(buff, buff_len)) { ConnectionError(); return; };
+				} while (!strcmp(buff, r_repeat));
 				while (strcmp(buff, r_end_update))
 				{
 					// action
 					face->MessageUser(this->name, gcnew String(buff));
 					
-					ClearBuffer();
 					if (!Socket->SendData(r_ok, strlen(r_ok))) { ConnectionError(); return; };
+					ClearBuffer();
 					if (!Socket->GetData(buff, buff_len)) { ConnectionError(); return; };
 				}
 				ClearBuffer();
@@ -944,7 +975,7 @@ namespace Lab2
 			// label_info
 			// 
 			this->label_info->AutoSize = true;
-			this->label_info->Location = System::Drawing::Point(12, 625);
+			this->label_info->Location = System::Drawing::Point(8, 625);
 			this->label_info->Name = L"label_info";
 			this->label_info->Size = System::Drawing::Size(222, 17);
 			this->label_info->TabIndex = 3;
