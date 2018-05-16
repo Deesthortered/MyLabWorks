@@ -362,7 +362,9 @@ namespace Lab2
 		};
 		ref class Server : public Engine
 		{
+			const size_t capacity = 10;
 			Thread^ listen_thr;
+
 			List<Thread^> client_threads;
 			List<SOCKET> client_sockets;
 			List<String^> names;
@@ -376,6 +378,11 @@ namespace Lab2
 				this->port = port;
 				this->is_server = true;
 				this->client_data = new std::vector<std::queue<std::string>>();
+
+				this->client_data->reserve(capacity);
+				this->client_threads.Capacity = capacity;
+				this->client_sockets.Capacity = capacity;
+				this->names.Capacity = capacity;
 			}
 			~Server()
 			{
@@ -424,14 +431,17 @@ namespace Lab2
 			}
 			virtual void Terminate() override
 			{
+				is_active = false;
 				if (listen_thr != nullptr)
 					listen_thr->Abort();
+				for (int i = 0; i < this->client_threads.Count; i++)
+					if (this->client_threads[i] != nullptr)
+						this->client_threads[i]->Abort();
 				Socket->~WinSocket();
 				client_sockets.Clear();
 				names.Clear();
 				client_data->clear();
 				delete[] buff;
-				is_active = false;
 				face->InfoLine("Выберите режим работы программы.");
 				face->ClearMemberBox();
 			}
@@ -445,19 +455,20 @@ namespace Lab2
 		private:
 			void Listening()
 			{
-				while (true)
+				while (is_active)
 				{
 					SOCKET s = Socket->Accept();
-					client_sockets.Add(s);
 					if (s == SOCKET_ERROR) continue;
+					client_sockets.Add(s);
+					int ind = client_threads.Count;
 					client_threads.Add(gcnew Thread(gcnew ParameterizedThreadStart(this, &Server::ConnectionFunc)));
-					int ind = client_threads.Count - 1;
 					this->client_data->push_back(std::queue<std::string>());
 					client_threads[ind]->Start(ind);
 				}
 			}
 			void ConnectionFunc(Object^ index)
 			{
+				face->Message("еее бич!!!");
 				SOCKET sock = client_sockets[(int)index];
 				bool r = true;
 				r = Socket->SendData(r_hello1, strlen(r_hello1), sock);
@@ -513,15 +524,6 @@ namespace Lab2
 					}		
 				}
 			}
-			void ConnectionError(int ind)
-			{
-				Socket->DisconnectClient(this->client_sockets[ind]);
-				face->DeleteMemberName(ind+1);
-				this->client_sockets.RemoveAt(ind);
-				this->names.RemoveAt(ind);
-				this->client_data->erase(this->client_data->begin() + ind);
-				this->face->Message("Проблемы с подключением с " + this->names[ind] + ", потому он отключен от чата.\n");
-			}
 
 			void RequestUpdate(int ind)
 			{
@@ -543,11 +545,22 @@ namespace Lab2
 			void RequestDisconect(int ind)
 			{
 				if (!Socket->SendData(r_ok, strlen(r_ok), this->client_sockets[ind])) { ConnectionError((int)ind); return; };
-				face->Message(this->names[ind+1] + " покинул чат.");
-				face->DeleteMemberName(ind+1);
-				Socket->DisconnectClient(this->client_sockets[ind]);
+				if (!Socket->DisconnectClient(this->client_sockets[ind]))
+					face->Message("Не удалось отключить сокет клиента.");
+				face->Message(this->names[ind + 1] + " покинул чат.");
 				this->client_sockets.RemoveAt(ind);
-				this->names.RemoveAt(ind+1);
+				this->names.RemoveAt(ind + 1);
+				this->client_data->erase(this->client_data->begin() + ind);
+				face->DeleteMemberName(ind + 1);
+			}
+
+			void ConnectionError(int ind)
+			{
+				this->face->Message("Проблемы с подключением с " + this->names[ind] + ", потому он отключен от чата.\n");
+				Socket->DisconnectClient(this->client_sockets[ind]);
+				face->DeleteMemberName(ind + 1);
+				this->client_sockets.RemoveAt(ind);
+				this->names.RemoveAt(ind + 1);
 				this->client_data->erase(this->client_data->begin() + ind);
 			}
 		};
@@ -577,7 +590,6 @@ namespace Lab2
 				this->is_active = true;
 				Socket = gcnew WinSocket();
 				buff = new char[buff_len];
-				ClearBuffer();
 				face->InfoLine("Инициализация клиентского сокета...");
 				if (!Socket->InitializeSocket())
 				{
@@ -594,6 +606,8 @@ namespace Lab2
 					Terminate();
 					return false;
 				}
+				face->InfoLine("Подтверждаем подключение 1...");
+				ClearBuffer();
 				Socket->GetData(buff, buff_len);
 				if (strcmp(r_hello1, buff))
 				{
@@ -602,6 +616,7 @@ namespace Lab2
 					return false;
 				}
 				Socket->SendData(r_hello2, strlen(r_hello2));
+				face->InfoLine("Подтверждаем подключение 2...");
 				ClearBuffer();
 				Socket->GetData(buff, buff_len);
 				if (strcmp(r_ok, buff))
