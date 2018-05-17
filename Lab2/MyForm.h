@@ -261,9 +261,9 @@ namespace Lab2
 			{
 				this->allMessages->Text += (who + " подключился к чату.\n");
 			}
-			void MessageUser(String ^who, String ^what)
+			void MessageUser(String ^s)
 			{
-				this->allMessages->Text += (who + ": \t" + what + "\n");
+				this->allMessages->Text += (s);
 			}
 			void ClearMessages()
 			{
@@ -291,17 +291,18 @@ namespace Lab2
 			bool is_active;
 			bool is_server;
 
-			const size_t buff_len = 1024;
+			const size_t buff_len = 5120;
 			char *buff = nullptr;
 			char* r_error =			"ERROR";
 			char* r_hello1 =		"Hey!\0";
-			char* r_hello2 =		"You!\0";
+			char* r_hello2 =		"Yo!\0";
 			char* r_ok =			"OK\0";
 			char* r_end_names =		"ENDNAMES\0";
 			char* r_update =		"UPDATE\0";
 			char* r_end_update =	"ENDUPDATE\0";
 			char* r_disconnect =	"DISCONNECT\0";
 			char* r_repeat =		"REPEAT\0";
+			char* r_sendmessage =	"SENDMESSAGE\0";
 
 		public:
 			Engine()
@@ -459,11 +460,11 @@ namespace Lab2
 			{
 				while (this->lockedBag) {};
 				List<SOCKET> ^sock_arr = gcnew List<SOCKET>(this->client_sockets.ToArray());
-				String ^s = face->CurrentMessageGet();
+				String ^s = (this->name + ": \t" + face->CurrentMessageGet() + "\n");
 				face->CurrentMessageClear();
 				for (int i = 0; i < sock_arr->Count; i++)
 					this->client_data[sock_arr[i]]->Enqueue(s);
-				face->MessageUser(this->name, s);
+				face->MessageUser(s);
 			}
 
 		private:
@@ -536,8 +537,21 @@ namespace Lab2
 						RequestDisconect(sock);
 						return;
 					}
-					else if (!Socket->SendData(r_repeat, strlen(r_repeat), sock)) 
-						{ ConnectionError(sock); return; }
+					else if (!strcmp(buff, r_sendmessage))
+					{
+						RequestSendMessage(sock, client_name);
+					}
+					else if (!strlen(buff))
+					{
+						if (!Socket->SendData(r_repeat, strlen(r_repeat), sock))
+							ConnectionError(sock); return;
+					}
+					else
+					{
+						if (!Socket->SendData(r_error, strlen(r_error), sock))
+							ConnectionError(sock); return;
+						face->MessageError(client_name, "UNKNOWN REQUEST");
+					}
 				}
 			}
 
@@ -554,6 +568,19 @@ namespace Lab2
 				}
 				if (!Socket->SendData(r_end_update, strlen(r_end_update), sock))
 					{ ConnectionError(sock); return; };
+			}
+			void RequestSendMessage(SOCKET sock, String ^cl_n)
+			{
+				if (!Socket->SendData(r_ok, strlen(r_ok), sock)) { ConnectionError(sock); return; };
+				ClearBuffer();
+				if (!Socket->GetData(buff, buff_len, sock)) { ConnectionError(sock); return; };
+				String ^s = gcnew String(buff);
+				while (this->lockedBag) {};
+				List<SOCKET> ^sock_arr = gcnew List<SOCKET>(this->client_sockets.ToArray());
+				for (int i = 0; i < sock_arr->Count; i++)
+					this->client_data[sock_arr[i]]->Enqueue((cl_n + ": \t" + s + "\n"));
+				face->Message(cl_n + ": \t" + s);
+				if (!Socket->SendData(r_ok, strlen(r_ok), sock)) { ConnectionError(sock); return; };
 			}
 			void RequestDisconect(SOCKET sock)
 			{
@@ -605,7 +632,7 @@ namespace Lab2
 		{
 			enum class ClientStates
 			{
-				Update, Disconect
+				Update, Disconect, SendMessage
 			};
 			ClientStates state;
 			const size_t delay_ms = 200;
@@ -676,7 +703,8 @@ namespace Lab2
 			}
 			virtual void SendMessage() override
 			{
-
+				if (!this->is_active) return;
+				this->state = ClientStates::SendMessage;
 			}
 
 		private:
@@ -717,6 +745,7 @@ namespace Lab2
 					switch (this->state)
 					{
 					case ClientStates::Update: { RequestUpdate(); } break;
+					case ClientStates::SendMessage: { RequestSendMessage(); } break;
 					case ClientStates::Disconect: { RequestDisconect(); return; } break;
 					}
 				}
@@ -734,13 +763,30 @@ namespace Lab2
 				while (strcmp(buff, r_end_update))
 				{
 					// action
-					face->MessageUser(this->name, gcnew String(buff));
+					face->MessageUser(gcnew String(buff));
 					
 					if (!Socket->SendData(r_ok, strlen(r_ok))) { ConnectionError(); return; };
 					ClearBuffer();
 					if (!Socket->GetData(buff, buff_len)) { ConnectionError(); return; };
 				}
 				ClearBuffer();
+			}
+			void RequestSendMessage()
+			{
+				if (!Socket->SendData(r_sendmessage, strlen(r_sendmessage))) { ConnectionError(); return; };
+				ClearBuffer();
+				if (!Socket->GetData(buff, buff_len)) { ConnectionError(); return; };
+				if (strcmp(buff, r_ok)) { ConnectionError(); return; };
+
+				String ^s = face->CurrentMessageGet();
+				face->CurrentMessageClear();
+				char *k = (char*)(void*)Marshal::StringToHGlobalAnsi(s);
+				if (!Socket->SendData(k, s->Length)) { ConnectionError(); return; };
+
+				ClearBuffer();
+				if (!Socket->GetData(buff, buff_len)) { ConnectionError(); return; };
+				if (strcmp(buff, r_ok)) { ConnectionError(); return; };
+				this->state = ClientStates::Update;
 			}
 			void RequestDisconect()
 			{
@@ -963,6 +1009,7 @@ namespace Lab2
 			this->b_att->TabIndex = 1;
 			this->b_att->Text = L"Прикрепить";
 			this->b_att->UseVisualStyleBackColor = true;
+			this->b_att->Click += gcnew System::EventHandler(this, &MyForm::b_att_Click);
 			// 
 			// rbt_my_msg
 			// 
@@ -1195,7 +1242,12 @@ namespace Lab2
 
 	private: System::Void b_send_Click(System::Object^  sender, System::EventArgs^  e) 
 	{
-		engine->SendMessage();
+		if (rbt_my_msg->Text != "")
+			engine->SendMessage();
+	}
+	private: System::Void b_att_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+
 	}
 };
 }
