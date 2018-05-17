@@ -1,24 +1,16 @@
 #pragma once
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
-#include <string>
 #include <vector>
-#include <queue>
-#include <string>
-#include <map>
 #include <WinSock2.h>
 #pragma comment(lib, "WS2_32.lib")
 
 namespace Lab2 
 {
 	using namespace System;
-	using namespace System::ComponentModel;
-	using namespace System::Collections;
 	using namespace System::Collections::Generic;
 	using namespace System::Collections::Concurrent;
 	using namespace System::Windows::Forms;
-	using namespace System::Data;
-	using namespace System::Drawing;
 	using namespace System::Threading;
 	using namespace System::Runtime::InteropServices;
 
@@ -277,6 +269,15 @@ namespace Lab2
 			{
 				this->allMessages->Text = "";
 			}
+
+			String^ CurrentMessageGet()
+			{
+				return this->currMessage->Text;
+			}
+			void CurrentMessageClear()
+			{
+				this->currMessage->Text = "";
+			}
 		};
 		ref class Engine
 		{
@@ -389,9 +390,6 @@ namespace Lab2
 				this->face = face;
 				this->lockedBag = false;
 			}
-			~Server()
-			{
-			}
 
 			virtual bool Start() override
 			{
@@ -461,9 +459,11 @@ namespace Lab2
 			{
 				while (this->lockedBag) {};
 				List<SOCKET> ^sock_arr = gcnew List<SOCKET>(this->client_sockets.ToArray());
+				String ^s = face->CurrentMessageGet();
+				face->CurrentMessageClear();
 				for (int i = 0; i < sock_arr->Count; i++)
-					this->client_data[sock_arr[i]]->Enqueue("kokoko");
-				face->MessageUser(this->name, "kokoko");
+					this->client_data[sock_arr[i]]->Enqueue(s);
+				face->MessageUser(this->name, s);
 			}
 
 		private:
