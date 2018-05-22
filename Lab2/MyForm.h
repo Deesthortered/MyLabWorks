@@ -211,6 +211,7 @@ namespace Lab2
 		};
 		ref class Interface
 		{
+			const bool switch_on = true;
 			Label ^infoline;
 			Label ^indicator;
 			ListBox ^members;
@@ -229,46 +230,52 @@ namespace Lab2
 			void Indicate()
 			{
 				this->indic_b = !this->indic_b;
-				if (this->indic_b) indicator->Text = "+++";
-				else indicator->Text = "---";
+				if (this->switch_on)
+				{
+					if (this->indic_b) indicator->Text = "+++";
+					else indicator->Text = "---";
+				}
+			}
+			void Deindicate()
+			{
+				if (this->switch_on) indicator->Text = "Indicator";
 			}
 			void InfoLine(String ^s)
 			{
-				infoline->Text = s;
+				if (this->switch_on) infoline->Text = s;
 			}
 			void AddMemberName(String ^s)
 			{
-				this->members->Items->Add(s + "\n");
+				if (this->switch_on) this->members->Items->Add(s + "\n");
 			}
 			void DeleteMemberName(String ^name)
 			{
-				this->members->Items->Remove(name);
+				if (this->switch_on) this->members->Items->Remove(name);
 			}
 			void ClearMemberBox()
 			{
-				this->members->Items->Clear();
+				if (this->switch_on) this->members->Items->Clear();
 			}
 
 			void Message(String ^s)
 			{
-				//this->allMessages->Invoke(gcnew MethodInvoker(this->Message), s);
-				this->allMessages->Text += (s + "\n");
+				if (this->switch_on) this->allMessages->Text += (s + "\n");
 			}
 			void MessageError(String ^who, String ^what)
 			{
-				this->allMessages->Text += ("Ошибка!!! (" + who + "): \t" + what + "\n");
+				if (this->switch_on) this->allMessages->Text += ("Ошибка!!! (" + who + "): \t" + what + "\n");
 			}
 			void MessageNewMember(String ^who)
 			{
-				this->allMessages->Text += (who + " подключился к чату.\n");
+				if (this->switch_on) this->allMessages->Text += (who + " подключился к чату.\n");
 			}
 			void MessageUser(String ^s)
 			{
-				this->allMessages->Text += (s);
+				if (this->switch_on) this->allMessages->Text += (s);
 			}
 			void ClearMessages()
 			{
-				this->allMessages->Text = "";
+				if (this->switch_on) this->allMessages->Text = "";
 			}
 
 			String^ CurrentMessageGet()
@@ -277,7 +284,7 @@ namespace Lab2
 			}
 			void CurrentMessageClear()
 			{
-				this->currMessage->Text = "";
+				if (this->switch_on) this->currMessage->Text = "";
 			}
 		};
 		ref class Engine
@@ -352,6 +359,7 @@ namespace Lab2
 				case 6: { MessageBox::Show("Не удалось подключится к указаному адресу.", "Ошибка подключения!", MessageBoxButtons::OK, MessageBoxIcon::Error); } break;
 				case 7: { MessageBox::Show("Подключение произошло, но не было подтверждено.", "Ошибка подключения!", MessageBoxButtons::OK, MessageBoxIcon::Warning); } break;
 				case 8: { MessageBox::Show("Поле IP и порта не может быть пустым. Введите данные.", "Внимание!", MessageBoxButtons::OK, MessageBoxIcon::Warning); } break;
+				case 10: { MessageBox::Show("Такое имя уже занято на сервере.", "Внимание!", MessageBoxButtons::OK, MessageBoxIcon::Warning); } break;
 				default: MessageBox::Show("Неизвестная фатально-летальная ошибка №" + Convert::ToString(k), "ERRORЩИНА!!!", MessageBoxButtons::OK, MessageBoxIcon::Error);
 				}
 			}
@@ -467,23 +475,17 @@ namespace Lab2
 				while (this->is_active)
 				{
 					SOCKET s = Socket->Accept();
-					face->Message("Ацептнули клиента");
 					if (s == SOCKET_ERROR) continue;
-					face->Message("сокет норм");
 					while (this->lockedBag) {};
 					client_sockets.Add(s);
-					face->Message("давили его в список");
 					this->client_threads[s] = gcnew Thread(gcnew ParameterizedThreadStart(this, &Server::ConnectionFunc));
 					this->client_data[s] = gcnew ConcurrentQueue<String^>();
-					face->Message("создали поток и очередь");
 					client_threads[s]->Start(s);
-					face->Message("запустили");
 				}
 			}
 			void ConnectionFunc(Object^ obj)
 			{
 				SOCKET sock = (SOCKET)obj;
-				face->Message("начинаем");
 				if (!Socket->SendData(r_hello1, strlen(r_hello1), sock)) { ConnectionError(sock, -5); return; }
 				if (!Socket->GetData(buff, buff_len, sock)) { ConnectionError(sock, -4); return; }
 				if (strcmp(r_hello2, buff)) { ConnectionError(sock, -3); return; }
@@ -498,7 +500,7 @@ namespace Lab2
 				if (client_name == this->name)
 				{
 					if (!Socket->SendData(r_alreadyexist, strlen(r_alreadyexist), sock)) { ConnectionError(sock, 0); return; }
-					Socket->DisconnectClient(sock);
+					disconnectclient(sock);
 					return;
 				}
 				List<KeyValuePair<SOCKET, String^>>^ rr = gcnew List<KeyValuePair<SOCKET, String^>>(this->names.ToArray());
@@ -506,7 +508,7 @@ namespace Lab2
 					if (rr[i].Value == client_name)
 					{
 						if (!Socket->SendData(r_alreadyexist, strlen(r_alreadyexist), sock)) { ConnectionError(sock, 0); return; }
-						Socket->DisconnectClient(sock);
+						disconnectclient(sock);
 						return;
 					}
 
@@ -591,32 +593,13 @@ namespace Lab2
 			void RequestDisconect(SOCKET sock)
 			{
 				if (!Socket->SendData(r_ok, strlen(r_ok), sock)) { ConnectionError(sock, 16); return; };
-				if (!Socket->DisconnectClient(sock))
-					face->Message("Не удалось отключить сокет клиента.");
-				face->Message(this->names[sock] + " покинул чат.");
-				face->DeleteMemberName(this->names[sock]);
-
-				String ^s;  this->names.TryRemove(sock, s);
-				face->Message("Удалено имя " + s);
-				ConcurrentQueue<String^> ^q;  this->client_data.TryRemove(sock, q);
-				face->Message("удалена очередь");
-				this->lockedBag = true;
-				List<SOCKET> ss;
-				while (!client_sockets.IsEmpty)
-				{
-					SOCKET s;
-					this->client_sockets.TryTake(s);
-					if (s == sock) { face->Message("Удален сокет"); break; }
-					else ss.Add(s);
-				}
-				for (int i = 0; i < ss.Count; i++)
-					this->client_sockets.Add(ss[i]);
-				this->lockedBag = false;
+				face->Message((this->names.ContainsKey(sock) ? this->names[sock] : "кто-то") + " покинул чат.");
+				disconnectclient(sock);
 			}
 
 			void ConnectionError(SOCKET sock, int errnum)
 			{
-				this->face->Message("Проблемы с подключением с " + this->names[sock] + ", потому он отключен от чата.");
+				this->face->Message("Проблемы с подключением с " + (this->names.ContainsKey(sock) ? this->names[sock] : "новым подключением") + ", потому он отключен от чата.");
 				String ^reason;
 				switch (errnum)
 				{
@@ -644,10 +627,16 @@ namespace Lab2
 				case 16: { reason = "Ошибка при подтверждении отключения соединения"; } break;
 				}
 				this->face->Message("Причина " + Convert::ToString(errnum) + ": " + reason + ".");
+				disconnectclient(sock);
+			}
+			void disconnectclient(SOCKET sock)
+			{
 				Socket->DisconnectClient(sock);
-				face->DeleteMemberName(this->names[sock]);
-
-				String ^s;  this->names.TryRemove(sock, s);
+				if (this->names.ContainsKey(sock))
+				{
+					face->DeleteMemberName(this->names[sock]);
+					String ^s;  this->names.TryRemove(sock, s);
+				}
 				ConcurrentQueue<String^> ^q;  this->client_data.TryRemove(sock, q);
 				this->lockedBag = true;
 				List<SOCKET> ss;
@@ -726,6 +715,30 @@ namespace Lab2
 					return false;
 				}
 				face->InfoLine("Соединение установлено. Создаем поток для приема/передачи данных...");
+
+				// Отправляем ему свое имя
+				char *name = (char*)(void*)Marshal::StringToHGlobalAnsi(this->name);
+				if (!Socket->SendData(name, this->name->Length))
+				{
+					ErrorMessage(8);
+					Terminate();
+					return false;
+				}
+				// Принимаем имена всех учасников
+				ClearBuffer();
+				if (!Socket->GetData(buff, buff_len)) 
+				{
+					ErrorMessage(9);
+					Terminate();
+					return false;
+				}
+				if (!strcmp(buff, r_alreadyexist)) 
+				{
+					ErrorMessage(10);
+					Terminate();
+					return false;
+				}
+
 				connect_thr = gcnew Thread(gcnew ThreadStart(this, &Client::ConnectionFunc));
 				connect_thr->Start();
 				face->InfoLine("Готово!");
@@ -734,7 +747,11 @@ namespace Lab2
 			virtual void Terminate() override
 			{
 				if (this->connect_thr != nullptr && this->connect_thr->ThreadState == ThreadState::Running) this->state = ClientStates::Disconect;
-				else term();
+				else
+				{
+					term();
+					face->Message("Вы отключились от сервера.\n");
+				}
 			}
 			virtual void SendMessage() override
 			{
@@ -745,15 +762,6 @@ namespace Lab2
 		private:
 			void ConnectionFunc()
 			{
-				// Подключение с сервером полностью установлено
-				// Отправляем ему свое имя
-				char *name = (char*)(void*)Marshal::StringToHGlobalAnsi(this->name);
-				if (!Socket->SendData(name, this->name->Length)) { ConnectionError(-1); return; }
-
-				// Принимаем имена всех учасников
-				ClearBuffer();
-				if (!Socket->GetData(buff, buff_len)) { ConnectionError(-2); return; }
-				if (!strcmp(buff, r_alreadyexist)) { ConnectionError(-3); return; }
 				if (!Socket->SendData(r_ok, strlen(r_ok))) { ConnectionError(-4); return; }
 				bool b = true;
 				while (strcmp(buff, r_end_names))
@@ -773,57 +781,61 @@ namespace Lab2
 					Sleep(this->delay_ms);
 					switch (this->state)
 					{
-					case ClientStates::Update: { RequestUpdate(); } break;
-					case ClientStates::SendMessage: { RequestSendMessage(); } break;
+					case ClientStates::Update: { if (!RequestUpdate()) return; } break;
+					case ClientStates::SendMessage: { if (!RequestSendMessage()) return; } break;
 					case ClientStates::Disconect: { RequestDisconect(); return; } break;
 					}
 				}
 			}
 
-			void RequestUpdate()
+			bool RequestUpdate()
 			{
 				face->Indicate();
 				do
 				{
-					if (!Socket->SendData(r_update, strlen(r_update))) { ConnectionError(-8); return; };
+					if (!Socket->SendData(r_update, strlen(r_update))) { ConnectionError(-8); return false; };
 					ClearBuffer();
-					if (!Socket->GetData(buff, buff_len)) { ConnectionError(-9); return; };
+					if (!Socket->GetData(buff, buff_len)) { ConnectionError(-9); return false; };
 				} while (!strcmp(buff, r_repeat));
 				while (strcmp(buff, r_end_update))
 				{
 					// action
 					face->MessageUser(gcnew String(buff));
 					
-					if (!Socket->SendData(r_ok, strlen(r_ok))) { ConnectionError(-10); return; };
+					if (!Socket->SendData(r_ok, strlen(r_ok))) { ConnectionError(-10); return false; };
 					ClearBuffer();
-					if (!Socket->GetData(buff, buff_len)) { ConnectionError(-11); return; };
+					if (!Socket->GetData(buff, buff_len)) { ConnectionError(-11); return false; };
 				}
 				ClearBuffer();
+				return true;
 			}
-			void RequestSendMessage()
+			bool RequestSendMessage()
 			{
-				if (!Socket->SendData(r_sendmessage, strlen(r_sendmessage))) { ConnectionError(-12); return; };
+				if (!Socket->SendData(r_sendmessage, strlen(r_sendmessage))) { ConnectionError(-12); return false; };
 				ClearBuffer();
-				if (!Socket->GetData(buff, buff_len)) { ConnectionError(-13); return; };
-				if (strcmp(buff, r_ok)) { ConnectionError(-14); return; };
+				if (!Socket->GetData(buff, buff_len)) { ConnectionError(-13); return false; };
+				if (strcmp(buff, r_ok)) { ConnectionError(-14); return false; };
 
 				String ^s = face->CurrentMessageGet();
 				face->CurrentMessageClear();
 				char *k = (char*)(void*)Marshal::StringToHGlobalAnsi(s);
-				if (!Socket->SendData(k, s->Length)) { ConnectionError(-15); return; };
+				if (!Socket->SendData(k, s->Length)) { ConnectionError(-15); return false; };
 
 				ClearBuffer();
-				if (!Socket->GetData(buff, buff_len)) { ConnectionError(-16); return; };
-				if (strcmp(buff, r_ok)) { ConnectionError(-17); return; };
+				if (!Socket->GetData(buff, buff_len)) { ConnectionError(-16); return false; };
+				if (strcmp(buff, r_ok)) { ConnectionError(-17); return false; };
 				this->state = ClientStates::Update;
+				return true;
 			}
-			void RequestDisconect()
+			bool RequestDisconect()
 			{
-				if (!Socket->SendData(r_disconnect, strlen(r_disconnect))) { ConnectionError(-18); return; };
+				if (!Socket->SendData(r_disconnect, strlen(r_disconnect))) { ConnectionError(-18); return false; };
 				ClearBuffer();
-				if (!Socket->GetData(buff, buff_len)) { ConnectionError(-19); return; };
-				if (strcmp(buff, r_ok)) { ConnectionError(-20); return; };
+				if (!Socket->GetData(buff, buff_len)) { ConnectionError(-19); return false; };
+				if (strcmp(buff, r_ok)) { ConnectionError(-20); return false; };
+				face->Message("Вы отключились от сервера.\n");
 				term();
+				return true;
 			}
 
 			void ConnectionError(int errnum)
@@ -854,11 +866,7 @@ namespace Lab2
 				case -20: { reason = "Вместо подтверждения на отключение принят некорректный запрос"; } break;
 				}
 				this->face->Message("Причина " + Convert::ToString(errnum) + ": " + reason + ".");
-				Socket->~WinSocket();
-				delete[] buff;
-				is_active = false;
-				face->ClearMemberBox();
-				face->InfoLine("Введите IP и порт сервера для подключения.");
+				term();
 			}
 			void term()
 			{
@@ -866,13 +874,14 @@ namespace Lab2
 				delete[] buff;
 				is_active = false;
 				face->ClearMemberBox();
-				face->Message("Вы отключились от сервера.\n");
 				face->InfoLine("Введите IP и порт сервера для подключения.");
+				face->Deindicate();
 			}
 		};
 
 		Engine ^engine;
-		Interface ^face;
+private: System::Data::DataSet^  dataSet;
+		 Interface ^face;
 		void StartServer()
 		{
 			engine = gcnew Server(tb_name->Text, tb_ip->Text, tb_port->Text, face);
@@ -906,7 +915,6 @@ namespace Lab2
 	private: System::Windows::Forms::Panel^  panel_main;
 	private: System::Windows::Forms::RichTextBox^  rbt_my_msg;
 	private: System::Windows::Forms::Button^  b_send;
-
 	private: System::Windows::Forms::Label^  label_info;
 	private: System::Windows::Forms::RichTextBox^  rtb_all_msg;
 	private: System::Windows::Forms::Panel^  panel_info;
@@ -917,6 +925,15 @@ namespace Lab2
 	private: System::Windows::Forms::TextBox^  tb_port;
 	private: System::Windows::Forms::Button^  b_connect;
 	private: System::ComponentModel::Container ^components;
+	private: System::Data::OleDb::OleDbCommand^  oleDbSelectCommand1;
+	private: System::Data::OleDb::OleDbConnection^  oleDbConnection1;
+	private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand1;
+	private: System::Data::OleDb::OleDbCommand^  oleDbUpdateCommand1;
+	private: System::Data::OleDb::OleDbCommand^  oleDbDeleteCommand1;
+private: System::Data::OleDb::OleDbDataAdapter^  oleDbDataAdapter1;
+
+
+
 #pragma region Windows Form Designer generated code
 		void InitializeComponent(void)
 		{
@@ -942,9 +959,17 @@ namespace Lab2
 			this->label_ip = (gcnew System::Windows::Forms::Label());
 			this->label_server_info = (gcnew System::Windows::Forms::Label());
 			this->label_indicator = (gcnew System::Windows::Forms::Label());
+			this->oleDbSelectCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
+			this->oleDbConnection1 = (gcnew System::Data::OleDb::OleDbConnection());
+			this->oleDbInsertCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
+			this->oleDbUpdateCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
+			this->oleDbDeleteCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
+			this->oleDbDataAdapter1 = (gcnew System::Data::OleDb::OleDbDataAdapter());
+			this->dataSet = (gcnew System::Data::DataSet());
 			this->panel_top->SuspendLayout();
 			this->panel_main->SuspendLayout();
 			this->panel_info->SuspendLayout();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataSet))->BeginInit();
 			this->SuspendLayout();
 			// 
 			// panel_top
@@ -1164,6 +1189,78 @@ namespace Lab2
 			this->label_indicator->TabIndex = 4;
 			this->label_indicator->Text = L"Indicator";
 			// 
+			// oleDbSelectCommand1
+			// 
+			this->oleDbSelectCommand1->CommandText = L"SELECT datatable.*\r\nFROM     datatable";
+			this->oleDbSelectCommand1->Connection = this->oleDbConnection1;
+			// 
+			// oleDbConnection1
+			// 
+			this->oleDbConnection1->ConnectionString = L"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=D:\\2.Programming\\MyLabWorks\\Lab2\\dat"
+				L"abase.mdb";
+			// 
+			// oleDbInsertCommand1
+			// 
+			this->oleDbInsertCommand1->CommandText = L"INSERT INTO `datatable` (`Time`, `Sender`, `Message`) VALUES (\?, \?, \?)";
+			this->oleDbInsertCommand1->Connection = this->oleDbConnection1;
+			this->oleDbInsertCommand1->Parameters->AddRange(gcnew cli::array< System::Data::OleDb::OleDbParameter^  >(3) {
+				(gcnew System::Data::OleDb::OleDbParameter(L"Time",
+					System::Data::OleDb::OleDbType::Date, 0, L"Time")), (gcnew System::Data::OleDb::OleDbParameter(L"Sender", System::Data::OleDb::OleDbType::VarWChar,
+						0, L"Sender")), (gcnew System::Data::OleDb::OleDbParameter(L"Message", System::Data::OleDb::OleDbType::LongVarWChar, 0, L"Message"))
+			});
+			// 
+			// oleDbUpdateCommand1
+			// 
+			this->oleDbUpdateCommand1->CommandText = L"UPDATE `datatable` SET `Time` = \?, `Sender` = \?, `Message` = \? WHERE ((`Time` = \?"
+				L") AND ((\? = 1 AND `Sender` IS NULL) OR (`Sender` = \?)))";
+			this->oleDbUpdateCommand1->Connection = this->oleDbConnection1;
+			this->oleDbUpdateCommand1->Parameters->AddRange(gcnew cli::array< System::Data::OleDb::OleDbParameter^  >(6) {
+				(gcnew System::Data::OleDb::OleDbParameter(L"Time",
+					System::Data::OleDb::OleDbType::Date, 0, L"Time")), (gcnew System::Data::OleDb::OleDbParameter(L"Sender", System::Data::OleDb::OleDbType::VarWChar,
+						0, L"Sender")), (gcnew System::Data::OleDb::OleDbParameter(L"Message", System::Data::OleDb::OleDbType::LongVarWChar, 0, L"Message")),
+						(gcnew System::Data::OleDb::OleDbParameter(L"Original_Time", System::Data::OleDb::OleDbType::Date, 0, System::Data::ParameterDirection::Input,
+							false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Time", System::Data::DataRowVersion::Original, nullptr)),
+							(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Sender", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+								static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Sender", System::Data::DataRowVersion::Original, true, nullptr)),
+								(gcnew System::Data::OleDb::OleDbParameter(L"Original_Sender", System::Data::OleDb::OleDbType::VarWChar, 0, System::Data::ParameterDirection::Input,
+									false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Sender", System::Data::DataRowVersion::Original, nullptr))
+			});
+			// 
+			// oleDbDeleteCommand1
+			// 
+			this->oleDbDeleteCommand1->CommandText = L"DELETE FROM `datatable` WHERE ((`Time` = \?) AND ((\? = 1 AND `Sender` IS NULL) OR "
+				L"(`Sender` = \?)))";
+			this->oleDbDeleteCommand1->Connection = this->oleDbConnection1;
+			this->oleDbDeleteCommand1->Parameters->AddRange(gcnew cli::array< System::Data::OleDb::OleDbParameter^  >(3) {
+				(gcnew System::Data::OleDb::OleDbParameter(L"Original_Time",
+					System::Data::OleDb::OleDbType::Date, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
+					L"Time", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Sender",
+						System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
+						L"Sender", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_Sender",
+							System::Data::OleDb::OleDbType::VarWChar, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
+							static_cast<System::Byte>(0), L"Sender", System::Data::DataRowVersion::Original, nullptr))
+			});
+			// 
+			// oleDbDataAdapter1
+			// 
+			this->oleDbDataAdapter1->DeleteCommand = this->oleDbDeleteCommand1;
+			this->oleDbDataAdapter1->InsertCommand = this->oleDbInsertCommand1;
+			this->oleDbDataAdapter1->SelectCommand = this->oleDbSelectCommand1;
+			cli::array< System::Data::Common::DataColumnMapping^ >^ __mcTemp__1 = gcnew cli::array< System::Data::Common::DataColumnMapping^  >(3) {
+				(gcnew System::Data::Common::DataColumnMapping(L"Time",
+					L"Time")), (gcnew System::Data::Common::DataColumnMapping(L"Sender", L"Sender")), (gcnew System::Data::Common::DataColumnMapping(L"Message",
+						L"Message"))
+			};
+			this->oleDbDataAdapter1->TableMappings->AddRange(gcnew cli::array< System::Data::Common::DataTableMapping^  >(1) {
+				(gcnew System::Data::Common::DataTableMapping(L"Table",
+					L"datatable", __mcTemp__1))
+			});
+			this->oleDbDataAdapter1->UpdateCommand = this->oleDbUpdateCommand1;
+			// 
+			// dataSet
+			// 
+			this->dataSet->DataSetName = L"DataSet";
+			// 
 			// MyForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(8, 16);
@@ -1182,13 +1279,14 @@ namespace Lab2
 			this->Name = L"MyForm";
 			this->ShowIcon = false;
 			this->Text = L"Сетевой чат";
-			this->FormClosed += gcnew System::Windows::Forms::FormClosedEventHandler(this, &MyForm::MyForm_FormClosed);
+			this->FormClosing += gcnew System::Windows::Forms::FormClosingEventHandler(this, &MyForm::MyForm_FormClosing);
 			this->Shown += gcnew System::EventHandler(this, &MyForm::MyForm_Shown);
 			this->panel_top->ResumeLayout(false);
 			this->panel_main->ResumeLayout(false);
 			this->panel_main->PerformLayout();
 			this->panel_info->ResumeLayout(false);
 			this->panel_info->PerformLayout();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataSet))->EndInit();
 			this->ResumeLayout(false);
 			this->PerformLayout();
 
@@ -1205,7 +1303,7 @@ namespace Lab2
 		face = gcnew Interface(label_info, label_indicator, lb_members, rtb_all_msg, rbt_my_msg);
 		engine = gcnew Engine(face);
 	}
-	private: System::Void MyForm_FormClosed(System::Object^  sender, System::Windows::Forms::FormClosedEventArgs^  e) 
+	private: System::Void MyForm_FormClosing(System::Object^  sender, System::Windows::Forms::FormClosingEventArgs^  e) 
 	{
 		if (engine->IsActive()) engine->Terminate();
 		if (!WinSocket::CloseLibrary())
@@ -1214,6 +1312,7 @@ namespace Lab2
 			Application::Exit();
 		}
 	}
+
 	private: System::Void tb_name_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
 	{
 		if (!((e->KeyChar > 47 && e->KeyChar < 59) || (e->KeyChar >= 65 && e->KeyChar <= 122) || e->KeyChar == 8) || e->KeyChar == 92)
