@@ -8,6 +8,8 @@
 namespace Lab2 
 {
 	using namespace System;
+	using namespace System::Data; 
+	using namespace System::Data::OleDb;
 	using namespace System::Collections::Generic;
 	using namespace System::Collections::Concurrent;
 	using namespace System::Windows::Forms;
@@ -218,14 +220,19 @@ namespace Lab2
 			RichTextBox ^allMessages;
 			RichTextBox ^currMessage;
 			bool indic_b;
+			DataSet ^dataSet;
+			OleDbDataAdapter ^dataAdapter;
+			size_t last_row_key = 1;
 		public:
-			Interface(Label ^%infoline, Label ^%indicator, ListBox ^%members, RichTextBox ^%allMessages, RichTextBox ^%currMessage)
+			Interface(Label ^%infoline, Label ^%indicator, ListBox ^%members, RichTextBox ^%allMessages, RichTextBox ^%currMessage, DataSet ^%dataSet, OleDbDataAdapter ^%dataAdapter)
 			{
 				this->infoline = infoline;
 				this->indicator = indicator;
 				this->members = members;
 				this->allMessages = allMessages;
 				this->currMessage = currMessage;
+				this->dataSet = dataSet;
+				this->dataAdapter = dataAdapter;
 			}
 			void Indicate()
 			{
@@ -285,6 +292,32 @@ namespace Lab2
 			void CurrentMessageClear()
 			{
 				if (this->switch_on) this->currMessage->Text = "";
+			}
+
+			void AddDataToBase(String ^who, String ^what)
+			{
+				if (!this->switch_on) return;
+				DataRow ^row = this->dataSet->Tables[0]->NewRow();
+				row["Counter"] = this->last_row_key;
+				row["Time"] = DateTime::Today;
+				row["Sender"] = who;
+				row["Message"] = what;
+				dataSet->Tables[0]->Rows->Add(row);
+				dataAdapter->Update(this->dataSet);
+			}
+			List<String^>^ LoadAllMessages()
+			{
+				List<String^>^ res = gcnew List<String^>();
+				for (int i = 0; i < this->dataSet->Tables[0]->Rows->Count; i++)
+				{
+					String ^who, ^what;
+					who  = (String^)this->dataSet->Tables[0]->Rows[i]->ItemArray[2];
+					what = (String^)this->dataSet->Tables[0]->Rows[i]->ItemArray[3];
+					if (who == "System") res->Add(what + "\n");
+					else res->Add(who + ": \t" + what + "\n");
+				}
+				this->last_row_key = this->dataSet->Tables[0]->Rows->Count + 1;
+				return res;
 			}
 		};
 		ref class Engine
@@ -431,6 +464,11 @@ namespace Lab2
 				face->InfoLine("Готово!");
 				face->Message("Сервер создан. Имя сервера: " + name);
 				face->AddMemberName(name);
+
+				List<String^> ^allmsg = face->LoadAllMessages();
+				for (int i = 0; i < allmsg->Count; i++)
+					face->MessageUser(allmsg[i]);
+
 				return true;
 			}
 			virtual void Terminate() override
@@ -462,11 +500,13 @@ namespace Lab2
 			{
 				while (this->lockedBag) {};
 				List<SOCKET> ^sock_arr = gcnew List<SOCKET>(this->client_sockets.ToArray());
-				String ^s = (this->name + ": \t" + face->CurrentMessageGet() + "\n");
+				String ^k = face->CurrentMessageGet();
+				String ^s = (this->name + ": \t" + k + "\n");
 				face->CurrentMessageClear();
 				for (int i = 0; i < sock_arr->Count; i++)
 					this->client_data[sock_arr[i]]->Enqueue(s);
 				face->MessageUser(s);
+				face->AddDataToBase(this->name, k);
 			}
 
 		private:
@@ -491,7 +531,6 @@ namespace Lab2
 				if (strcmp(r_hello2, buff)) { ConnectionError(sock, -3); return; }
 				if (!Socket->SendData(r_ok, strlen(r_ok), sock)) { ConnectionError(sock, -2); return; }
 
-				// Поключение с клиентом полностью установлено
 				// Получаем имя клиента
 				ClearBuffer();
 				if (!Socket->GetData(buff, buff_len, sock)) { ConnectionError(sock, -1); return; }
@@ -519,6 +558,13 @@ namespace Lab2
 				// Отсылаем ему список всех участников
 				while (this->lockedBag) {};
 				List<SOCKET> ^sock_arr = gcnew List<SOCKET>(this->client_sockets.ToArray());
+
+				char *k = (char*)(void*)Marshal::StringToHGlobalAnsi(this->name);
+				if (!Socket->SendData(k, this->name->Length, sock)) { ConnectionError(sock, 1); return; }
+				ClearBuffer();
+				if (!Socket->GetData(buff, buff_len, sock)) { ConnectionError(sock, 2); return; }
+				if (strcmp(buff, r_ok)) { ConnectionError(sock, 2); return; }
+
 				for (int i = 0; i < sock_arr->Count; i++)
 				{
 					char *k = (char*)(void*)Marshal::StringToHGlobalAnsi(this->names[sock_arr[i]]);
@@ -532,6 +578,17 @@ namespace Lab2
 				if (!Socket->GetData(buff, buff_len, sock)) { ConnectionError(sock, 4); return; }
 				if (strcmp(buff, r_ok)) { ConnectionError(sock, 4); return; }
 				if (!Socket->SendData(r_ok, strlen(r_ok), sock)) { ConnectionError(sock, 5); return; }
+
+				for (int i = 0; i < sock_arr->Count; i++)
+					if (this->names[sock_arr[i]] != client_name)
+					{
+						String ^s = "NEW" + this->names[sock_arr[i]];
+						this->client_data[sock_arr[i]]->Enqueue(s);
+					}
+
+				List<String^> ^allmsg = face->LoadAllMessages();
+				for (int i = 0; i < allmsg->Count; i++)
+					this->client_data[sock]->Enqueue(allmsg[i]);
 
 				// Цикл приема и обработки запросов.
 				while (this->is_active)
@@ -589,6 +646,7 @@ namespace Lab2
 					this->client_data[sock_arr[i]]->Enqueue((cl_n + ": \t" + s + "\n"));
 				face->Message(cl_n + ": \t" + s);
 				if (!Socket->SendData(r_ok, strlen(r_ok), sock)) { ConnectionError(sock, 15); return; };
+				face->AddDataToBase(this->names[sock], s);
 			}
 			void RequestDisconect(SOCKET sock)
 			{
@@ -799,8 +857,13 @@ namespace Lab2
 				} while (!strcmp(buff, r_repeat));
 				while (strcmp(buff, r_end_update))
 				{
-					// action
-					face->MessageUser(gcnew String(buff));
+					if (buff[0] == 'N' && buff[1] == 'E' && buff[2] == 'W')
+					{
+						String ^s = gcnew String(buff);
+						s = s->Substring(3);
+						face->AddMemberName(s);
+					}
+					else face->MessageUser(gcnew String(buff));
 					
 					if (!Socket->SendData(r_ok, strlen(r_ok))) { ConnectionError(-10); return false; };
 					ClearBuffer();
@@ -880,8 +943,7 @@ namespace Lab2
 		};
 
 		Engine ^engine;
-private: System::Data::DataSet^  dataSet;
-		 Interface ^face;
+		Interface ^face;
 		void StartServer()
 		{
 			engine = gcnew Server(tb_name->Text, tb_ip->Text, tb_port->Text, face);
@@ -930,9 +992,8 @@ private: System::Data::DataSet^  dataSet;
 	private: System::Data::OleDb::OleDbCommand^  oleDbInsertCommand1;
 	private: System::Data::OleDb::OleDbCommand^  oleDbUpdateCommand1;
 	private: System::Data::OleDb::OleDbCommand^  oleDbDeleteCommand1;
-private: System::Data::OleDb::OleDbDataAdapter^  oleDbDataAdapter1;
-
-
+	private: System::Data::OleDb::OleDbDataAdapter^  oleDbDataAdapter1;
+	private: System::Data::DataSet^  dataSet;
 
 #pragma region Windows Form Designer generated code
 		void InitializeComponent(void)
@@ -1259,7 +1320,7 @@ private: System::Data::OleDb::OleDbDataAdapter^  oleDbDataAdapter1;
 			// 
 			// dataSet
 			// 
-			this->dataSet->DataSetName = L"DataSet";
+			this->dataSet->DataSetName = L"MaaDataSet";
 			// 
 			// MyForm
 			// 
@@ -1300,8 +1361,10 @@ private: System::Data::OleDb::OleDbDataAdapter^  oleDbDataAdapter1;
 			Engine::ErrorMessage(0);
 			Application::Exit();
 		}
-		face = gcnew Interface(label_info, label_indicator, lb_members, rtb_all_msg, rbt_my_msg);
+		face = gcnew Interface(label_info, label_indicator, lb_members, rtb_all_msg, rbt_my_msg, dataSet, oleDbDataAdapter1);
 		engine = gcnew Engine(face);
+		dataSet->Reset();
+		oleDbDataAdapter1->Fill(dataSet);
 	}
 	private: System::Void MyForm_FormClosing(System::Object^  sender, System::Windows::Forms::FormClosingEventArgs^  e) 
 	{
@@ -1330,6 +1393,7 @@ private: System::Data::OleDb::OleDbDataAdapter^  oleDbDataAdapter1;
 	private: System::Void b_create_room_Click(System::Object^  sender, System::EventArgs^  e) 
 	{
 		StartServer();
+		rtb_all_msg->Text = "";
 		if (!engine->Start()) return;
 
 		tb_ip->Text = engine->GetIP();
