@@ -296,7 +296,7 @@ namespace Lab2
 
 			void AddDataToBase(String ^who, String ^what)
 			{
-				if (!this->switch_on) return;
+				//if (!this->switch_on) return;
 				DataRow ^row = this->dataSet->Tables[0]->NewRow();
 				row["Counter"] = this->last_row_key;
 				row["Time"] = DateTime::Today;
@@ -720,6 +720,7 @@ namespace Lab2
 			const size_t delay_ms = 200;
 			Thread^ connect_thr;
 			String ^server_name;
+			bool terminated = false;
 			
 		public:
 			Client(String ^name, String ^ip, String ^port, Interface ^face)
@@ -734,6 +735,7 @@ namespace Lab2
 
 			virtual bool Start() override
 			{
+				terminated = false;
 				this->is_active = true;
 				Socket = gcnew WinSocket();
 				buff = new char[buff_len];
@@ -807,7 +809,7 @@ namespace Lab2
 				if (this->connect_thr != nullptr && this->connect_thr->ThreadState == ThreadState::Running) this->state = ClientStates::Disconect;
 				else
 				{
-					term();
+					if (!terminated) term();
 					face->Message("Вы отключились от сервера.\n");
 				}
 			}
@@ -933,6 +935,7 @@ namespace Lab2
 			}
 			void term()
 			{
+				terminated = true;
 				Socket->~WinSocket();
 				delete[] buff;
 				is_active = false;
@@ -1202,7 +1205,6 @@ namespace Lab2
 			this->tb_ip->ReadOnly = true;
 			this->tb_ip->Size = System::Drawing::Size(116, 22);
 			this->tb_ip->TabIndex = 4;
-			this->tb_ip->Text = L"192.168.1.165";
 			this->tb_ip->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb_ip_KeyPress);
 			// 
 			// tb_port
@@ -1257,8 +1259,7 @@ namespace Lab2
 			// 
 			// oleDbConnection1
 			// 
-			this->oleDbConnection1->ConnectionString = L"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=D:\\2.Programming\\MyLabWorks\\Lab2\\dat"
-				L"abase.mdb";
+			this->oleDbConnection1->ConnectionString = L"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=C:\\database.mdb";
 			// 
 			// oleDbInsertCommand1
 			// 
@@ -1272,34 +1273,43 @@ namespace Lab2
 			// 
 			// oleDbUpdateCommand1
 			// 
-			this->oleDbUpdateCommand1->CommandText = L"UPDATE `datatable` SET `Time` = \?, `Sender` = \?, `Message` = \? WHERE ((`Time` = \?"
-				L") AND ((\? = 1 AND `Sender` IS NULL) OR (`Sender` = \?)))";
+			this->oleDbUpdateCommand1->CommandText = L"UPDATE `datatable` SET `Time` = \?, `Sender` = \?, `Message` = \? WHERE ((`Counter` "
+				L"= \?) AND ((\? = 1 AND `Time` IS NULL) OR (`Time` = \?)) AND ((\? = 1 AND `Sender` I"
+				L"S NULL) OR (`Sender` = \?)))";
 			this->oleDbUpdateCommand1->Connection = this->oleDbConnection1;
-			this->oleDbUpdateCommand1->Parameters->AddRange(gcnew cli::array< System::Data::OleDb::OleDbParameter^  >(6) {
+			this->oleDbUpdateCommand1->Parameters->AddRange(gcnew cli::array< System::Data::OleDb::OleDbParameter^  >(8) {
 				(gcnew System::Data::OleDb::OleDbParameter(L"Time",
 					System::Data::OleDb::OleDbType::Date, 0, L"Time")), (gcnew System::Data::OleDb::OleDbParameter(L"Sender", System::Data::OleDb::OleDbType::VarWChar,
 						0, L"Sender")), (gcnew System::Data::OleDb::OleDbParameter(L"Message", System::Data::OleDb::OleDbType::LongVarWChar, 0, L"Message")),
-						(gcnew System::Data::OleDb::OleDbParameter(L"Original_Time", System::Data::OleDb::OleDbType::Date, 0, System::Data::ParameterDirection::Input,
-							false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Time", System::Data::DataRowVersion::Original, nullptr)),
-							(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Sender", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
-								static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Sender", System::Data::DataRowVersion::Original, true, nullptr)),
-								(gcnew System::Data::OleDb::OleDbParameter(L"Original_Sender", System::Data::OleDb::OleDbType::VarWChar, 0, System::Data::ParameterDirection::Input,
-									false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Sender", System::Data::DataRowVersion::Original, nullptr))
+						(gcnew System::Data::OleDb::OleDbParameter(L"Original_Counter", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+							false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Counter", System::Data::DataRowVersion::Original, nullptr)),
+							(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Time", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+								static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Time", System::Data::DataRowVersion::Original, true, nullptr)),
+								(gcnew System::Data::OleDb::OleDbParameter(L"Original_Time", System::Data::OleDb::OleDbType::Date, 0, System::Data::ParameterDirection::Input,
+									false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Time", System::Data::DataRowVersion::Original, nullptr)),
+									(gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Sender", System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input,
+										static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Sender", System::Data::DataRowVersion::Original, true, nullptr)),
+										(gcnew System::Data::OleDb::OleDbParameter(L"Original_Sender", System::Data::OleDb::OleDbType::VarWChar, 0, System::Data::ParameterDirection::Input,
+											false, static_cast<System::Byte>(0), static_cast<System::Byte>(0), L"Sender", System::Data::DataRowVersion::Original, nullptr))
 			});
 			// 
 			// oleDbDeleteCommand1
 			// 
-			this->oleDbDeleteCommand1->CommandText = L"DELETE FROM `datatable` WHERE ((`Time` = \?) AND ((\? = 1 AND `Sender` IS NULL) OR "
-				L"(`Sender` = \?)))";
+			this->oleDbDeleteCommand1->CommandText = L"DELETE FROM `datatable` WHERE ((`Counter` = \?) AND ((\? = 1 AND `Time` IS NULL) OR"
+				L" (`Time` = \?)) AND ((\? = 1 AND `Sender` IS NULL) OR (`Sender` = \?)))";
 			this->oleDbDeleteCommand1->Connection = this->oleDbConnection1;
-			this->oleDbDeleteCommand1->Parameters->AddRange(gcnew cli::array< System::Data::OleDb::OleDbParameter^  >(3) {
-				(gcnew System::Data::OleDb::OleDbParameter(L"Original_Time",
-					System::Data::OleDb::OleDbType::Date, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
-					L"Time", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Sender",
+			this->oleDbDeleteCommand1->Parameters->AddRange(gcnew cli::array< System::Data::OleDb::OleDbParameter^  >(5) {
+				(gcnew System::Data::OleDb::OleDbParameter(L"Original_Counter",
+					System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
+					static_cast<System::Byte>(0), L"Counter", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Time",
 						System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
-						L"Sender", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_Sender",
-							System::Data::OleDb::OleDbType::VarWChar, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
-							static_cast<System::Byte>(0), L"Sender", System::Data::DataRowVersion::Original, nullptr))
+						L"Time", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_Time",
+							System::Data::OleDb::OleDbType::Date, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
+							L"Time", System::Data::DataRowVersion::Original, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"IsNull_Sender",
+								System::Data::OleDb::OleDbType::Integer, 0, System::Data::ParameterDirection::Input, static_cast<System::Byte>(0), static_cast<System::Byte>(0),
+								L"Sender", System::Data::DataRowVersion::Original, true, nullptr)), (gcnew System::Data::OleDb::OleDbParameter(L"Original_Sender",
+									System::Data::OleDb::OleDbType::VarWChar, 0, System::Data::ParameterDirection::Input, false, static_cast<System::Byte>(0),
+									static_cast<System::Byte>(0), L"Sender", System::Data::DataRowVersion::Original, nullptr))
 			});
 			// 
 			// oleDbDataAdapter1
@@ -1307,10 +1317,10 @@ namespace Lab2
 			this->oleDbDataAdapter1->DeleteCommand = this->oleDbDeleteCommand1;
 			this->oleDbDataAdapter1->InsertCommand = this->oleDbInsertCommand1;
 			this->oleDbDataAdapter1->SelectCommand = this->oleDbSelectCommand1;
-			cli::array< System::Data::Common::DataColumnMapping^ >^ __mcTemp__1 = gcnew cli::array< System::Data::Common::DataColumnMapping^  >(3) {
-				(gcnew System::Data::Common::DataColumnMapping(L"Time",
-					L"Time")), (gcnew System::Data::Common::DataColumnMapping(L"Sender", L"Sender")), (gcnew System::Data::Common::DataColumnMapping(L"Message",
-						L"Message"))
+			cli::array< System::Data::Common::DataColumnMapping^ >^ __mcTemp__1 = gcnew cli::array< System::Data::Common::DataColumnMapping^  >(4) {
+				(gcnew System::Data::Common::DataColumnMapping(L"Counter",
+					L"Counter")), (gcnew System::Data::Common::DataColumnMapping(L"Time", L"Time")), (gcnew System::Data::Common::DataColumnMapping(L"Sender",
+						L"Sender")), (gcnew System::Data::Common::DataColumnMapping(L"Message", L"Message"))
 			};
 			this->oleDbDataAdapter1->TableMappings->AddRange(gcnew cli::array< System::Data::Common::DataTableMapping^  >(1) {
 				(gcnew System::Data::Common::DataTableMapping(L"Table",
@@ -1353,6 +1363,16 @@ namespace Lab2
 
 		}
 #pragma endregion
+	void AutoSetIP()
+	{
+		WinSocket ^sock = gcnew WinSocket();
+		if (!sock->InitializeSocket()) return;
+		sock->Set_IPAuto();
+		sock->Set_PortAuto();
+		if (!sock->Bind()) return;
+		this->tb_ip->Text = sock->GetIP();
+		sock->~WinSocket();
+	}
 
 	private: System::Void MyForm_Shown(System::Object^  sender, System::EventArgs^  e) 
 	{
@@ -1408,6 +1428,7 @@ namespace Lab2
 	}
 	private: System::Void b_connet_room_Click(System::Object^  sender, System::EventArgs^  e) 
 	{
+		AutoSetIP();
 		panel_top->Enabled = false;
 		panel_info->Enabled = true;
 		b_connect->Visible = true;
