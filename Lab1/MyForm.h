@@ -32,7 +32,7 @@ namespace Lab1
 	public:
 		enum class ShapeType
 		{
-			Cube, Pyramid
+			Paralelepiped, Ellipse
 		};
 		ref class Shape abstract
 		{
@@ -41,16 +41,20 @@ namespace Lab1
 			bool selected;
 			double x_coor, y_coor, z_coor;
 			double x_rot, y_rot, z_rot;
-			size_t l;
+			size_t width;
+			size_t height;
+			size_t depth;
 			Color  color;
 			size_t cnt;
 		public:
-			virtual void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id)
+			virtual void SetData(Color color, size_t width, size_t height, size_t depth, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id)
 			{
 				this->id = id;
 				this->selected = false;
 				this->color = color;
-				this->l = l;
+				this->width = width;
+				this->height = height;
+				this->depth = depth;
 				this->x_coor = x_coor;
 				this->y_coor = y_coor;
 				this->z_coor = z_coor;
@@ -82,9 +86,17 @@ namespace Lab1
 			{
 				return OpenTK::Vector3((float)x_rot, (float)y_rot, (float)z_rot);
 			}
-			size_t GetLength()
+			size_t GetWidth()
 			{
-				return l;
+				return this->width;
+			}
+			size_t GetHeight()
+			{
+				return this->height;
+			}
+			size_t GetDepth()
+			{
+				return this->depth;
 			}
 			Color GetColor()
 			{
@@ -102,34 +114,34 @@ namespace Lab1
 				return Math::Sqrt((p1.X - p2.X)*(p1.X - p2.X) + (p1.Y - p2.Y)*(p1.Y - p2.Y) + (p1.Z - p2.Z)*(p1.Z - p2.Z));
 			}
 		};
-		ref class Cube : public Shape
+		ref class Paralelepiped : public Shape
 		{
 			double *x, *y, *z;
 		public:
-			Cube()
+			Paralelepiped()
 			{
 				cnt = 8;
 				x = y = z = nullptr;
 			}
-			~Cube()
+			~Paralelepiped()
 			{
 				delete[] x, y, z;
 			}
-			virtual void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id) override
+			virtual void SetData(Color color, size_t width, size_t height, size_t depth, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id) override
 			{
 				x_rot = OpenTK::MathHelper::DegreesToRadians(x_rot);
 				y_rot = OpenTK::MathHelper::DegreesToRadians(y_rot);
 				z_rot = OpenTK::MathHelper::DegreesToRadians(z_rot);
-				Shape::SetData(color, l, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot, id);
+				Shape::SetData(color, width, height, depth, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot, id);
 				x = new double[cnt];
 				y = new double[cnt];
 				z = new double[cnt];
-				x[0] = x[1] = x[4] = x[5] =  -((int)l / 2.0);
-				x[2] = x[3] = x[6] = x[7] =   ((int)l / 2.0);
-				y[0] = y[1] = y[2] = y[3] =  -((int)l / 2.0);
-				y[4] = y[5] = y[6] = y[7] =   ((int)l / 2.0);
-				z[0] = z[3] = z[4] = z[7] =  -((int)l / 2.0);
-				z[1] = z[2] = z[5] = z[6] =   ((int)l / 2.0);
+				x[0] = x[1] = x[4] = x[5] =  -((int)width / 2.0);
+				x[2] = x[3] = x[6] = x[7] =   ((int)width / 2.0);
+				y[0] = y[1] = y[2] = y[3] =  -((int)height / 2.0);
+				y[4] = y[5] = y[6] = y[7] =   ((int)height / 2.0);
+				z[0] = z[3] = z[4] = z[7] =  -((int)depth / 2.0);
+				z[1] = z[2] = z[5] = z[6] =   ((int)depth / 2.0);
 
 				double *_x = new double[cnt];
 				double *_y = new double[cnt];
@@ -335,68 +347,33 @@ namespace Lab1
 				for (size_t i = 0; i < cnt; i++)
 				{
 					double k = Shape::distance(ray, camera_pos, OpenTK::Vector3(float(x[i]), float(y[i]), float(z[i])));
-					if (k > l*Math::Sqrt(3)) return -1;
+					if (k > (height+width+depth)/Math::Sqrt(3)) return -1;
 				}
 				return Shape::distance(OpenTK::Vector3(float(x_coor), float(y_coor), float(z_coor)), camera_pos);
 			}
 		};
-		ref class Pyramid : public Shape
+		ref class Ellipse : public Shape
 		{
-			double *x, *y, *z;
 		public:
-			Pyramid()
+			Ellipse()
 			{
 				cnt = 4;
-				x = y = z = nullptr;
 			}
-			~Pyramid()
+			~Ellipse()
 			{
-				delete[] x, y, z;
 			}
 
-			virtual void SetData(Color color, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id) override
+			virtual void SetData(Color color, size_t width, size_t height, size_t depth, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id) override
 			{
 				x_rot = OpenTK::MathHelper::DegreesToRadians(x_rot);
 				y_rot = OpenTK::MathHelper::DegreesToRadians(y_rot);
 				z_rot = OpenTK::MathHelper::DegreesToRadians(z_rot);
-				Shape::SetData(color, l, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot, id);
-				x = new double[cnt];
-				y = new double[cnt];
-				z = new double[cnt];
-				x[0] = x[2] = -((int)l / Math::Sqrt(12)); x[1] = ((int)l / Math::Sqrt(3)); x[3] = 0;
-				y[0] = y[1] = y[2] = 0; y[3] = Math::Sqrt((2 * l*l) / 3);
-				z[0] =  -((int)l / 2); z[1] = z[3] = 0; z[2] = (l / 2);
+				Shape::SetData(color, width, height, depth, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot, id);
 
-				double *_x = new double[cnt];
-				double *_y = new double[cnt];
-				double *_z = new double[cnt];
-
-				for (size_t i = 0; i < cnt; i++) _x[i] = x[i], _y[i] = y[i], _z[i] = z[i];
-				for (size_t i = 0; i < cnt; i++)
-				{
-					_y[i] = y[i] * Math::Cos(x_rot) - z[i] * Math::Sin(x_rot);
-					_z[i] = y[i] * Math::Sin(x_rot) + z[i] * Math::Cos(x_rot);
-				}
-				for (size_t i = 0; i < cnt; i++) x[i] = _x[i], y[i] = _y[i], z[i] = _z[i];
-				for (size_t i = 0; i < cnt; i++)
-				{
-					_x[i] = x[i] * Math::Cos(y_rot) + z[i] * Math::Sin(y_rot);
-					_z[i] = -x[i] * Math::Sin(y_rot) + z[i] * Math::Cos(y_rot);
-				}
-				for (size_t i = 0; i < cnt; i++) x[i] = _x[i], y[i] = _y[i], z[i] = _z[i];
-				for (size_t i = 0; i < cnt; i++)
-				{
-					_x[i] = x[i] * Math::Cos(z_rot) - y[i] * Math::Sin(z_rot);
-					_y[i] = x[i] * Math::Sin(z_rot) + y[i] * Math::Cos(z_rot);
-				}
-				for (size_t i = 0; i < cnt; i++) x[i] = _x[i], y[i] = _y[i], z[i] = _z[i];
-				delete[] _x, _y, _z;
-				for (size_t i = 0; i < cnt; i++)
-				{
-					x[i] += x_coor;
-					y[i] += y_coor;
-					z[i] += z_coor;
-				}
+				// тут я создавал точки а потом вращал с помощью умножение на матрицу вращения.
+				// Но так как єто библиотека полное говно и матрицы здесь ваще не удобны, то
+				// я их множил в линию (то есть линейно).
+				// На основе этих точек я делал прорисовку, но может ты сделаешь по другому, хз как.
 			}
 			virtual void Draw() override
 			{
@@ -404,33 +381,8 @@ namespace Lab1
 				if (this->selected) GL::Color3(Color::White);
 				else GL::Color3(color);
 
-				GL::Vertex3(x[0], y[0], z[0]);
-				GL::Vertex3(x[1], y[1], z[1]);
-				GL::Vertex3(x[2], y[2], z[2]);
+				// Тут тебе надо сделать прорисовку эддипса на основе уже полученных даных.
 
-				GL::Vertex3(x[0], y[0], z[0]);
-				GL::Vertex3(x[3], y[3], z[3]);
-				GL::Vertex3(x[2], y[2], z[2]);
-
-				GL::Vertex3(x[0], y[0], z[0]);
-				GL::Vertex3(x[3], y[3], z[3]);
-				GL::Vertex3(x[1], y[1], z[1]);
-
-				GL::Vertex3(x[2], y[2], z[2]);
-				GL::Vertex3(x[3], y[3], z[3]);
-				GL::Vertex3(x[1], y[1], z[1]);
-				GL::End();
-
-				GL::Color3(Color::Black);
-				GL::Begin(BeginMode::LineStrip);
-				GL::Vertex3(x[0], y[0], z[0]);
-				GL::Vertex3(x[1], y[1], z[1]);
-				GL::Vertex3(x[2], y[2], z[2]);
-				GL::Vertex3(x[0], y[0], z[0]);
-				GL::Vertex3(x[3], y[3], z[3]);
-				GL::Vertex3(x[2], y[2], z[2]);
-				GL::Vertex3(x[1], y[1], z[1]);
-				GL::Vertex3(x[3], y[3], z[3]);
 				GL::End();
 			}
 			virtual void DrawProjections(bool xy, bool xz, bool yz) override
@@ -439,61 +391,19 @@ namespace Lab1
 				if (xy)
 				{
 					GL::Begin(BeginMode::Triangles);
-					GL::Vertex3(x[0], y[0], 0.0);
-					GL::Vertex3(x[1], y[1], 0.0);
-					GL::Vertex3(x[2], y[2], 0.0);
-
-					GL::Vertex3(x[0], y[0], 0.0);
-					GL::Vertex3(x[3], y[3], 0.0);
-					GL::Vertex3(x[2], y[2], 0.0);
-
-					GL::Vertex3(x[0], y[0], 0.0);
-					GL::Vertex3(x[3], y[3], 0.0);
-					GL::Vertex3(x[1], y[1], 0.0);
-
-					GL::Vertex3(x[2], y[2], 0.0);
-					GL::Vertex3(x[3], y[3], 0.0);
-					GL::Vertex3(x[1], y[1], 0.0);
+					// тут просто нужно рисовать круг (не шар). 
 					GL::End();
 				}
 				if (xz)
 				{
 					GL::Begin(BeginMode::Triangles);
-					GL::Vertex3(x[0], 0.0, z[0]);
-					GL::Vertex3(x[1], 0.0, z[1]);
-					GL::Vertex3(x[2], 0.0, z[2]);
-
-					GL::Vertex3(x[0], 0.0, z[0]);
-					GL::Vertex3(x[3], 0.0, z[3]);
-					GL::Vertex3(x[2], 0.0, z[2]);
-
-					GL::Vertex3(x[0], 0.0, z[0]);
-					GL::Vertex3(x[3], 0.0, z[3]);
-					GL::Vertex3(x[1], 0.0, z[1]);
-
-					GL::Vertex3(x[2], 0.0, z[2]);
-					GL::Vertex3(x[3], 0.0, z[3]);
-					GL::Vertex3(x[1], 0.0, z[1]);
+					// тоже
 					GL::End();
 				}
 				if (yz)
 				{
 					GL::Begin(BeginMode::Triangles);
-					GL::Vertex3(0.0, y[0], z[0]);
-					GL::Vertex3(0.0, y[1], z[1]);
-					GL::Vertex3(0.0, y[2], z[2]);
-
-					GL::Vertex3(0.0, y[0], z[0]);
-					GL::Vertex3(0.0, y[3], z[3]);
-					GL::Vertex3(0.0, y[2], z[2]);
-
-					GL::Vertex3(0.0, y[0], z[0]);
-					GL::Vertex3(0.0, y[3], z[3]);
-					GL::Vertex3(0.0, y[1], z[1]);
-
-					GL::Vertex3(0.0, y[2], z[2]);
-					GL::Vertex3(0.0, y[3], z[3]);
-					GL::Vertex3(0.0, y[1], z[1]);
+					// и тут
 					GL::End();
 				}
 			}
@@ -501,7 +411,7 @@ namespace Lab1
 			{
 				for (size_t i = 0; i < cnt; i++)
 				{
-					if (Shape::distance(ray, camera_pos, OpenTK::Vector3((float)x[i], (float)y[i], (float)z[i])) > (l*5)/6) return -1;
+					if (Shape::distance(ray, camera_pos, OpenTK::Vector3((float)x_coor, (float)y_coor, (float)z_coor)) > (width + height + depth)/18) return -1;
 				}
 				return Shape::distance(OpenTK::Vector3((float)x_coor, (float)y_coor, (float)z_coor), camera_pos);
 			}
@@ -608,20 +518,20 @@ namespace Lab1
 				}
 			}
 
-			void CreateShape(ShapeType type, Color col, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id)
+			void CreateShape(ShapeType type, Color col, size_t width, size_t height, size_t depth, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id)
 			{
 				Shape^ s;
-				if (type == ShapeType::Cube) s = gcnew Cube();
-				else s = gcnew Pyramid();
-				s->SetData(col, l, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot, id);
+				if (type == ShapeType::Paralelepiped) s = gcnew Paralelepiped();
+				else s = gcnew Ellipse();
+				s->SetData(col, width, height, depth, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot, id);
 				this->shape_list.Add(s);
 			}
-			void ResetShape(ShapeType type, Color col, size_t l, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id)
+			void ResetShape(ShapeType type, Color col, size_t width, size_t height, size_t depth, double x_coor, double y_coor, double z_coor, double x_rot, double y_rot, double z_rot, size_t id)
 			{
 				int i = 0;
 				for (; i < shape_list.Count; i++)
 					if (shape_list[i]->GetID() == id) break;
-				shape_list[i]->SetData(col, l, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot, id);
+				shape_list[i]->SetData(col, width, height, depth, x_coor, y_coor, z_coor, x_rot, y_rot, z_rot, id);
 			}
 			void DeleteShape(size_t id)
 			{
@@ -706,8 +616,6 @@ namespace Lab1
 	private: OpenTK::GLControl^  GLFrame;
 	private: System::ComponentModel::IContainer^  components;
 	private: System::Windows::Forms::Label^  label2Shape;
-	private: System::Windows::Forms::Label^  label2EdgeLenght;
-	private: System::Windows::Forms::TextBox^  tb2_leght;
 	private: System::Windows::Forms::ComboBox^  ShapeListBox2;
 	private: System::Windows::Forms::Label^  label2XCoord;
 	private: System::Windows::Forms::Label^  label2YCoord;
@@ -751,7 +659,6 @@ namespace Lab1
 	private: System::Windows::Forms::Label^  label1LightY;
 	private: System::Windows::Forms::Label^  label1LightX;
 	private: System::Windows::Forms::Label^  label1LightPos;
-	private: System::Data::DataSet^  dataSet1;
 	private: System::Windows::Forms::ColorDialog^  colorDialog;
 	private: System::Windows::Forms::Button^  b2_setColor;
 	private: System::Windows::Forms::PictureBox^  picture2;
@@ -788,10 +695,10 @@ namespace Lab1
 	private: System::Windows::Forms::Label^  label3XRot;
 	private: System::Windows::Forms::TextBox^  tb3_XRot;
 	private: System::Windows::Forms::Label^  label3Rotare;
-	private: System::Windows::Forms::Label^  label3Length;
-	private: System::Windows::Forms::Button^  b3_LengthUp;
-	private: System::Windows::Forms::Button^  b3_LengthDown;
-	private: System::Windows::Forms::TextBox^  tb3_Length;
+	private: System::Windows::Forms::Label^  label3Size;
+	private: System::Windows::Forms::Button^  b3_WidthUp;
+	private: System::Windows::Forms::Button^  b3_WidthDown;
+	private: System::Windows::Forms::TextBox^  tb3_Width;
 	private: System::Windows::Forms::TextBox^  tb3_Step;
 	private: System::Windows::Forms::Label^  label3Step;
 	private: System::Windows::Forms::Button^  b3_Color;
@@ -804,6 +711,20 @@ namespace Lab1
 	private: System::Data::OleDb::OleDbCommand^  oleDbUpdateCommand1;
 	private: System::Data::OleDb::OleDbCommand^  oleDbDeleteCommand1;
 	private: System::Data::OleDb::OleDbDataAdapter^  oleDbDataAdapter1;
+	private: System::Data::DataSet^  dataSet1;
+	private: System::Windows::Forms::Label^  label2Depth;
+	private: System::Windows::Forms::TextBox^  tb2_depth;
+	private: System::Windows::Forms::TextBox^  tb2_height;
+	private: System::Windows::Forms::TextBox^  tb2_width;
+	private: System::Windows::Forms::Label^  label2Height;
+	private: System::Windows::Forms::Label^  label2Width;
+	private: System::Windows::Forms::Label^  label2Size;
+	private: System::Windows::Forms::Button^  b3_DepthUp;
+	private: System::Windows::Forms::Button^  b3_DepthDown;
+	private: System::Windows::Forms::TextBox^  tb3_Depth;
+	private: System::Windows::Forms::Button^  b3_HeigthUp;
+	private: System::Windows::Forms::Button^  b3_HeigthDown;
+	private: System::Windows::Forms::TextBox^  tb3_Heigth;
 
 	private: Engine engine;
 	private: Shape ^ current_shape;
@@ -814,8 +735,6 @@ namespace Lab1
 			this->GLFrame = (gcnew OpenTK::GLControl());
 			this->ShapeListBox2 = (gcnew System::Windows::Forms::ComboBox());
 			this->label2Shape = (gcnew System::Windows::Forms::Label());
-			this->label2EdgeLenght = (gcnew System::Windows::Forms::Label());
-			this->tb2_leght = (gcnew System::Windows::Forms::TextBox());
 			this->label2XCoord = (gcnew System::Windows::Forms::Label());
 			this->label2YCoord = (gcnew System::Windows::Forms::Label());
 			this->label2ZCoord = (gcnew System::Windows::Forms::Label());
@@ -859,19 +778,32 @@ namespace Lab1
 			this->label1scal = (gcnew System::Windows::Forms::Label());
 			this->label1trans = (gcnew System::Windows::Forms::Label());
 			this->AddShapeTab = (gcnew System::Windows::Forms::TabPage());
+			this->label2Depth = (gcnew System::Windows::Forms::Label());
+			this->tb2_depth = (gcnew System::Windows::Forms::TextBox());
+			this->tb2_height = (gcnew System::Windows::Forms::TextBox());
+			this->tb2_width = (gcnew System::Windows::Forms::TextBox());
+			this->label2Height = (gcnew System::Windows::Forms::Label());
+			this->label2Width = (gcnew System::Windows::Forms::Label());
+			this->label2Size = (gcnew System::Windows::Forms::Label());
 			this->picture2 = (gcnew System::Windows::Forms::PictureBox());
 			this->b2_setColor = (gcnew System::Windows::Forms::Button());
 			this->ControlTab = (gcnew System::Windows::Forms::TabPage());
 			this->panel3ControlUI = (gcnew System::Windows::Forms::Panel());
+			this->b3_DepthUp = (gcnew System::Windows::Forms::Button());
+			this->b3_DepthDown = (gcnew System::Windows::Forms::Button());
+			this->tb3_Depth = (gcnew System::Windows::Forms::TextBox());
+			this->b3_HeigthUp = (gcnew System::Windows::Forms::Button());
+			this->b3_HeigthDown = (gcnew System::Windows::Forms::Button());
+			this->tb3_Heigth = (gcnew System::Windows::Forms::TextBox());
 			this->b3_deleteShape = (gcnew System::Windows::Forms::Button());
 			this->picture3_Color = (gcnew System::Windows::Forms::PictureBox());
 			this->b3_Color = (gcnew System::Windows::Forms::Button());
 			this->tb3_Step = (gcnew System::Windows::Forms::TextBox());
 			this->label3Step = (gcnew System::Windows::Forms::Label());
-			this->b3_LengthUp = (gcnew System::Windows::Forms::Button());
-			this->b3_LengthDown = (gcnew System::Windows::Forms::Button());
-			this->tb3_Length = (gcnew System::Windows::Forms::TextBox());
-			this->label3Length = (gcnew System::Windows::Forms::Label());
+			this->b3_WidthUp = (gcnew System::Windows::Forms::Button());
+			this->b3_WidthDown = (gcnew System::Windows::Forms::Button());
+			this->tb3_Width = (gcnew System::Windows::Forms::TextBox());
+			this->label3Size = (gcnew System::Windows::Forms::Label());
 			this->b3_RotXdown = (gcnew System::Windows::Forms::Button());
 			this->b3_RotZdown = (gcnew System::Windows::Forms::Button());
 			this->b3_RotZup = (gcnew System::Windows::Forms::Button());
@@ -906,11 +838,11 @@ namespace Lab1
 			this->colorDialog = (gcnew System::Windows::Forms::ColorDialog());
 			this->colorDialog3 = (gcnew System::Windows::Forms::ColorDialog());
 			this->oleDbSelectCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
+			this->oleDbConnection1 = (gcnew System::Data::OleDb::OleDbConnection());
 			this->oleDbInsertCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
 			this->oleDbUpdateCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
 			this->oleDbDeleteCommand1 = (gcnew System::Data::OleDb::OleDbCommand());
 			this->oleDbDataAdapter1 = (gcnew System::Data::OleDb::OleDbDataAdapter());
-			this->oleDbConnection1 = (gcnew System::Data::OleDb::OleDbConnection());
 			this->MainTabControl->SuspendLayout();
 			this->CameraTab->SuspendLayout();
 			this->AddShapeTab->SuspendLayout();
@@ -952,25 +884,6 @@ namespace Lab1
 			this->label2Shape->Size = System::Drawing::Size(53, 17);
 			this->label2Shape->TabIndex = 2;
 			this->label2Shape->Text = L"Shape:";
-			// 
-			// label2EdgeLenght
-			// 
-			this->label2EdgeLenght->AutoSize = true;
-			this->label2EdgeLenght->Location = System::Drawing::Point(11, 62);
-			this->label2EdgeLenght->Name = L"label2EdgeLenght";
-			this->label2EdgeLenght->Size = System::Drawing::Size(88, 17);
-			this->label2EdgeLenght->TabIndex = 3;
-			this->label2EdgeLenght->Text = L"Edge lenght:";
-			// 
-			// tb2_leght
-			// 
-			this->tb2_leght->Location = System::Drawing::Point(101, 59);
-			this->tb2_leght->Name = L"tb2_leght";
-			this->tb2_leght->Size = System::Drawing::Size(108, 22);
-			this->tb2_leght->TabIndex = 4;
-			this->tb2_leght->Text = L"50";
-			this->tb2_leght->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb2_leght_KeyPress);
-			this->tb2_leght->Leave += gcnew System::EventHandler(this, &MyForm::tb2_leght_Leave);
 			// 
 			// label2XCoord
 			// 
@@ -1127,7 +1040,7 @@ namespace Lab1
 			// 
 			// but2_AddShape
 			// 
-			this->but2_AddShape->Location = System::Drawing::Point(497, 13);
+			this->but2_AddShape->Location = System::Drawing::Point(624, 14);
 			this->but2_AddShape->Name = L"but2_AddShape";
 			this->but2_AddShape->Size = System::Drawing::Size(80, 106);
 			this->but2_AddShape->TabIndex = 20;
@@ -1421,16 +1334,21 @@ namespace Lab1
 			// 
 			// AddShapeTab
 			// 
+			this->AddShapeTab->Controls->Add(this->label2Depth);
+			this->AddShapeTab->Controls->Add(this->tb2_depth);
+			this->AddShapeTab->Controls->Add(this->tb2_height);
+			this->AddShapeTab->Controls->Add(this->tb2_width);
+			this->AddShapeTab->Controls->Add(this->label2Height);
+			this->AddShapeTab->Controls->Add(this->label2Width);
+			this->AddShapeTab->Controls->Add(this->label2Size);
 			this->AddShapeTab->Controls->Add(this->picture2);
 			this->AddShapeTab->Controls->Add(this->b2_setColor);
-			this->AddShapeTab->Controls->Add(this->label2EdgeLenght);
 			this->AddShapeTab->Controls->Add(this->label2ZRot);
 			this->AddShapeTab->Controls->Add(this->but2_AddShape);
 			this->AddShapeTab->Controls->Add(this->ShapeListBox2);
 			this->AddShapeTab->Controls->Add(this->lable2General);
 			this->AddShapeTab->Controls->Add(this->label2Shape);
 			this->AddShapeTab->Controls->Add(this->label2Rotation);
-			this->AddShapeTab->Controls->Add(this->tb2_leght);
 			this->AddShapeTab->Controls->Add(this->tb2_Zrot);
 			this->AddShapeTab->Controls->Add(this->label2XCoord);
 			this->AddShapeTab->Controls->Add(this->tb2_Yrot);
@@ -1451,9 +1369,71 @@ namespace Lab1
 			this->AddShapeTab->Text = L"Add shape";
 			this->AddShapeTab->UseVisualStyleBackColor = true;
 			// 
+			// label2Depth
+			// 
+			this->label2Depth->AutoSize = true;
+			this->label2Depth->Location = System::Drawing::Point(521, 83);
+			this->label2Depth->Name = L"label2Depth";
+			this->label2Depth->Size = System::Drawing::Size(29, 17);
+			this->label2Depth->TabIndex = 26;
+			this->label2Depth->Text = L"Z =";
+			// 
+			// tb2_depth
+			// 
+			this->tb2_depth->Location = System::Drawing::Point(556, 80);
+			this->tb2_depth->Name = L"tb2_depth";
+			this->tb2_depth->Size = System::Drawing::Size(46, 22);
+			this->tb2_depth->TabIndex = 29;
+			this->tb2_depth->Text = L"0";
+			// 
+			// tb2_height
+			// 
+			this->tb2_height->Location = System::Drawing::Point(556, 52);
+			this->tb2_height->Name = L"tb2_height";
+			this->tb2_height->Size = System::Drawing::Size(46, 22);
+			this->tb2_height->TabIndex = 28;
+			this->tb2_height->Text = L"0";
+			// 
+			// tb2_width
+			// 
+			this->tb2_width->Location = System::Drawing::Point(556, 24);
+			this->tb2_width->Name = L"tb2_width";
+			this->tb2_width->Size = System::Drawing::Size(46, 22);
+			this->tb2_width->TabIndex = 27;
+			this->tb2_width->Text = L"0";
+			// 
+			// label2Height
+			// 
+			this->label2Height->AutoSize = true;
+			this->label2Height->Location = System::Drawing::Point(521, 55);
+			this->label2Height->Name = L"label2Height";
+			this->label2Height->Size = System::Drawing::Size(29, 17);
+			this->label2Height->TabIndex = 25;
+			this->label2Height->Text = L"Y =";
+			// 
+			// label2Width
+			// 
+			this->label2Width->AutoSize = true;
+			this->label2Width->Location = System::Drawing::Point(521, 27);
+			this->label2Width->Name = L"label2Width";
+			this->label2Width->Size = System::Drawing::Size(29, 17);
+			this->label2Width->TabIndex = 24;
+			this->label2Width->Text = L"X =";
+			// 
+			// label2Size
+			// 
+			this->label2Size->AutoSize = true;
+			this->label2Size->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 7.8F, System::Drawing::FontStyle::Underline, System::Drawing::GraphicsUnit::Point,
+				static_cast<System::Byte>(204)));
+			this->label2Size->Location = System::Drawing::Point(490, 3);
+			this->label2Size->Name = L"label2Size";
+			this->label2Size->Size = System::Drawing::Size(39, 17);
+			this->label2Size->TabIndex = 23;
+			this->label2Size->Text = L"SIze:";
+			// 
 			// picture2
 			// 
-			this->picture2->Location = System::Drawing::Point(178, 89);
+			this->picture2->Location = System::Drawing::Point(178, 76);
 			this->picture2->Name = L"picture2";
 			this->picture2->Size = System::Drawing::Size(31, 30);
 			this->picture2->TabIndex = 22;
@@ -1461,7 +1441,7 @@ namespace Lab1
 			// 
 			// b2_setColor
 			// 
-			this->b2_setColor->Location = System::Drawing::Point(101, 89);
+			this->b2_setColor->Location = System::Drawing::Point(101, 76);
 			this->b2_setColor->Name = L"b2_setColor";
 			this->b2_setColor->Size = System::Drawing::Size(70, 32);
 			this->b2_setColor->TabIndex = 21;
@@ -1483,15 +1463,21 @@ namespace Lab1
 			// 
 			// panel3ControlUI
 			// 
+			this->panel3ControlUI->Controls->Add(this->b3_DepthUp);
+			this->panel3ControlUI->Controls->Add(this->b3_DepthDown);
+			this->panel3ControlUI->Controls->Add(this->tb3_Depth);
+			this->panel3ControlUI->Controls->Add(this->b3_HeigthUp);
+			this->panel3ControlUI->Controls->Add(this->b3_HeigthDown);
+			this->panel3ControlUI->Controls->Add(this->tb3_Heigth);
 			this->panel3ControlUI->Controls->Add(this->b3_deleteShape);
 			this->panel3ControlUI->Controls->Add(this->picture3_Color);
 			this->panel3ControlUI->Controls->Add(this->b3_Color);
 			this->panel3ControlUI->Controls->Add(this->tb3_Step);
 			this->panel3ControlUI->Controls->Add(this->label3Step);
-			this->panel3ControlUI->Controls->Add(this->b3_LengthUp);
-			this->panel3ControlUI->Controls->Add(this->b3_LengthDown);
-			this->panel3ControlUI->Controls->Add(this->tb3_Length);
-			this->panel3ControlUI->Controls->Add(this->label3Length);
+			this->panel3ControlUI->Controls->Add(this->b3_WidthUp);
+			this->panel3ControlUI->Controls->Add(this->b3_WidthDown);
+			this->panel3ControlUI->Controls->Add(this->tb3_Width);
+			this->panel3ControlUI->Controls->Add(this->label3Size);
 			this->panel3ControlUI->Controls->Add(this->b3_RotXdown);
 			this->panel3ControlUI->Controls->Add(this->b3_RotZdown);
 			this->panel3ControlUI->Controls->Add(this->b3_RotZup);
@@ -1526,9 +1512,63 @@ namespace Lab1
 			this->panel3ControlUI->Size = System::Drawing::Size(980, 109);
 			this->panel3ControlUI->TabIndex = 5;
 			// 
+			// b3_DepthUp
+			// 
+			this->b3_DepthUp->Location = System::Drawing::Point(707, 85);
+			this->b3_DepthUp->Name = L"b3_DepthUp";
+			this->b3_DepthUp->Size = System::Drawing::Size(40, 22);
+			this->b3_DepthUp->TabIndex = 41;
+			this->b3_DepthUp->Text = L"▶";
+			this->b3_DepthUp->UseVisualStyleBackColor = true;
+			this->b3_DepthUp->Click += gcnew System::EventHandler(this, &MyForm::b3_DepthUp_Click);
+			// 
+			// b3_DepthDown
+			// 
+			this->b3_DepthDown->Location = System::Drawing::Point(573, 85);
+			this->b3_DepthDown->Name = L"b3_DepthDown";
+			this->b3_DepthDown->Size = System::Drawing::Size(40, 22);
+			this->b3_DepthDown->TabIndex = 40;
+			this->b3_DepthDown->Text = L"◀";
+			this->b3_DepthDown->UseVisualStyleBackColor = true;
+			this->b3_DepthDown->Click += gcnew System::EventHandler(this, &MyForm::b3_DepthDown_Click);
+			// 
+			// tb3_Depth
+			// 
+			this->tb3_Depth->Location = System::Drawing::Point(619, 85);
+			this->tb3_Depth->Name = L"tb3_Depth";
+			this->tb3_Depth->Size = System::Drawing::Size(82, 22);
+			this->tb3_Depth->TabIndex = 39;
+			// 
+			// b3_HeigthUp
+			// 
+			this->b3_HeigthUp->Location = System::Drawing::Point(707, 57);
+			this->b3_HeigthUp->Name = L"b3_HeigthUp";
+			this->b3_HeigthUp->Size = System::Drawing::Size(40, 22);
+			this->b3_HeigthUp->TabIndex = 38;
+			this->b3_HeigthUp->Text = L"▶";
+			this->b3_HeigthUp->UseVisualStyleBackColor = true;
+			this->b3_HeigthUp->Click += gcnew System::EventHandler(this, &MyForm::b3_HeigthUp_Click);
+			// 
+			// b3_HeigthDown
+			// 
+			this->b3_HeigthDown->Location = System::Drawing::Point(573, 57);
+			this->b3_HeigthDown->Name = L"b3_HeigthDown";
+			this->b3_HeigthDown->Size = System::Drawing::Size(40, 22);
+			this->b3_HeigthDown->TabIndex = 37;
+			this->b3_HeigthDown->Text = L"◀";
+			this->b3_HeigthDown->UseVisualStyleBackColor = true;
+			this->b3_HeigthDown->Click += gcnew System::EventHandler(this, &MyForm::b3_HeigthDown_Click);
+			// 
+			// tb3_Heigth
+			// 
+			this->tb3_Heigth->Location = System::Drawing::Point(619, 57);
+			this->tb3_Heigth->Name = L"tb3_Heigth";
+			this->tb3_Heigth->Size = System::Drawing::Size(82, 22);
+			this->tb3_Heigth->TabIndex = 36;
+			// 
 			// b3_deleteShape
 			// 
-			this->b3_deleteShape->Location = System::Drawing::Point(666, 14);
+			this->b3_deleteShape->Location = System::Drawing::Point(772, 19);
 			this->b3_deleteShape->Name = L"b3_deleteShape";
 			this->b3_deleteShape->Size = System::Drawing::Size(123, 86);
 			this->b3_deleteShape->TabIndex = 35;
@@ -1573,43 +1613,42 @@ namespace Lab1
 			this->label3Step->TabIndex = 32;
 			this->label3Step->Text = L"Step:";
 			// 
-			// b3_LengthUp
+			// b3_WidthUp
 			// 
-			this->b3_LengthUp->Location = System::Drawing::Point(597, 56);
-			this->b3_LengthUp->Name = L"b3_LengthUp";
-			this->b3_LengthUp->Size = System::Drawing::Size(40, 30);
-			this->b3_LengthUp->TabIndex = 31;
-			this->b3_LengthUp->Text = L"▶";
-			this->b3_LengthUp->UseVisualStyleBackColor = true;
-			this->b3_LengthUp->Click += gcnew System::EventHandler(this, &MyForm::b3_LengthUp_Click);
+			this->b3_WidthUp->Location = System::Drawing::Point(707, 29);
+			this->b3_WidthUp->Name = L"b3_WidthUp";
+			this->b3_WidthUp->Size = System::Drawing::Size(40, 22);
+			this->b3_WidthUp->TabIndex = 31;
+			this->b3_WidthUp->Text = L"▶";
+			this->b3_WidthUp->UseVisualStyleBackColor = true;
+			this->b3_WidthUp->Click += gcnew System::EventHandler(this, &MyForm::b3_WidthUp_Click);
 			// 
-			// b3_LengthDown
+			// b3_WidthDown
 			// 
-			this->b3_LengthDown->Location = System::Drawing::Point(551, 56);
-			this->b3_LengthDown->Name = L"b3_LengthDown";
-			this->b3_LengthDown->Size = System::Drawing::Size(40, 30);
-			this->b3_LengthDown->TabIndex = 30;
-			this->b3_LengthDown->Text = L"◀";
-			this->b3_LengthDown->UseVisualStyleBackColor = true;
-			this->b3_LengthDown->Click += gcnew System::EventHandler(this, &MyForm::b3_LengthDown_Click);
+			this->b3_WidthDown->Location = System::Drawing::Point(573, 29);
+			this->b3_WidthDown->Name = L"b3_WidthDown";
+			this->b3_WidthDown->Size = System::Drawing::Size(40, 22);
+			this->b3_WidthDown->TabIndex = 30;
+			this->b3_WidthDown->Text = L"◀";
+			this->b3_WidthDown->UseVisualStyleBackColor = true;
+			this->b3_WidthDown->Click += gcnew System::EventHandler(this, &MyForm::b3_WidthDown_Click);
 			// 
-			// tb3_Length
+			// tb3_Width
 			// 
-			this->tb3_Length->Location = System::Drawing::Point(551, 30);
-			this->tb3_Length->Name = L"tb3_Length";
-			this->tb3_Length->Size = System::Drawing::Size(82, 22);
-			this->tb3_Length->TabIndex = 29;
-			this->tb3_Length->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb3_Length_KeyPress);
-			this->tb3_Length->Leave += gcnew System::EventHandler(this, &MyForm::tb3_Length_Leave);
+			this->tb3_Width->Location = System::Drawing::Point(619, 29);
+			this->tb3_Width->Name = L"tb3_Width";
+			this->tb3_Width->Size = System::Drawing::Size(82, 22);
+			this->tb3_Width->TabIndex = 29;
+			this->tb3_Width->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MyForm::tb3_Length_KeyPress);
 			// 
-			// label3Length
+			// label3Size
 			// 
-			this->label3Length->AutoSize = true;
-			this->label3Length->Location = System::Drawing::Point(548, 7);
-			this->label3Length->Name = L"label3Length";
-			this->label3Length->Size = System::Drawing::Size(56, 17);
-			this->label3Length->TabIndex = 28;
-			this->label3Length->Text = L"Length:";
+			this->label3Size->AutoSize = true;
+			this->label3Size->Location = System::Drawing::Point(570, 6);
+			this->label3Size->Name = L"label3Size";
+			this->label3Size->Size = System::Drawing::Size(39, 17);
+			this->label3Size->TabIndex = 28;
+			this->label3Size->Text = L"Size:";
 			// 
 			// b3_RotXdown
 			// 
@@ -1903,6 +1942,11 @@ namespace Lab1
 			this->oleDbSelectCommand1->CommandText = L"SELECT Shapes.*\r\nFROM     Shapes";
 			this->oleDbSelectCommand1->Connection = this->oleDbConnection1;
 			// 
+			// oleDbConnection1
+			// 
+			this->oleDbConnection1->ConnectionString = L"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=D:\\2.Programming\\MyLabWorks\\Lab1\\dat"
+				L"abase.mdb";
+			// 
 			// oleDbInsertCommand1
 			// 
 			this->oleDbInsertCommand1->CommandText = resources->GetString(L"oleDbInsertCommand1.CommandText");
@@ -2076,11 +2120,6 @@ namespace Lab1
 			});
 			this->oleDbDataAdapter1->UpdateCommand = this->oleDbUpdateCommand1;
 			// 
-			// oleDbConnection1
-			// 
-			this->oleDbConnection1->ConnectionString = L"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=D:\\2.Programming\\MyLabWorks\\Lab1\\dat"
-				L"abase.mdb";
-			// 
 			// MyForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(8, 16);
@@ -2162,20 +2201,22 @@ namespace Lab1
 		if (dataSet1->Tables->Count)
 		for (int i = 0; i < dataSet1->Tables[0]->Rows->Count; i++)
 		{
-			ShapeType type = ShapeType::Pyramid;
+			ShapeType type = ShapeType::Paralelepiped;
 			String^ t = dataSet1->Tables[0]->Rows[i]->ItemArray[8]->ToString();
-			if (t == "Cube") type = ShapeType::Cube;
-			engine.CreateShape(type, Color::FromArgb(	Convert::ToInt32(dataSet1->Tables[0]->Rows[i]->ItemArray[12]),
-														Convert::ToInt32(dataSet1->Tables[0]->Rows[i]->ItemArray[9]),
-														Convert::ToInt32(dataSet1->Tables[0]->Rows[i]->ItemArray[10]),
-														Convert::ToInt32(dataSet1->Tables[0]->Rows[i]->ItemArray[11])),
-											Convert::ToUInt32(dataSet1->Tables[0]->Rows[i]->ItemArray[4]),
-											Convert::ToDouble(dataSet1->Tables[0]->Rows[i]->ItemArray[1]),
+			if (t == "Ellipse") type = ShapeType::Ellipse;
+			engine.CreateShape(type, Color::FromArgb(	Convert::ToInt32(dataSet1->Tables[0]->Rows[i]->ItemArray[14]),
+														Convert::ToInt32(dataSet1->Tables[0]->Rows[i]->ItemArray[11]),
+														Convert::ToInt32(dataSet1->Tables[0]->Rows[i]->ItemArray[12]),
+														Convert::ToInt32(dataSet1->Tables[0]->Rows[i]->ItemArray[13])),
+													Convert::ToUInt32(dataSet1->Tables[0]->Rows[i]->ItemArray[4]),
+													Convert::ToUInt32(dataSet1->Tables[0]->Rows[i]->ItemArray[5]),
+													Convert::ToUInt32(dataSet1->Tables[0]->Rows[i]->ItemArray[6]),
+													Convert::ToDouble(dataSet1->Tables[0]->Rows[i]->ItemArray[1]),
 											Convert::ToDouble(dataSet1->Tables[0]->Rows[i]->ItemArray[2]),
-											Convert::ToDouble(dataSet1->Tables[0]->Rows[i]->ItemArray[3]),
 											Convert::ToDouble(dataSet1->Tables[0]->Rows[i]->ItemArray[5]),
-											Convert::ToDouble(dataSet1->Tables[0]->Rows[i]->ItemArray[6]),
 											Convert::ToDouble(dataSet1->Tables[0]->Rows[i]->ItemArray[7]),
+											Convert::ToDouble(dataSet1->Tables[0]->Rows[i]->ItemArray[8]),
+											Convert::ToDouble(dataSet1->Tables[0]->Rows[i]->ItemArray[9]),
 											Convert::ToUInt32(dataSet1->Tables[0]->Rows[i]->ItemArray[0]));
 		}
 	}
@@ -2187,7 +2228,7 @@ namespace Lab1
 			label3None->Text = "ID " + Convert::ToString(selected_shape_id);
 			current_shape = engine.GetShape(selected_shape_id);
 
-			if (dynamic_cast<Cube^>(current_shape))
+			if (dynamic_cast<Paralelepiped^>(current_shape))
 			{
 				ShapeTypeBox3->SelectedIndex = 0;
 				ShapeTypeBox3->Text = "Cube";
@@ -2215,7 +2256,9 @@ namespace Lab1
 			tb3_YRot->Text = Convert::ToString(OpenTK::MathHelper::RadiansToDegrees(rot.Y));
 			tb3_ZRot->Text = Convert::ToString(OpenTK::MathHelper::RadiansToDegrees(rot.Z));
 
-			tb3_Length->Text = Convert::ToString(current_shape->GetLength());
+			tb3_Width->Text = Convert::ToString(current_shape->GetWidth());
+			tb3_Heigth->Text = Convert::ToString(current_shape->GetHeight());
+			tb3_Depth->Text = Convert::ToString(current_shape->GetDepth());
 		}
 		else
 		{
@@ -2228,7 +2271,9 @@ namespace Lab1
 			tb3_XRot->Text = "";
 			tb3_YRot->Text = "";
 			tb3_ZRot->Text = "";
-			tb3_Length->Text = "";
+			tb3_Width->Text = "";
+			tb3_Heigth->Text = "";
+			tb3_Depth->Text = "";
 
 			colorDialog3->Color = Color::White;
 			Bitmap^ bmp = gcnew Bitmap(picture3_Color->Width, picture3_Color->Height);
@@ -2240,9 +2285,9 @@ namespace Lab1
 	}
 	private: void UpdateShape()
 	{
-		ShapeType type = ShapeType::Cube;
-		if (ShapeTypeBox3->SelectedIndex == 1) type = ShapeType::Pyramid;
-		engine.ResetShape(type, colorDialog3->Color, Convert::ToUInt32(tb3_Length->Text), Convert::ToDouble(tb3_XPos->Text), Convert::ToDouble(tb3_YPos->Text),
+		ShapeType type = ShapeType::Paralelepiped;
+		if (ShapeTypeBox3->SelectedIndex == 1) type = ShapeType::Ellipse;
+		engine.ResetShape(type, colorDialog3->Color, Convert::ToUInt32(tb3_Width->Text), Convert::ToUInt32(tb3_Heigth->Text), Convert::ToUInt32(tb3_Depth->Text), Convert::ToDouble(tb3_XPos->Text), Convert::ToDouble(tb3_YPos->Text),
 			Convert::ToDouble(tb3_ZPos->Text), Convert::ToDouble(tb3_XRot->Text), Convert::ToDouble(tb3_YRot->Text),Convert::ToDouble(tb3_ZRot->Text), current_shape->GetID());
 		current_shape = engine.GetShape(current_shape->GetID());
 		DrawAll();
@@ -2543,10 +2588,6 @@ namespace Lab1
 	{
 		if (tb2_Zrot->Text == "0") tb2_Zrot->Text = "";
 	}
-	private: System::Void tb2_leght_Leave(System::Object^  sender, System::EventArgs^  e) 
-	{
-		if (tb2_leght->Text->Length == 0 || tb2_leght->Text == "-") tb2_leght->Text = "50";
-	}
 	private: System::Void tb2_Xcoor_Leave(System::Object^  sender, System::EventArgs^  e) 
 	{
 		if (tb2_Xcoor->Text->Length == 0 || tb2_Xcoor->Text == "-") tb2_Xcoor->Text = "0";
@@ -2570,11 +2611,6 @@ namespace Lab1
 	private: System::Void tb2_Zrot_Leave(System::Object^  sender, System::EventArgs^  e) 
 	{
 		if (tb2_Zrot->Text->Length == 0 || tb2_Zrot->Text == "-") tb2_Zrot->Text = "0";
-	}
-	private: System::Void tb2_leght_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
-	{
-		if ((e->KeyChar <= 47 || e->KeyChar >= 59) && e->KeyChar != 8)
-			e->Handled = true;
 	}
 	private: System::Void tb2_Xcoor_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
 	{
@@ -2637,10 +2673,12 @@ namespace Lab1
 	{
 		SystemSounds::Beep->Play();
 		ShapeType type;
-		String^ b = "Cube";
-		if (ShapeListBox2->SelectedItem == ShapeListBox2->Items[0]) type = ShapeType::Cube;
-		else if (ShapeListBox2->SelectedItem == ShapeListBox2->Items[1]) { type = ShapeType::Pyramid; b = "Pyramid"; }
-		engine.CreateShape(type, colorDialog->Color,	Convert::ToUInt32(tb2_leght->Text),
+		String^ b = "Paralelepiped";
+		if (ShapeListBox2->SelectedItem == ShapeListBox2->Items[0]) type = ShapeType::Paralelepiped;
+		else if (ShapeListBox2->SelectedItem == ShapeListBox2->Items[1]) { type = ShapeType::Ellipse; b = "Ellipse"; }
+		engine.CreateShape(type, colorDialog->Color,	Convert::ToUInt32(tb2_width->Text),
+														Convert::ToDouble(tb2_height->Text),
+														Convert::ToDouble(tb2_depth->Text),
 														Convert::ToDouble(tb2_Xcoor->Text),
 														Convert::ToDouble(tb2_Ycoor->Text),
 														Convert::ToDouble(tb2_Zcoor->Text),
@@ -2654,8 +2692,10 @@ namespace Lab1
 											tb2_Xcoor->Text, 
 											tb2_Ycoor->Text, 
 											tb2_Zcoor->Text,
-											tb2_leght->Text, 
-											tb2_Xrot->Text, 
+											tb2_width->Text,
+											tb2_height->Text,
+											tb2_depth->Text,
+											tb2_Xrot->Text,
 											tb2_Yrot->Text, 
 											tb2_Zrot->Text, 
 											b, 
@@ -2740,17 +2780,38 @@ namespace Lab1
 		tb3_ZRot->Text = Convert::ToString(Convert::ToDouble(tb3_ZRot->Text) + Convert::ToDouble(tb3_Step->Text));
 		UpdateShape();
 	}
-	private: System::Void b3_LengthDown_Click(System::Object^  sender, System::EventArgs^  e) 
+
+	private: System::Void b3_HeigthUp_Click(System::Object^  sender, System::EventArgs^  e)
 	{
-		if (Convert::ToUInt32(tb3_Length->Text) < Convert::ToUInt32(tb3_Step->Text)) return;
-		tb3_Length->Text = Convert::ToString(Convert::ToUInt32(tb3_Length->Text) - Convert::ToUInt32(tb3_Step->Text));
+		tb3_ZRot->Text = Convert::ToString(Convert::ToDouble(tb3_Heigth->Text) + Convert::ToDouble(tb3_Step->Text));
 		UpdateShape();
 	}
-	private: System::Void b3_LengthUp_Click(System::Object^  sender, System::EventArgs^  e) 
+	private: System::Void b3_HeigthDown_Click(System::Object^  sender, System::EventArgs^  e) 
 	{
-		tb3_Length->Text = Convert::ToString(Convert::ToDouble(tb3_Length->Text) + Convert::ToDouble(tb3_Step->Text));
+		tb3_ZRot->Text = Convert::ToString(Convert::ToDouble(tb3_Heigth->Text) - Convert::ToDouble(tb3_Step->Text));
 		UpdateShape();
 	}
+	private: System::Void b3_DepthUp_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+		tb3_ZRot->Text = Convert::ToString(Convert::ToDouble(tb3_Depth->Text) + Convert::ToDouble(tb3_Step->Text));
+		UpdateShape();
+	}
+	private: System::Void b3_DepthDown_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		tb3_ZRot->Text = Convert::ToString(Convert::ToDouble(tb3_Depth->Text) - Convert::ToDouble(tb3_Step->Text));
+		UpdateShape();
+	}
+	private: System::Void b3_WidthUp_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		tb3_ZRot->Text = Convert::ToString(Convert::ToDouble(tb3_Width->Text) + Convert::ToDouble(tb3_Step->Text));
+		UpdateShape();
+	}
+	private: System::Void b3_WidthDown_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+		tb3_ZRot->Text = Convert::ToString(Convert::ToDouble(tb3_Width->Text) - Convert::ToDouble(tb3_Step->Text));
+		UpdateShape();
+	}
+
 
 	private: System::Void tb3_Step_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) 
 	{
@@ -2848,11 +2909,6 @@ namespace Lab1
 	private: System::Void tb3_ZRot_Leave(System::Object^  sender, System::EventArgs^  e) 
 	{
 		if (tb3_ZRot->Text->Length == 0) tb3_ZRot->Text = "0";
-		UpdateShape();
-	}
-	private: System::Void tb3_Length_Leave(System::Object^  sender, System::EventArgs^  e) 
-	{
-		if (tb3_Length->Text->Length == 0) tb3_Length->Text = "50";
 		UpdateShape();
 	}
 
